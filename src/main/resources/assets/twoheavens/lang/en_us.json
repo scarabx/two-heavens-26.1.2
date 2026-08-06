@@ -1,0 +1,23 @@
+{
+  "itemGroup.twoheavens.two_heavens": "Two Heavens",
+  "item.twoheavens.katana": "Katana",
+  "item.twoheavens.wakizashi": "Wakizashi",
+  "item.twoheavens.daisho": "Daisho",
+  "item.twoheavens.katana_hilt": "Katana Hilt",
+  "item.twoheavens.katana_blade": "Katana Blade",
+  "item.twoheavens.wakizashi_hilt": "Wakizashi Hilt",
+  "item.twoheavens.wakizashi_blade": "Wakizashi Blade",
+  "item.twoheavens.tatara_clay": "Tatara Clay",
+  "item.twoheavens.satetsu_sand": "Satetsu",
+  "item.twoheavens.tatara_clay_block": "Tatara Clay Block",
+  "item.twoheavens.tatara_furnace": "Unfired Tatara Furnace",
+  "item.twoheavens.tatara_furnace_fired": "Fired Tatara Furnace",
+  "item.twoheavens.kera_block": "Kera",
+  "item.twoheavens.hammer": "Hammer",
+  "item.twoheavens.bellows": "Bellows",
+  "block.twoheavens.satetsu_sand": "Satetsu Sand",
+  "block.twoheavens.tatara_clay_block": "Tatara Clay Block",
+  "block.twoheavens.tatara_furnace": "Unfired Tatara Furnace",
+  "block.twoheavens.tatara_furnace_fired": "Fired Tatara Furnace",
+  "block.twoheavens.kera_block": "Kera"
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:sugar_cane",
+    "minecraft:charcoal",
+    "minecraft:clay_ball"
+  ],
+  "result": {
+    "id": "twoheavens:tatara_clay"
+  }
+}

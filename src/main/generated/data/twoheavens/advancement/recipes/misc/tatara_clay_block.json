@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_tatara_clay": {
+      "conditions": {
+        "items": [
+          {
+            "items": "twoheavens:tatara_clay"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "twoheavens:tatara_clay_block"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_tatara_clay"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "twoheavens:tatara_clay_block"
+    ]
+  }
+}

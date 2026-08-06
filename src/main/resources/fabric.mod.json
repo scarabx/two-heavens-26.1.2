@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "twoheavens",
+	"version": "${version}",
+	"name": "Two Heavens",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"scarabx"
+	],
+	"contact": {},
+	"license": "CC0-1.0",
+	"icon": "assets/twoheavens/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.scarabx.twoheavens.TwoHeavens"
+		],
+		"client": [
+			"net.scarabx.twoheavens.client.TwoHeavensClient"
+		],
+		"fabric-datagen": [
+			"net.scarabx.twoheavens.datagen.TwoHeavensDataGenerator"
+		]
+	},
+	"mixins": [
+		"twoheavens.mixins.json",
+		{
+			"config": "twoheavens.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

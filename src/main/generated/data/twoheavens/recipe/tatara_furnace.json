@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block",
+    "twoheavens:tatara_clay_block"
+  ],
+  "result": {
+    "id": "twoheavens:tatara_furnace"
+  }
+}

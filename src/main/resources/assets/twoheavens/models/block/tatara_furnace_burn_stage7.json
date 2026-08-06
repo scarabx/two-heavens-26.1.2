@@ -1,0 +1,25 @@
+{
+  "textures": {
+    "particle": "twoheavens:block/tatara_furnace_charcoal_glow7",
+    "inside": "twoheavens:block/tatara_furnace_charcoal_glow7"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#inside"
+        }
+      }
+    }
+  ]
+}

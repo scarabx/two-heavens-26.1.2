@@ -1,0 +1,7 @@
+{
+  "textures": {
+    "particle": "twoheavens:block/tatara_furnace_charcoal_glow8",
+    "inside": "twoheavens:block/tatara_furnace_charcoal_glow8"
+  },
+  "elements": []
+}

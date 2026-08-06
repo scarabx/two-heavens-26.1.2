@@ -1,0 +1,229 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage0"
+      },
+      "when": {
+        "color_stage": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage1"
+      },
+      "when": {
+        "color_stage": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage2"
+      },
+      "when": {
+        "color_stage": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage3"
+      },
+      "when": {
+        "color_stage": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage4"
+      },
+      "when": {
+        "color_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage5"
+      },
+      "when": {
+        "color_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage6"
+      },
+      "when": {
+        "color_stage": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage7"
+      },
+      "when": {
+        "color_stage": "7"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_body_stage8"
+      },
+      "when": {
+        "color_stage": "8"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_1"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_2"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_3"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_4"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_5"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_6"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_7"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "7"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_charcoal_8"
+      },
+      "when": {
+        "lit": "false",
+        "charcoal_level": "8"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage0"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage1"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage2"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage3"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage4"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage5"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage6"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage7"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "7"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_burn_stage8"
+      },
+      "when": {
+        "lit": "true",
+        "burn_stage": "8"
+      }
+    }
+  ]
+}

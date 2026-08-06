@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "cool_stage=0": {
+      "model": "twoheavens:block/kera_stage0"
+    },
+    "cool_stage=1": {
+      "model": "twoheavens:block/kera_stage1"
+    },
+    "cool_stage=2": {
+      "model": "twoheavens:block/kera_stage2"
+    },
+    "cool_stage=3": {
+      "model": "twoheavens:block/kera_stage3"
+    },
+    "cool_stage=4": {
+      "model": "twoheavens:block/kera_stage4"
+    },
+    "cool_stage=5": {
+      "model": "twoheavens:block/kera_stage5"
+    },
+    "cool_stage=6": {
+      "model": "twoheavens:block/kera_stage6"
+    },
+    "cool_stage=7": {
+      "model": "twoheavens:block/kera_stage7"
+    },
+    "cool_stage=8": {
+      "model": "twoheavens:block/kera_stage8"
+    }
+  }
+}

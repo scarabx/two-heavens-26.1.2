@@ -1,0 +1,9 @@
+// 26.1.2	-999999999-01-01T00:00:00	Two Heavens/Model Definitions
+1118cb0e316745e13324a5d2a676d8c13322a556 assets/twoheavens/blockstates/satetsu_sand.json
+3e7faef0f0a6fdfa65ff4add575c2fd6878e88d1 assets/twoheavens/blockstates/tatara_clay_block.json
+38a9ff7ba4dc8448d205357b811e25376f7933c3 assets/twoheavens/items/satetsu_sand.json
+c760bf0853fe54c817f6eb5e00786d504a0a6253 assets/twoheavens/items/tatara_clay.json
+91bf5724ab6cca3f8267821f8f07166315ede89f assets/twoheavens/items/tatara_clay_block.json
+c587c0ebc9c9833ac5caadc850ff5db160760ef9 assets/twoheavens/models/block/satetsu_sand.json
+ea9ee395b9b76942ea7c02117ab9988786329bef assets/twoheavens/models/block/tatara_clay_block.json
+6dba59c901e3f168e80b7ec7a7765a1da35251e2 assets/twoheavens/models/item/tatara_clay.json

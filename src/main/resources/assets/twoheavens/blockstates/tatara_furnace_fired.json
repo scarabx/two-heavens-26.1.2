@@ -1,0 +1,206 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_charcoal_1"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "charcoal_level": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_charcoal_2"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "charcoal_level": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_charcoal_3"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "charcoal_level": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_charcoal_4"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "charcoal_level": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_satetsu_1"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "satetsu_level": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_satetsu_2"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "satetsu_level": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_satetsu_3"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "satetsu_level": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_fired_satetsu_4"
+      },
+      "when": {
+        "lit": "false",
+        "kera_formed": "false",
+        "satetsu_level": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage0"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "0"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage1"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage2"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage3"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage4"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage5"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage6"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage7"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "7"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage8"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "8"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_crack_overlay1"
+      },
+      "when": {
+        "kera_formed": "true",
+        "crack_stage": "1"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_crack_overlay2"
+      },
+      "when": {
+        "kera_formed": "true",
+        "crack_stage": "2"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_crack_overlay3"
+      },
+      "when": {
+        "kera_formed": "true",
+        "crack_stage": "3"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_crack_overlay4"
+      },
+      "when": {
+        "kera_formed": "true",
+        "crack_stage": "4"
+      }
+    }
+  ]
+}

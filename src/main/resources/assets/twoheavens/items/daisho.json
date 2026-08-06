@@ -1,0 +1,7 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "twoheavens:item/daisho"
+  },
+  "oversized_in_gui": true
+}

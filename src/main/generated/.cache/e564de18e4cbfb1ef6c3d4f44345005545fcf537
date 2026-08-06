@@ -1,0 +1,11 @@
+// 26.1.2	-999999999-01-01T00:00:00	Two Heavens/Two Heavens/Recipes
+fbec7fc6f2a0161a646c4fc6333ae1e60c2072f6 data/twoheavens/advancement/recipes/misc/tatara_clay.json
+d97ef3aa2a65d53d790e834285de85775fb88b35 data/twoheavens/advancement/recipes/misc/tatara_clay_block.json
+06f14282ffa25dc3952b6b6d1eef9ed7858c2129 data/twoheavens/advancement/recipes/misc/tatara_furnace.json
+7191711e653bd4ab79f97f9229cfc7f5a12c20ca data/twoheavens/advancement/recipes/tools/bellows.json
+d091a891a3df972e7c566e567b2387851b5e0025 data/twoheavens/advancement/recipes/tools/hammer.json
+425b66cf1746a25037206ee1c80a785320f4ba6e data/twoheavens/recipe/bellows.json
+2d872538848e0fc797b67b2dc95d1d45a59b5846 data/twoheavens/recipe/hammer.json
+41e43285fd86a91e49a649893b30b08172ff5399 data/twoheavens/recipe/tatara_clay.json
+fbaabd205a6a7f6c2c37808dc45694965f6e1a2d data/twoheavens/recipe/tatara_clay_block.json
+177647f7c8e5839287548ac3311d78b02f1cc791 data/twoheavens/recipe/tatara_furnace.json

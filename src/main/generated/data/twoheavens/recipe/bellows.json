@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "L": "minecraft:leather",
+    "P": "#minecraft:planks"
+  },
+  "pattern": [
+    "PPP",
+    "ILL",
+    "PPP"
+  ],
+  "result": {
+    "id": "twoheavens:bellows"
+  }
+}
