@@ -28,10 +28,11 @@ public class ModItemGroups {
 							entries.accept(ModItems.KATANA);
 							entries.accept(ModItems.WAKIZASHI);
 							entries.accept(ModItems.DAISHO);
-							entries.accept(ModItems.KATANA_HILT);
+							entries.accept(ModItems.KATANA_TSUKA);
 							entries.accept(ModItems.KATANA_BLADE);
-							entries.accept(ModItems.WAKIZASHI_HILT);
+							entries.accept(ModItems.WAKIZASHI_TSUKA);
 							entries.accept(ModItems.WAKIZASHI_BLADE);
+							entries.accept(ModItems.TSUBA);
 							entries.accept(ModItems.TATARA_CLAY);
 							entries.accept(ModBlocks.SATETSU_SAND);
 							entries.accept(ModBlocks.TATARA_CLAY_BLOCK);
