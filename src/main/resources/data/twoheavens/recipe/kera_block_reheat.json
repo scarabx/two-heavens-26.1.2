@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.0,
+  "ingredient": "twoheavens:kera",
+  "result": {
+    "id": "twoheavens:hot_kera_block"
+  }
+}

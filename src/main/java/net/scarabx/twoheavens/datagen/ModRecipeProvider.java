@@ -52,10 +52,13 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.unlockedBy("has_tatara_clay_block", this.has(ModBlocks.TATARA_CLAY_BLOCK))
 						.save(output);
 
-				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.TOOLS, ModItems.HAMMER)
-						.requires(Items.IRON_INGOT, 6)
-						.requires(Items.STICK)
-						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.TOOLS, ModItems.HAMMER)
+						.pattern("SSS")
+						.pattern("SSS")
+						.pattern(" T ")
+						.define('S', ItemTags.STONE_TOOL_MATERIALS)
+						.define('T', Items.STICK)
+						.unlockedBy("has_stone", this.has(ItemTags.STONE_TOOL_MATERIALS))
 						.save(output);
 
 				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.TOOLS, ModItems.BELLOWS)
@@ -66,6 +69,51 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.define('I', Items.IRON_INGOT)
 						.define('L', Items.LEATHER)
 						.unlockedBy("has_leather", this.has(Items.LEATHER))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.KATANA)
+						.pattern(" b ")
+						.pattern(" g ")
+						.pattern(" h ")
+						.define('b', ModItems.KATANA_BLADE)
+						.define('g', ModItems.TSUBA)
+						.define('h', ModItems.KATANA_TSUKA)
+						.unlockedBy("has_katana_blade", this.has(ModItems.KATANA_BLADE))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.WAKIZASHI)
+						.pattern(" b ")
+						.pattern(" g ")
+						.pattern(" h ")
+						.define('b', ModItems.WAKIZASHI_BLADE)
+						.define('g', ModItems.TSUBA)
+						.define('h', ModItems.WAKIZASHI_TSUKA)
+						.unlockedBy("has_wakizashi_blade", this.has(ModItems.WAKIZASHI_BLADE))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.KATANA_TSUKA)
+						.pattern("LSL")
+						.pattern("LSL")
+						.pattern("LSL")
+						.define('L', Items.LEATHER)
+						.define('S', Items.STICK)
+						.unlockedBy("has_leather", this.has(Items.LEATHER))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.WAKIZASHI_TSUKA)
+						.pattern("LSL")
+						.pattern("LSL")
+						.define('L', Items.LEATHER)
+						.define('S', Items.STICK)
+						.unlockedBy("has_leather", this.has(Items.LEATHER))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.TSUBA)
+						.pattern(" I ")
+						.pattern("I I")
+						.pattern(" I ")
+						.define('I', Items.IRON_INGOT)
+						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);
 			}
 		};

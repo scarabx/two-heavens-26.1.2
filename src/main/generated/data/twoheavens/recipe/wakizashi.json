@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "b": "twoheavens:wakizashi_blade",
+    "g": "twoheavens:tsuba",
+    "h": "twoheavens:wakizashi_tsuka"
+  },
+  "pattern": [
+    " b ",
+    " g ",
+    " h "
+  ],
+  "result": {
+    "id": "twoheavens:wakizashi"
+  }
+}

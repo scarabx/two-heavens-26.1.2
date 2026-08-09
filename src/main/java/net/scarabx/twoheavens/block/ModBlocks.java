@@ -34,8 +34,11 @@ public class ModBlocks {
 	public static final Block TATARA_FURNACE_FIRED = registerBlockWithItem("tatara_furnace_fired", TataraFurnaceFiredBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
 
+	public static final Block KERA = registerBlockWithItem("kera", Block::new,
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops());
+
 	public static final Block KERA_BLOCK = registerBlockWithItem("kera_block", KeraBlock::new,
-			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(5.0F).sound(SoundType.STONE).requiresCorrectToolForDrops());
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
 
 	private static Block registerBlockWithItem(String name, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties blockProperties) {
 		ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(TwoHeavens.MOD_ID, name));

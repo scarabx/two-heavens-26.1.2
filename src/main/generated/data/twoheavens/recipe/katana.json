@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "b": "twoheavens:katana_blade",
+    "g": "twoheavens:tsuba",
+    "h": "twoheavens:katana_tsuka"
+  },
+  "pattern": [
+    " b ",
+    " g ",
+    " h "
+  ],
+  "result": {
+    "id": "twoheavens:katana"
+  }
+}

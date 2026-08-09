@@ -1,4 +1,5 @@
 // 26.1.2	-999999999-01-01T00:00:00	Two Heavens/Block Loot Tables
+1086c3d45fc6e0f2d4e30fd34bb04da01eada5d0 data/twoheavens/loot_table/blocks/kera.json
 63d58102dd463b1cca0ec33f59284edb0da69609 data/twoheavens/loot_table/blocks/kera_block.json
 8ac596e1eebc19b64d18a50eca3b5815cc81664f data/twoheavens/loot_table/blocks/satetsu_sand.json
 d81099efe8e2781211a1aeed32ca7633f0391a27 data/twoheavens/loot_table/blocks/tatara_clay_block.json

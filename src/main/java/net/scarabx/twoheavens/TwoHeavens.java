@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.event.AnvilForgingHandler;
 import net.scarabx.twoheavens.item.ModItemGroups;
 import net.scarabx.twoheavens.item.ModItems;
 import net.scarabx.twoheavens.worldgen.ModWorldGeneration;
@@ -33,6 +34,7 @@ public class TwoHeavens implements ModInitializer {
 		ModItems.registerModItems();
 		ModItemGroups.registerItemGroups();
 		ModWorldGeneration.registerWorldGeneration();
+		AnvilForgingHandler.register();
 	}
 
 	public static Identifier id(String path) {

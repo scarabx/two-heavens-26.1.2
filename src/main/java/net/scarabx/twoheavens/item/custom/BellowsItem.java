@@ -11,7 +11,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.scarabx.twoheavens.block.entity.TataraFurnaceBlockEntity;
 import net.scarabx.twoheavens.block.entity.TataraFurnaceFiredBlockEntity;
 
 public class BellowsItem extends Item {
@@ -26,18 +25,10 @@ public class BellowsItem extends Item {
 		BlockPos pos = context.getClickedPos();
 		Player player = context.getPlayer();
 
-		boolean used = false;
-		if (level.getBlockEntity(pos) instanceof TataraFurnaceBlockEntity unfired) {
-			unfired.onBellowsUsed();
-			used = true;
-		} else if (level.getBlockEntity(pos) instanceof TataraFurnaceFiredBlockEntity fired) {
-			fired.onBellowsUsed();
-			used = true;
-		}
-
-		if (!used) {
+		if (!(level.getBlockEntity(pos) instanceof TataraFurnaceFiredBlockEntity fired)) {
 			return InteractionResult.PASS;
 		}
+		fired.onBellowsUsed();
 
 		if (!level.isClientSide()) {
 			level.playSound(null, pos, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.BLOCKS, 0.6F, 1.6F);

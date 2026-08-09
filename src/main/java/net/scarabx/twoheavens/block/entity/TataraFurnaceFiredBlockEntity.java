@@ -16,10 +16,13 @@ import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
 
 public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
-	public static final int SMELT_DURATION_TICKS = 2400; // 2 minutes
-	private static final int BELLOWS_BOOST_WINDOW = 100; // 5s
-	private static final int BELLOWS_STAGNATE_WINDOW = 400; // up to 20s
-	private static final float HEAT_CHANGE_PER_TICK = 0.1F; // tuned for the 2-minute official duration
+	public static final int SMELT_DURATION_TICKS = 1200; // 1 minute
+	private static final int BELLOWS_BOOST_WINDOW = 100; // 5s - bellows must be reused about this often to keep climbing
+	private static final float STARTING_HEAT = 50.0F;
+	private static final float PASSIVE_CAP = 70.0F; // fire alone gets you here over roughly the first 30 seconds, no bellows needed
+	private static final float PASSIVE_HEAT_PER_TICK = (PASSIVE_CAP - STARTING_HEAT) / 600.0F; // ~30 seconds to reach the cap
+	private static final float BOOSTED_HEAT_PER_TICK = 0.1F; // bellows-driven climb above the cap, toward MAX_HEAT
+	private static final float FALLBACK_PER_TICK = 0.1F; // above the cap, sinks back toward it (never below) if not bellowed
 	private static final float MAX_HEAT = 100.0F;
 
 	private int smeltTicks = 0;
@@ -32,7 +35,7 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
 	public void startSmelting() {
 		this.smeltTicks = 0;
-		this.heat = 50.0F;
+		this.heat = STARTING_HEAT;
 		if (this.level != null) {
 			this.lastBellowsGameTime = this.level.getGameTime();
 		}
@@ -53,23 +56,14 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
 		long ticksSinceBellows = level.getGameTime() - this.lastBellowsGameTime;
 		if (ticksSinceBellows < BELLOWS_BOOST_WINDOW) {
-			this.heat = Math.min(MAX_HEAT, this.heat + HEAT_CHANGE_PER_TICK);
-		} else if (ticksSinceBellows < BELLOWS_STAGNATE_WINDOW) {
-			// heat holds steady
-		} else {
-			this.heat = Math.max(0.0F, this.heat - HEAT_CHANGE_PER_TICK);
-		}
-
-		if (this.heat <= 0.0F) {
-			// Fire died from neglect - reset the whole smelting attempt.
-			level.setBlock(pos, state.setValue(TataraFurnaceFiredBlock.LIT, false)
-					.setValue(TataraFurnaceFiredBlock.CHARCOAL_LEVEL, 0)
-					.setValue(TataraFurnaceFiredBlock.SATETSU_LEVEL, 0)
-					.setValue(TataraFurnaceFiredBlock.SMELT_STAGE, 0), 3);
-			this.smeltTicks = 0;
-			this.heat = 0.0F;
-			this.setChanged();
-			return;
+			// Actively bellowed recently - can climb past the passive cap, up to MAX_HEAT.
+			this.heat = Math.min(MAX_HEAT, this.heat + BOOSTED_HEAT_PER_TICK);
+		} else if (this.heat > PASSIVE_CAP) {
+			// Not bellowed enough - settles back toward the passive cap, never below it.
+			this.heat = Math.max(PASSIVE_CAP, this.heat - FALLBACK_PER_TICK);
+		} else if (this.heat < PASSIVE_CAP) {
+			// The fire alone keeps burning up toward the passive cap.
+			this.heat = Math.min(PASSIVE_CAP, this.heat + PASSIVE_HEAT_PER_TICK);
 		}
 
 		this.smeltTicks++;
@@ -81,10 +75,9 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
 		if (level instanceof ServerLevel serverLevel) {
 			RandomSource random = level.getRandom();
-			// Smoke ramps up the further along smelting is, not just with instantaneous heat -
-			// this is also the visual cue for how much charcoal remains under the satetsu.
-			int smokeChanceOutOf100 = Math.min(95, 15 + smeltStage * 10 + (int) (this.heat / 5.0F));
-			int smokeCount = 1 + smeltStage / 2;
+			// Smoke steps up with each reddening stage - hotter and redder means more violent smoke.
+			int smokeChanceOutOf100 = Math.min(95, 30 + smeltStage * 20);
+			int smokeCount = 2 + smeltStage;
 			if (random.nextInt(100) < smokeChanceOutOf100) {
 				serverLevel.sendParticles(ParticleTypes.SMOKE,
 						pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,

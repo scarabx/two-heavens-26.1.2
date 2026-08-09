@@ -13,12 +13,21 @@
   "item.twoheavens.tatara_clay_block": "Tatara Clay Block",
   "item.twoheavens.tatara_furnace": "Unfired Tatara Furnace",
   "item.twoheavens.tatara_furnace_fired": "Fired Tatara Furnace",
-  "item.twoheavens.kera_block": "Kera",
+  "item.twoheavens.kera": "Kera",
+  "item.twoheavens.kera_block": "Molten Kera",
+  "item.twoheavens.hot_kera_block": "Hot Kera",
+  "item.twoheavens.tamahagane_ingot": "Tamahagane Ingot",
+  "item.twoheavens.flat_tamahagane_ingot": "Flat Tamahagane Ingot",
+  "item.twoheavens.hot_wakizashi_blade": "Hot Wakizashi Blade",
+  "item.twoheavens.hot_katana_blade": "Hot Katana Blade",
   "item.twoheavens.hammer": "Hammer",
   "item.twoheavens.bellows": "Bellows",
+  "item.twoheavens.tongs": "Tongs",
   "block.twoheavens.satetsu_sand": "Satetsu Sand",
   "block.twoheavens.tatara_clay_block": "Tatara Clay Block",
   "block.twoheavens.tatara_furnace": "Unfired Tatara Furnace",
   "block.twoheavens.tatara_furnace_fired": "Fired Tatara Furnace",
-  "block.twoheavens.kera_block": "Kera"
+  "block.twoheavens.kera": "Kera",
+  "block.twoheavens.kera_block": "Molten Kera",
+  "block.twoheavens.hot_kera_block": "Hot Kera"
 }

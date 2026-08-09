@@ -33,6 +33,9 @@ public class ModModelProvider extends FabricModelProvider {
 	public void generateItemModels(ItemModelGenerators itemModels) {
 		// Simple flat 2D item icons.
 		itemModels.generateFlatItem(ModItems.TATARA_CLAY, ModelTemplates.FLAT_ITEM);
+		itemModels.generateFlatItem(ModItems.HAMMER, ModelTemplates.FLAT_HANDHELD_ITEM);
+		itemModels.generateFlatItem(ModItems.BELLOWS, ModelTemplates.FLAT_HANDHELD_ITEM);
+		itemModels.generateFlatItem(ModItems.TONGS, ModelTemplates.FLAT_HANDHELD_ITEM);
 
 		// The katana/wakizashi/daisho/hilt/blade weapons use custom 3D
 		// Blockbench models and stay hand-authored.

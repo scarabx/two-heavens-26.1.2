@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.scarabx.twoheavens.block.ModBlockEntities;
+import net.scarabx.twoheavens.block.ModBlocks;
 import net.scarabx.twoheavens.block.custom.KeraBlock;
 
 public class KeraBlockEntity extends BlockEntity {
@@ -25,7 +26,14 @@ public class KeraBlockEntity extends BlockEntity {
 		}
 
 		this.coolTicks++;
-		int coolStage = Math.min(8, this.coolTicks * 8 / COOL_DURATION_TICKS);
+
+		if (this.coolTicks >= COOL_DURATION_TICKS) {
+			// Fully cooled - becomes the separate static Cold Kera block.
+			level.setBlock(pos, ModBlocks.KERA.defaultBlockState(), 3);
+			return;
+		}
+
+		int coolStage = Math.min(7, this.coolTicks * 8 / COOL_DURATION_TICKS);
 		if (state.getValue(KeraBlock.COOL_STAGE) != coolStage) {
 			level.setBlock(pos, state.setValue(KeraBlock.COOL_STAGE, coolStage), 3);
 		}

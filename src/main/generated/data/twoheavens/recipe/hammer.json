@@ -1,14 +1,14 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "equipment",
-  "ingredients": [
-    "minecraft:iron_ingot",
-    "minecraft:iron_ingot",
-    "minecraft:iron_ingot",
-    "minecraft:iron_ingot",
-    "minecraft:iron_ingot",
-    "minecraft:iron_ingot",
-    "minecraft:stick"
+  "key": {
+    "S": "#minecraft:stone_tool_materials",
+    "T": "minecraft:stick"
+  },
+  "pattern": [
+    "SSS",
+    "SSS",
+    " T "
   ],
   "result": {
     "id": "twoheavens:hammer"

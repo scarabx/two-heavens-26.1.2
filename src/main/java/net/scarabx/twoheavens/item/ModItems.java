@@ -33,6 +33,13 @@ public class ModItems {
 	public static final Item WAKIZASHI_BLADE = registerItem("wakizashi_blade", WakizashiBladeItem::new);
 	public static final Item TSUBA = registerItem("tsuba", TsubaItem::new);
 	public static final Item TATARA_CLAY = registerItem("tatara_clay", TataraClayItem::new);
+	public static final Item MOLTEN_KERA = registerItem("hot_kera_block", Item::new);
+	public static final Item TAMAHAGANE_INGOT = registerItem("tamahagane_ingot", Item::new);
+	public static final Item FLAT_TAMAHAGANE_INGOT = registerItem("flat_tamahagane_ingot", Item::new);
+	public static final Item HOT_WAKIZASHI_BLADE = registerItem("hot_wakizashi_blade", Item::new);
+	public static final Item HOT_KATANA_BLADE = registerItem("hot_katana_blade", Item::new);
+	public static final Item TONGS = registerItem("tongs", Item::new,
+			new Item.Properties().durability(128));
 	public static final Item HAMMER = registerItem("hammer", HammerItem::new,
 			new Item.Properties().durability(250));
 	public static final Item BELLOWS = registerItem("bellows", BellowsItem::new,

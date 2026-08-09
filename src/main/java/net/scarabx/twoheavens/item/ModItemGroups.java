@@ -38,9 +38,16 @@ public class ModItemGroups {
 							entries.accept(ModBlocks.TATARA_CLAY_BLOCK);
 							entries.accept(ModBlocks.TATARA_FURNACE);
 							entries.accept(ModBlocks.TATARA_FURNACE_FIRED);
+							entries.accept(ModBlocks.KERA);
 							entries.accept(ModBlocks.KERA_BLOCK);
+							entries.accept(ModItems.MOLTEN_KERA);
+							entries.accept(ModItems.TAMAHAGANE_INGOT);
+							entries.accept(ModItems.FLAT_TAMAHAGANE_INGOT);
+							entries.accept(ModItems.HOT_WAKIZASHI_BLADE);
+							entries.accept(ModItems.HOT_KATANA_BLADE);
 							entries.accept(ModItems.HAMMER);
 							entries.accept(ModItems.BELLOWS);
+							entries.accept(ModItems.TONGS);
 						})
 						.build());
 	}
