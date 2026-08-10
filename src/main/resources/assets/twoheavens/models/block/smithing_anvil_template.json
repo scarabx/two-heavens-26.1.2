@@ -1,0 +1,64 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "twoheavens:block/smithing_anvil",
+    "body": "twoheavens:block/smithing_anvil"
+  },
+  "elements": [
+    {
+      "from": [2, 0, 2],
+      "to": [14, 4, 14],
+      "faces": {
+        "down": { "texture": "#body", "cullface": "down" },
+        "up": { "texture": "#body" },
+        "north": { "texture": "#body", "cullface": "north" },
+        "south": { "texture": "#body", "cullface": "south" },
+        "west": { "texture": "#body", "cullface": "west" },
+        "east": { "texture": "#body", "cullface": "east" }
+      }
+    },
+    {
+      "from": [4, 4, 3],
+      "to": [12, 5, 13],
+      "faces": {
+        "down": { "texture": "#body" },
+        "up": { "texture": "#body" },
+        "north": { "texture": "#body" },
+        "south": { "texture": "#body" },
+        "west": { "texture": "#body" },
+        "east": { "texture": "#body" }
+      }
+    },
+    {
+      "from": [6, 5, 4],
+      "to": [10, 10, 12],
+      "faces": {
+        "down": { "texture": "#body" },
+        "up": { "texture": "#body" },
+        "north": { "texture": "#body" },
+        "south": { "texture": "#body" },
+        "west": { "texture": "#body" },
+        "east": { "texture": "#body" }
+      }
+    },
+    {
+      "from": [3, 10, 0],
+      "to": [13, 16, 16],
+      "faces": {
+        "down": { "texture": "#body" },
+        "up": { "texture": "#top" },
+        "north": { "texture": "#body" },
+        "south": { "texture": "#body" },
+        "west": { "texture": "#body" },
+        "east": { "texture": "#body" }
+      }
+    }
+  ],
+  "display": {
+    "fixed": {
+      "rotation": [0, 90, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.5, 0.5, 0.5]
+    }
+  }
+}

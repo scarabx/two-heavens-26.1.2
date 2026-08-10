@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "C": "twoheavens:tatara_clay"
+    "I": "minecraft:iron_ingot"
   },
   "pattern": [
-    "CC",
-    "CC"
+    "III",
+    " I ",
+    "III"
   ],
   "result": {
-    "id": "twoheavens:tatara_clay_block"
+    "id": "twoheavens:smithing_anvil"
   }
 }

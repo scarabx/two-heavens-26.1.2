@@ -1,15 +1,13 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block",
-    "twoheavens:tatara_clay_block"
+  "key": {
+    "C": "twoheavens:tatara_clay_block"
+  },
+  "pattern": [
+    "CCC",
+    "C C",
+    "CCC"
   ],
   "result": {
     "id": "twoheavens:tatara_furnace"

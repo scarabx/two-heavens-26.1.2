@@ -14,9 +14,11 @@ import net.minecraft.world.level.material.MapColor;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.scarabx.twoheavens.block.custom.KeraBlock;
 import net.scarabx.twoheavens.block.custom.SatetsuSandBlock;
+import net.scarabx.twoheavens.block.custom.SmithingAnvilBlock;
 import net.scarabx.twoheavens.block.custom.TataraClayBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
+import net.minecraft.world.level.material.PushReaction;
 
 import java.util.function.Function;
 
@@ -39,6 +41,10 @@ public class ModBlocks {
 
 	public static final Block KERA_BLOCK = registerBlockWithItem("kera_block", KeraBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
+
+	public static final Block SMITHING_ANVIL = registerBlockWithItem("smithing_anvil", SmithingAnvilBlock::new,
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops()
+					.strength(5.0F, 1200.0F).sound(SoundType.ANVIL).pushReaction(PushReaction.BLOCK));
 
 	private static Block registerBlockWithItem(String name, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties blockProperties) {
 		ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(TwoHeavens.MOD_ID, name));

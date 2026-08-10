@@ -1,0 +1,6 @@
+{
+  "parent": "twoheavens:block/smithing_anvil_template",
+  "textures": {
+    "top": "twoheavens:block/smithing_anvil_top"
+  }
+}

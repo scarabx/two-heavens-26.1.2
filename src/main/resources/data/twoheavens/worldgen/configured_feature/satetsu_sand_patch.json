@@ -11,7 +11,17 @@
         "target": {
           "predicate_type": "minecraft:random_block_match",
           "block": "minecraft:sand",
-          "probability": 0.22
+          "probability": 0.28
+        }
+      },
+      {
+        "state": {
+          "Name": "twoheavens:satetsu_sand"
+        },
+        "target": {
+          "predicate_type": "minecraft:random_block_match",
+          "block": "minecraft:gravel",
+          "probability": 0.28
         }
       }
     ]

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "twoheavens:block/smithing_anvil", "y": 270 },
+    "facing=north": { "model": "twoheavens:block/smithing_anvil", "y": 180 },
+    "facing=south": { "model": "twoheavens:block/smithing_anvil" },
+    "facing=west": { "model": "twoheavens:block/smithing_anvil", "y": 90 }
+  }
+}

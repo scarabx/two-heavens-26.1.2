@@ -4,10 +4,12 @@ import com.mojang.math.Transformation;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -17,12 +19,17 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.scarabx.twoheavens.block.custom.SmithingAnvilBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.item.ModItems;
 import net.scarabx.twoheavens.item.custom.HammerItem;
 import org.joml.Quaternionf;
@@ -34,14 +41,18 @@ public class AnvilForgingHandler {
 
 	private static final String HIT_TAG_PREFIX = "twoheavens_kera_hits_";
 	private static final String MARKER_TAG = "twoheavens_forge_display";
-	private static final String NEEDS_TONGS_TAG = "twoheavens_needs_tongs";
 
 	private static final int ORPHAN_CHECK_INTERVAL_TICKS = 20;
 
 	public static void register() {
 		UseBlockCallback.EVENT.register(AnvilForgingHandler::onUseBlock);
+		UseItemCallback.EVENT.register(AnvilForgingHandler::onUseItem);
 		PlayerBlockBreakEvents.AFTER.register(AnvilForgingHandler::onAnvilBroken);
 		ServerTickEvents.END_LEVEL_TICK.register(AnvilForgingHandler::onLevelTick);
+	}
+
+	private static boolean isForgeAnvil(Block block) {
+		return block instanceof AnvilBlock || block instanceof SmithingAnvilBlock;
 	}
 
 	private static boolean isBareHotBlade(ItemStack stack) {
@@ -68,37 +79,67 @@ public class AnvilForgingHandler {
 		return InteractionResult.SUCCESS;
 	}
 
-	private static void onLevelTick(ServerLevel level) {
-		// Fast, every-tick check: bare-handing a hot blade burns you instantly and yanks it away.
-		for (ServerPlayer player : level.players()) {
-			ItemStack main = player.getMainHandItem();
-			if (isBareHotBlade(main) && !player.getOffhandItem().is(ModItems.TONGS)) {
-				player.setRemainingFireTicks(Math.max(player.getRemainingFireTicks(), 1));
-				player.hurt(level.damageSources().onFire(), 1.0F);
-
-				ItemStack dropped = main.copy();
-				player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-				ItemEntity entity = player.drop(dropped, true, false);
-				if (entity != null) {
-					entity.setPickUpDelay(32767);
-					entity.addTag(NEEDS_TONGS_TAG);
-				}
-			}
+	private static InteractionResult onUseItem(Player player, Level level, InteractionHand hand) {
+		if (hand != InteractionHand.MAIN_HAND) {
+			return InteractionResult.PASS;
 		}
 
-		// Every tick: hand a tongs-tagged blade to any nearby player who's actually holding tongs.
-		for (ItemEntity itemEntity : level.getEntities(net.minecraft.world.level.entity.EntityTypeTest.forClass(ItemEntity.class),
-				new AABB(-30000000, level.getMinY(), -30000000, 30000000, level.getMaxY(), 30000000),
-				e -> e.entityTags().contains(NEEDS_TONGS_TAG))) {
-			for (ServerPlayer player : level.players()) {
-				if (player.getOffhandItem().is(ModItems.TONGS) && player.distanceToSqr(itemEntity) <= 4.0) {
-					ItemStack picked = itemEntity.getItem().copy();
-					if (!player.getInventory().add(picked)) {
-						continue;
-					}
-					itemEntity.discard();
-					break;
+		ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
+		if (!isBareHotBlade(main) || !player.getOffhandItem().is(ModItems.TONGS)) {
+			return InteractionResult.PASS;
+		}
+
+		// The vanilla block-use raycast ignores fluids by default (only bucket-style items
+		// clip against them), so a plain UseBlockCallback never fires when aiming at open
+		// water. Do our own fluid-inclusive clip here instead.
+		Vec3 eyePos = player.getEyePosition(1.0F);
+		Vec3 viewVec = player.getViewVector(1.0F);
+		double reach = 5.0;
+		Vec3 endPos = eyePos.add(viewVec.x * reach, viewVec.y * reach, viewVec.z * reach);
+		BlockHitResult hit = level.clip(new ClipContext(eyePos, endPos, ClipContext.Block.OUTLINE, ClipContext.Fluid.SOURCE_ONLY, player));
+
+		if (hit.getType() != HitResult.Type.BLOCK || !level.getFluidState(hit.getBlockPos()).is(FluidTags.WATER)) {
+			return InteractionResult.PASS;
+		}
+
+		if (level instanceof ServerLevel serverLevel) {
+			net.minecraft.world.item.Item quenched = main.is(ModItems.HOT_KATANA_BLADE) ? ModItems.KATANA_BLADE : ModItems.WAKIZASHI_BLADE;
+			player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(quenched));
+			player.getOffhandItem().hurtAndBreak(1, player, EquipmentSlot.OFFHAND);
+			serverLevel.playSound(null, hit.getBlockPos(), net.minecraft.sounds.SoundEvents.GENERIC_EXTINGUISH_FIRE,
+					net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F);
+		}
+		return InteractionResult.SUCCESS;
+	}
+
+	private static void onLevelTick(ServerLevel level) {
+		// Fast, every-tick check: carrying a hot blade anywhere in the inventory without
+		// tongs in the offhand burns you instantly and ejects every such blade.
+		for (ServerPlayer player : level.players()) {
+			if (player.getOffhandItem().is(ModItems.TONGS)) {
+				continue;
+			}
+
+			boolean burned = false;
+			Inventory inventory = player.getInventory();
+			for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+				ItemStack stack = inventory.getItem(slot);
+				if (!isBareHotBlade(stack)) {
+					continue;
 				}
+
+				// A normal drop, pickable by anyone - a player without tongs who scoops it
+				// back up just gets caught by this same loop again next tick and it bounces
+				// right back out, so it still can't be kept without tongs.
+				ItemStack dropped = stack.copy();
+				inventory.setItem(slot, ItemStack.EMPTY);
+				player.drop(dropped, true, false);
+				burned = true;
+			}
+
+			if (burned) {
+				player.setRemainingFireTicks(Math.max(player.getRemainingFireTicks(), 1));
+				player.hurt(level.damageSources().onFire(), 1.0F);
 			}
 		}
 
@@ -110,14 +151,14 @@ public class AnvilForgingHandler {
 		for (Display.ItemDisplay display : level.getEntities(net.minecraft.world.level.entity.EntityTypeTest.forClass(Display.ItemDisplay.class),
 				worldBounds, d -> d.entityTags().contains(MARKER_TAG))) {
 			BlockPos anvilPos = BlockPos.containing(display.getX(), display.getY() - 1.0, display.getZ());
-			if (!(level.getBlockState(anvilPos).getBlock() instanceof AnvilBlock)) {
+			if (!isForgeAnvil(level.getBlockState(anvilPos).getBlock())) {
 				dropOrDiscard(level, display);
 			}
 		}
 	}
 
 	private static void onAnvilBroken(Level level, Player player, BlockPos pos, BlockState state, BlockEntity blockEntity) {
-		if (!(state.getBlock() instanceof AnvilBlock) || !(level instanceof ServerLevel serverLevel)) {
+		if (!isForgeAnvil(state.getBlock()) || !(level instanceof ServerLevel serverLevel)) {
 			return;
 		}
 
@@ -141,7 +182,7 @@ public class AnvilForgingHandler {
 			return onQuenchWater(player, level, hand, pos);
 		}
 
-		if (!(level.getBlockState(pos).getBlock() instanceof AnvilBlock)) {
+		if (!isForgeAnvil(level.getBlockState(pos).getBlock())) {
 			return InteractionResult.PASS;
 		}
 

@@ -42,13 +42,18 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.unlockedBy("has_clay_ball", this.has(Items.CLAY_BALL))
 						.save(output);
 
-				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModBlocks.TATARA_CLAY_BLOCK)
-						.requires(ModItems.TATARA_CLAY, 4)
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, ModBlocks.TATARA_CLAY_BLOCK)
+						.pattern("CC")
+						.pattern("CC")
+						.define('C', ModItems.TATARA_CLAY)
 						.unlockedBy("has_tatara_clay", this.has(ModItems.TATARA_CLAY))
 						.save(output);
 
-				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModBlocks.TATARA_FURNACE)
-						.requires(ModBlocks.TATARA_CLAY_BLOCK, 8)
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, ModBlocks.TATARA_FURNACE)
+						.pattern("CCC")
+						.pattern("C C")
+						.pattern("CCC")
+						.define('C', ModBlocks.TATARA_CLAY_BLOCK)
 						.unlockedBy("has_tatara_clay_block", this.has(ModBlocks.TATARA_CLAY_BLOCK))
 						.save(output);
 
@@ -69,6 +74,14 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.define('I', Items.IRON_INGOT)
 						.define('L', Items.LEATHER)
 						.unlockedBy("has_leather", this.has(Items.LEATHER))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.TOOLS, ModItems.TONGS)
+						.pattern("I  ")
+						.pattern(" I ")
+						.pattern("  I")
+						.define('I', Items.IRON_INGOT)
+						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);
 
 				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.KATANA)
@@ -112,6 +125,14 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.pattern(" I ")
 						.pattern("I I")
 						.pattern(" I ")
+						.define('I', Items.IRON_INGOT)
+						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
+						.save(output);
+
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, ModBlocks.SMITHING_ANVIL)
+						.pattern("III")
+						.pattern(" I ")
+						.pattern("III")
 						.define('I', Items.IRON_INGOT)
 						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);

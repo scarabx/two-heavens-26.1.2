@@ -21,5 +21,6 @@ public class ModLootTableProvider extends FabricBlockLootSubProvider {
 		this.dropSelf(ModBlocks.TATARA_FURNACE_FIRED);
 		this.dropSelf(ModBlocks.KERA);
 		this.dropSelf(ModBlocks.KERA_BLOCK);
+		this.dropSelf(ModBlocks.SMITHING_ANVIL);
 	}
 }

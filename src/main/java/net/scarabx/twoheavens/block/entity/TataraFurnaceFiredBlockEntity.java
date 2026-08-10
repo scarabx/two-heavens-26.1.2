@@ -28,6 +28,7 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 	private int smeltTicks = 0;
 	private float heat = 0.0F;
 	private long lastBellowsGameTime = Long.MIN_VALUE / 2;
+	private boolean reachedCap = false;
 
 	public TataraFurnaceFiredBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.TATARA_FURNACE_FIRED, pos, state);
@@ -36,6 +37,7 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 	public void startSmelting() {
 		this.smeltTicks = 0;
 		this.heat = STARTING_HEAT;
+		this.reachedCap = false;
 		if (this.level != null) {
 			this.lastBellowsGameTime = this.level.getGameTime();
 		}
@@ -73,7 +75,13 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 			level.setBlock(pos, state.setValue(TataraFurnaceFiredBlock.SMELT_STAGE, smeltStage), 3);
 		}
 
-		if (level instanceof ServerLevel serverLevel) {
+		// Once it first reaches the passive cap, smoke shuts off for good - even active
+		// bellowing afterward doesn't bring it back, all the way through to completion.
+		if (this.heat >= PASSIVE_CAP) {
+			this.reachedCap = true;
+		}
+
+		if (level instanceof ServerLevel serverLevel && !this.reachedCap) {
 			RandomSource random = level.getRandom();
 			// Smoke steps up with each reddening stage - hotter and redder means more violent smoke.
 			int smokeChanceOutOf100 = Math.min(95, 30 + smeltStage * 20);
@@ -85,7 +93,10 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 			}
 		}
 
-		if (this.smeltTicks >= SMELT_DURATION_TICKS) {
+		// Timer alone isn't enough to finish - heat has to have actually been driven all
+		// the way up to MAX_HEAT, which only happens from sustained, repeated bellows use
+		// climbing past the passive cap. Fire alone, or a single bellows tap, isn't enough.
+		if (this.smeltTicks >= SMELT_DURATION_TICKS && this.heat >= MAX_HEAT) {
 			level.setBlock(pos, state.setValue(TataraFurnaceFiredBlock.KERA_FORMED, true).setValue(TataraFurnaceFiredBlock.SMELT_STAGE, 8), 3);
 			level.playSound(null, pos, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS, 1.5F, 0.6F);
 		}
@@ -97,6 +108,7 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 		output.putInt("SmeltTicks", this.smeltTicks);
 		output.putFloat("Heat", this.heat);
 		output.putLong("LastBellows", this.lastBellowsGameTime);
+		output.putBoolean("ReachedCap", this.reachedCap);
 	}
 
 	@Override
@@ -105,5 +117,6 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 		this.smeltTicks = input.getIntOr("SmeltTicks", 0);
 		this.heat = input.getFloatOr("Heat", 0.0F);
 		this.lastBellowsGameTime = input.getLongOr("LastBellows", Long.MIN_VALUE / 2);
+		this.reachedCap = input.getBooleanOr("ReachedCap", false);
 	}
 }
