@@ -1,4 +1,4 @@
-package net.scarabx.twoheavens.item.custom.japanese_weapons;
+package net.scarabx.twoheavens.item.custom;
 
 import net.minecraft.world.item.Item;
 

@@ -1,4 +1,4 @@
-package net.scarabx.twoheavens.item.custom.japanese_weapons;
+package net.scarabx.twoheavens.item.custom;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
