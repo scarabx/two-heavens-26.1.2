@@ -1,0 +1,33 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.daisho_saya",
+				"texture_width": 16,
+				"texture_height": 16,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 2,
+				"visible_bounds_offset": [0, 0.5, 0]
+			},
+			"bones": [
+				{
+					"name": "body",
+					"pivot": [8, 0.5, 14],
+					"cubes": [
+						{
+							"origin": [7, 0, 2],
+							"size": [2, 1, 24],
+							"uv": [0, 0]
+						},
+						{
+							"origin": [9, 0.4, 2],
+							"size": [2, 1, 20],
+							"uv": [0, 0]
+						}
+					]
+				}
+			]
+		}
+	]
+}

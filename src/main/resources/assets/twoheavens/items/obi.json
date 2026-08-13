@@ -1,0 +1,9 @@
+{
+	"model": {
+		"type": "minecraft:special",
+		"base": "twoheavens:item/obi",
+		"model": {
+			"type": "geckolib:geckolib"
+		}
+	}
+}

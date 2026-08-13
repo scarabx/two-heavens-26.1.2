@@ -35,6 +35,12 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 
 			@Override
 			public void buildRecipes() {
+				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.COMBAT, ModItems.DAISHO_SAYA_OBI)
+						.requires(ModItems.OBI)
+						.requires(ModItems.DAISHO_SAYA)
+						.unlockedBy("has_obi", this.has(ModItems.OBI))
+						.save(output);
+
 				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModItems.TATARA_CLAY)
 						.requires(Items.SUGAR_CANE)
 						.requires(Items.CHARCOAL)

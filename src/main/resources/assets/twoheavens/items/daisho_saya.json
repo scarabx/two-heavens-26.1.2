@@ -1,0 +1,9 @@
+{
+	"model": {
+		"type": "minecraft:special",
+		"base": "twoheavens:item/daisho_saya",
+		"model": {
+			"type": "geckolib:geckolib"
+		}
+	}
+}

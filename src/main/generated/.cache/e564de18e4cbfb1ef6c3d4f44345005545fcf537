@@ -1,4 +1,5 @@
 // 26.1.2	-999999999-01-01T00:00:00	Two Heavens/Two Heavens/Recipes
+3a10428439c561d48b275121f13bb690c1c7770d data/twoheavens/advancement/recipes/combat/daisho_saya_obi.json
 2f0dca3c7f11276345b21fa9be4e35572f984781 data/twoheavens/advancement/recipes/combat/katana.json
 7fe91f3f5474e1f0278c493ba4c7c64d222a54e6 data/twoheavens/advancement/recipes/combat/katana_tsuka.json
 919514373533f4882449257c805836826dadc1b5 data/twoheavens/advancement/recipes/combat/tsuba.json
@@ -12,6 +13,7 @@ d97ef3aa2a65d53d790e834285de85775fb88b35 data/twoheavens/advancement/recipes/mis
 63fe36613efe9da868d9daad8593b92176f95d21 data/twoheavens/advancement/recipes/tools/hammer.json
 60e07ac255b0763580f937285cb45a2ad37d1305 data/twoheavens/advancement/recipes/tools/tongs.json
 425b66cf1746a25037206ee1c80a785320f4ba6e data/twoheavens/recipe/bellows.json
+03ecbd36020108e5a460876f7d249d77311fc4ac data/twoheavens/recipe/daisho_saya_obi.json
 2cd75a617071879b85d0eebf7987a23e80824023 data/twoheavens/recipe/hammer.json
 a5ff3d56946a75af06a10e65b2d05a94347617c5 data/twoheavens/recipe/katana.json
 b0ddb400cd2225e684084d679ce6bb84237cedb6 data/twoheavens/recipe/katana_tsuka.json

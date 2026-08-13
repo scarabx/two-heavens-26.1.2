@@ -33,6 +33,9 @@ public class ModItemGroups {
 							entries.accept(ModItems.WAKIZASHI_TSUKA);
 							entries.accept(ModItems.WAKIZASHI_BLADE);
 							entries.accept(ModItems.TSUBA);
+							entries.accept(ModItems.OBI);
+							entries.accept(ModItems.DAISHO_SAYA);
+							entries.accept(ModItems.DAISHO_SAYA_OBI);
 							entries.accept(ModItems.TATARA_CLAY);
 							entries.accept(ModBlocks.SATETSU_SAND);
 							entries.accept(ModBlocks.TATARA_CLAY_BLOCK);

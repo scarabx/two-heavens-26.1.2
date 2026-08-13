@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_obi": {
+      "conditions": {
+        "items": [
+          {
+            "items": "twoheavens:obi"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "twoheavens:daisho_saya_obi"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_obi"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "twoheavens:daisho_saya_obi"
+    ]
+  }
+}
