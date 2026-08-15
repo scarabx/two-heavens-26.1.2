@@ -35,6 +35,7 @@
 		"java": ">=25",
 		"fabric-api": "*",
 		"trinkets": "*",
-		"geckolib": "*"
+		"geckolib": "*",
+		"player_animation_library": "*"
 	}
 }

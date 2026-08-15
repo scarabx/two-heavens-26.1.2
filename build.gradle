@@ -14,6 +14,7 @@ repositories {
 	// for more information about repositories.
 	maven { url 'https://maven.nucleoid.xyz/releases' }
 	maven { name = 'GeckoLib'; url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+	maven { name = 'Modrinth'; url 'https://api.modrinth.com/maven' }
 }
 
 loom {
@@ -47,6 +48,13 @@ dependencies {
 
 	implementation "eu.pb4:trinkets:${project.trinkets_version}"
 	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+	implementation "maven.modrinth:ha1mEyJS:${project.player_anim_version}"
+	// Nested jars the Player Animation Library normally bundles via Fabric's
+	// jar-in-jar mechanism - not auto-extracted under plain `implementation`
+	// (this project can't use `modImplementation`, see earlier commits), so
+	// vendored locally instead.
+	implementation files('libs/mochafloats-5.0.0.jar')
+	implementation files('libs/services-1.2.8.jar')
 }
 
 processResources {
