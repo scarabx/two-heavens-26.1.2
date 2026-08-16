@@ -31,6 +31,9 @@ public class TwoHeavensPlayerAnimation {
 	private static Map<String, Animation> testAnimations;
 	private static Map<String, Animation> drawSwordsAnimations;
 	private static Map<String, Animation> sheatheSwordsAnimations;
+	private static Map<String, Animation> attackSwingAnimations;
+	private static Map<String, Animation> katanaSliceAnimations;
+	private static Map<String, Animation> combatIdleAnimations;
 
 	// Animations are loaded once and cached (below), so an F3+T resource
 	// reload alone won't pick up edited animation JSON - this clears the
@@ -39,6 +42,9 @@ public class TwoHeavensPlayerAnimation {
 		testAnimations = null;
 		drawSwordsAnimations = null;
 		sheatheSwordsAnimations = null;
+		attackSwingAnimations = null;
+		katanaSliceAnimations = null;
+		combatIdleAnimations = null;
 	}
 
 	public static void register() {
@@ -85,6 +91,27 @@ public class TwoHeavensPlayerAnimation {
 			sheatheSwordsAnimations = loadAnimations("sheathe_swords.animation.json");
 		}
 		return sheatheSwordsAnimations.get("animation.twoheavens.sheathe_swords");
+	}
+
+	public static Animation getAttackSwingAnimation() {
+		if (attackSwingAnimations == null) {
+			attackSwingAnimations = loadAnimations("attack_swing.animation.json");
+		}
+		return attackSwingAnimations.get("animation.twoheavens.attack_swing");
+	}
+
+	public static Animation getKatanaSliceAnimation() {
+		if (katanaSliceAnimations == null) {
+			katanaSliceAnimations = loadAnimations("katana_slice.animation.json");
+		}
+		return katanaSliceAnimations.get("animation.twoheavens.katana_slice");
+	}
+
+	public static Animation getCombatIdleAnimation() {
+		if (combatIdleAnimations == null) {
+			combatIdleAnimations = loadAnimations("combat_idle.animation.json");
+		}
+		return combatIdleAnimations.get("animation.twoheavens.combat_idle");
 	}
 
 	private static Map<String, Animation> loadAnimations(String fileName) {

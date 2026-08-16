@@ -5,6 +5,8 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.combat.SwordComboHandler;
+import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import net.scarabx.twoheavens.event.AnvilForgingHandler;
 import net.scarabx.twoheavens.item.ModItemGroups;
 import net.scarabx.twoheavens.item.ModItems;
@@ -35,6 +37,8 @@ public class TwoHeavens implements ModInitializer {
 		ModItemGroups.registerItemGroups();
 		ModWorldGeneration.registerWorldGeneration();
 		AnvilForgingHandler.register();
+		SwordComboHandler.register();
+		SwordDrawServerHandler.register();
 	}
 
 	public static Identifier id(String path) {

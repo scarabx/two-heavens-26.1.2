@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.scarabx.twoheavens.TwoHeavens;
+import net.scarabx.twoheavens.client.animation.AttackSwingController;
 import net.scarabx.twoheavens.client.animation.PlayerHandAnimator;
 import net.scarabx.twoheavens.client.animation.SwordDrawController;
 import net.scarabx.twoheavens.client.animation.TwoHeavensPlayerAnimation;
@@ -68,6 +69,7 @@ public class TwoHeavensClient implements ClientModInitializer {
 				}
 			}
 			SwordDrawController.tick(client);
+			AttackSwingController.tick(client);
 		});
 	}
 }

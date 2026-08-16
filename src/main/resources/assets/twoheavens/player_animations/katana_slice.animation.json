@@ -1,0 +1,24 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.twoheavens.katana_slice": {
+			"loop": false,
+			"animation_length": 0.6,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": [-60, 20, 90],
+						"0.22": [-60, 20, 90],
+						"0.6": [-60, 20, 90]
+					}
+				},
+				"left_arm": {
+					"rotation": {
+						"0.0": [-75, 0, -90],
+						"0.6": [-75, 0, -90]
+					}
+				}
+			}
+		}
+	}
+}

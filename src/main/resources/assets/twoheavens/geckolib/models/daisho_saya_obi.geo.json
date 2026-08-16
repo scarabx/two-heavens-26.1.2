@@ -6,7 +6,7 @@
 				"identifier": "geometry.daisho_saya_obi",
 				"texture_width": 16,
 				"texture_height": 16,
-				"visible_bounds_width": 4,
+				"visible_bounds_width": 5,
 				"visible_bounds_height": 4,
 				"visible_bounds_offset": [0, 1, 0]
 			},
@@ -21,7 +21,7 @@
 					"pivot": [8, 7, 8],
 					"cubes": [
 						{
-							"origin": [-5, 8, -3.45],
+							"origin": [-5, 15, -3.5],
 							"size": [10, 4, 1.5],
 							"uv": {
 								"north": {"uv": [1, 1], "uv_size": [4, 4]},
@@ -33,7 +33,7 @@
 							}
 						},
 						{
-							"origin": [3, 9, 1.25],
+							"origin": [-5, 15, 2.05],
 							"size": [10, 4, 1.5],
 							"uv": {
 								"north": {"uv": [1, 1], "uv_size": [4, 4]},
@@ -45,8 +45,8 @@
 							}
 						},
 						{
-							"origin": [-6.5, 9, -1.75],
-							"size": [1.5, 4, 3],
+							"origin": [-6.5, 15, -3.5],
+							"size": [1.5, 4, 6.85],
 							"uv": {
 								"north": {"uv": [1, 1], "uv_size": [4, 4]},
 								"east": {"uv": [1, 1], "uv_size": [4, 4]},
@@ -57,8 +57,8 @@
 							}
 						},
 						{
-							"origin": [11.5, 9, -1.75],
-							"size": [1.5, 4, 3],
+							"origin": [5, 15, -3.5],
+							"size": [1.5, 4, 6.85],
 							"uv": {
 								"north": {"uv": [1, 1], "uv_size": [4, 4]},
 								"east": {"uv": [1, 1], "uv_size": [4, 4]},
@@ -77,8 +77,10 @@
 					"rotation": [12, 90, 0],
 					"cubes": [
 						{
-							"origin": [7, 0, 2],
+							"origin": [14, 24, 17],
 							"size": [2, 1, 24],
+							"pivot": [0, 0, 0],
+							"rotation": [87.37356, 12.19405, 79.75746],
 							"uv": {
 								"north": {"uv": [10, 1], "uv_size": [4, 4]},
 								"east": {"uv": [10, 1], "uv_size": [4, 4]},
@@ -89,8 +91,10 @@
 							}
 						},
 						{
-							"origin": [9, 0.4, 2],
+							"origin": [16, 24.4, 17],
 							"size": [2, 1, 20],
+							"pivot": [0, 0, 0],
+							"rotation": [87.37356, 12.19405, 79.75746],
 							"uv": {
 								"north": {"uv": [10, 1], "uv_size": [4, 4]},
 								"east": {"uv": [10, 1], "uv_size": [4, 4]},
@@ -101,6 +105,70 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "bipedRightLeg",
+					"pivot": [-2, 12, 0]
+				},
+				{
+					"name": "armorRightLeg",
+					"parent": "bipedRightLeg",
+					"pivot": [-2, 12, 0]
+				},
+				{
+					"name": "armorRightBoot",
+					"parent": "bipedRightLeg",
+					"pivot": [-2, 12, 0]
+				},
+				{
+					"name": "bipedLeftArm",
+					"pivot": [5, 22, 0]
+				},
+				{
+					"name": "armorLeftArm",
+					"parent": "bipedLeftArm",
+					"pivot": [5, 22, 0]
+				},
+				{
+					"name": "bipedLeftLeg",
+					"pivot": [2, 12, 0]
+				},
+				{
+					"name": "armorLeftLeg2",
+					"parent": "bipedLeftLeg",
+					"pivot": [2, 12, 0]
+				},
+				{
+					"name": "armorLeftBoot",
+					"parent": "bipedLeftLeg",
+					"pivot": [2, 12, 0]
+				},
+				{
+					"name": "bipedRightArm",
+					"pivot": [-5, 22, 0]
+				},
+				{
+					"name": "armorRightArm",
+					"parent": "bipedRightArm",
+					"pivot": [-5, 22, 0]
+				},
+				{
+					"name": "bipedBody",
+					"pivot": [0, 24, 0]
+				},
+				{
+					"name": "armorBody",
+					"parent": "bipedBody",
+					"pivot": [0, 24, 0]
+				},
+				{
+					"name": "bipedHead",
+					"pivot": [0, 24, 0]
+				},
+				{
+					"name": "armorHead",
+					"parent": "bipedHead",
+					"pivot": [0, 24, 0]
 				}
 			]
 		}

@@ -2,7 +2,9 @@ package net.scarabx.twoheavens.client.animation;
 
 import com.zigythebird.playeranimcore.animation.RawAnimation;
 import eu.pb4.trinkets.api.TrinketsApi;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
+import net.scarabx.twoheavens.combat.DrawSwordsPayload;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -15,11 +17,12 @@ import java.util.Deque;
 import java.util.function.Consumer;
 
 /**
- * Client-only toggle: draws/sheathes the katana and wakizashi from the
- * Daisho Saya Obi trinket, swapping the local player's main/off-hand items
- * in sync with the arm animation - katana first, wakizashi immediately
- * after. Cosmetic and client-side only - does not sync to other players or
- * the server, same scope as the rest of the player-animation foundation.
+ * Draws/sheathes the katana and wakizashi from the Daisho Saya Obi trinket.
+ * Locally predicts the item swap timed to the arm animation (katana first,
+ * wakizashi immediately after) for responsiveness, and separately sends
+ * DrawSwordsPayload so SwordDrawServerHandler performs the real,
+ * authoritative swap - without that, server-side systems like
+ * SwordComboHandler would never see the swords as actually drawn.
  */
 public class SwordDrawController {
 
@@ -34,6 +37,10 @@ public class SwordDrawController {
 
 	private static boolean drawn = false;
 
+	public static boolean isDrawn() {
+		return drawn;
+	}
+
 	private static final Deque<PendingSwap> pending = new ArrayDeque<>();
 
 	private static ItemStack storedMainHand = ItemStack.EMPTY;
@@ -46,6 +53,8 @@ public class SwordDrawController {
 		if (!TrinketsApi.getAttachment(player).isEquipped(ModItems.DAISHO_SAYA_OBI)) {
 			return;
 		}
+
+		ClientPlayNetworking.send(new DrawSwordsPayload());
 
 		if (!drawn) {
 			storedMainHand = player.getItemInHand(InteractionHand.MAIN_HAND).copy();
