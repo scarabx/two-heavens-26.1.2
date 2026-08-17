@@ -5,6 +5,7 @@ import eu.pb4.trinkets.api.TrinketsApi;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.scarabx.twoheavens.combat.DrawSwordsPayload;
+import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -18,11 +19,16 @@ import java.util.function.Consumer;
 
 /**
  * Draws/sheathes the katana and wakizashi from the Daisho Saya Obi trinket.
- * Locally predicts the item swap timed to the arm animation (katana first,
- * wakizashi immediately after) for responsiveness, and separately sends
- * DrawSwordsPayload so SwordDrawServerHandler performs the real,
- * authoritative swap - without that, server-side systems like
- * SwordComboHandler would never see the swords as actually drawn.
+ * "Drawn" is server-authoritative via DrawnSwordsAttachment on the player
+ * entity, synced to the client automatically by Fabric's attachment system.
+ * That sync always lags our own local action by a tick or more, even on an
+ * integrated server - predictedDrawn tracks our own local intent, and
+ * awaitingServerConfirmation suppresses the external-change detector until
+ * the server's value has actually caught up to what we predicted at least
+ * once. Without that suppression window, the detector reads the sync lag
+ * itself as an "external" flip-flop (false, because it hasn't arrived yet,
+ * then true once it does) and re-triggers the pose mid-animation reacting to
+ * its own echo.
  */
 public class SwordDrawController {
 
@@ -35,10 +41,11 @@ public class SwordDrawController {
 	private static final int SHEATHE_WAKIZASHI_DELAY_TICKS = 6;
 	private static final int SHEATHE_KATANA_DELAY_TICKS = 17;
 
-	private static boolean drawn = false;
+	private static boolean predictedDrawn = false;
+	private static boolean awaitingServerConfirmation = false;
 
-	public static boolean isDrawn() {
-		return drawn;
+	public static boolean isDrawn(Player player) {
+		return player.hasAttached(DrawnSwordsAttachment.TYPE);
 	}
 
 	private static final Deque<PendingSwap> pending = new ArrayDeque<>();
@@ -56,7 +63,7 @@ public class SwordDrawController {
 
 		ClientPlayNetworking.send(new DrawSwordsPayload());
 
-		if (!drawn) {
+		if (!predictedDrawn) {
 			storedMainHand = player.getItemInHand(InteractionHand.MAIN_HAND).copy();
 			storedOffHand = player.getItemInHand(InteractionHand.OFF_HAND).copy();
 
@@ -67,7 +74,8 @@ public class SwordDrawController {
 					p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.KATANA))));
 			pending.add(new PendingSwap(DRAW_WAKIZASHI_DELAY_TICKS - DRAW_KATANA_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ModItems.WAKIZASHI))));
-			drawn = true;
+			AttackSwingController.resetAttackPose();
+			predictedDrawn = true;
 		} else {
 			PlayerHandAnimator.trigger(player,
 					RawAnimation.begin().thenPlay(TwoHeavensPlayerAnimation.getSheatheSwordsAnimation()));
@@ -76,13 +84,38 @@ public class SwordDrawController {
 					p.setItemInHand(InteractionHand.OFF_HAND, storedOffHand)));
 			pending.add(new PendingSwap(SHEATHE_KATANA_DELAY_TICKS - SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.MAIN_HAND, storedMainHand)));
-			drawn = false;
+			predictedDrawn = false;
 		}
+		awaitingServerConfirmation = true;
 	}
 
 	public static void tick(Minecraft client) {
+		Player player = client.player;
+		if (player == null) {
+			return;
+		}
+
+		boolean serverDrawn = isDrawn(player);
+		if (awaitingServerConfirmation) {
+			// Ignore mismatches entirely while waiting - they're just our
+			// own action's sync still in flight, not a real external change.
+			if (serverDrawn == predictedDrawn) {
+				awaitingServerConfirmation = false;
+			}
+		} else if (serverDrawn != predictedDrawn) {
+			// A genuine external change (join, respawn, death forcing
+			// sheathe, or correcting a real desync) - not something we
+			// initiated locally.
+			if (serverDrawn) {
+				PlayerHandAnimator.trigger(player,
+						RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getCombatIdleAnimation()));
+				AttackSwingController.resetAttackPose();
+			}
+			predictedDrawn = serverDrawn;
+		}
+
 		PendingSwap next = pending.peek();
-		if (next == null || client.player == null) {
+		if (next == null) {
 			return;
 		}
 		if (next.ticksRemaining-- > 0) {
@@ -90,12 +123,11 @@ public class SwordDrawController {
 		}
 		pending.poll();
 
-		Player player = client.player;
 		next.action.accept(player);
 		player.level().playSound(player, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.ARMOR_EQUIP_CHAIN, SoundSource.PLAYERS, 0.7F, 1.6F);
 
-		if (pending.isEmpty() && !drawn) {
+		if (pending.isEmpty() && !predictedDrawn) {
 			storedMainHand = ItemStack.EMPTY;
 			storedOffHand = ItemStack.EMPTY;
 		}

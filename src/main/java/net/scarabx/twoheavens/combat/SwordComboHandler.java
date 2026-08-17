@@ -42,9 +42,10 @@ public class SwordComboHandler {
 	private static final double STAB_REACH_DISTANCE = 4.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
-	private static final float FINISHER_DAMAGE = 10.0F;
-	private static final int STUN_DURATION_TICKS = 30;
-	private static final int COMBO_WINDOW_TICKS = 40;
+	private static final int STUN_DURATION_TICKS = 100;
+	// Covers the whole stun window so the finisher stays usable for as long
+	// as the target is actually stunned, not a shorter arbitrary cutoff.
+	private static final int COMBO_WINDOW_TICKS = STUN_DURATION_TICKS;
 
 	private static final Map<UUID, ComboState> activeCombos = new HashMap<>();
 	private static final Map<UUID, PendingStab> pendingStabs = new HashMap<>();
@@ -126,7 +127,9 @@ public class SwordComboHandler {
 		activeCombos.remove(player.getUUID());
 		target.removeEffect(MobEffects.SLOWNESS);
 		target.removeEffect(MobEffects.WEAKNESS);
-		target.hurt(level.damageSources().playerAttack(player), FINISHER_DAMAGE);
+		// Instakill - the finisher always ends the target regardless of
+		// remaining health/armor/resistance.
+		target.hurt(level.damageSources().playerAttack(player), Float.MAX_VALUE);
 		playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 
 		return InteractionResult.FAIL;

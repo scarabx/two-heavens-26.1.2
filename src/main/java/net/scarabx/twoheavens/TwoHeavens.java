@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.SwordComboHandler;
 import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import net.scarabx.twoheavens.event.AnvilForgingHandler;
@@ -38,6 +39,13 @@ public class TwoHeavens implements ModInitializer {
 		ModWorldGeneration.registerWorldGeneration();
 		AnvilForgingHandler.register();
 		SwordComboHandler.register();
+		// Forces DrawnSwordsAttachment's class to load (and its
+		// AttachmentType to actually register) right now during mod init,
+		// rather than lazily whenever something first references it mid-game
+		// - attachment types need to exist before the world loads to
+		// persist/sync correctly, same as items/blocks needing registration
+		// up front rather than on first use.
+		DrawnSwordsAttachment.touch();
 		SwordDrawServerHandler.register();
 	}
 

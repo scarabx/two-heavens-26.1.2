@@ -8,18 +8,33 @@ import net.minecraft.world.entity.player.Player;
  * Client-only combo visuals: while the katana/wakizashi are drawn
  * (SwordDrawController), any left-click swing plays a wakizashi lunge/stab
  * - no entity needs to be in range, so the move can be tested/tuned freely.
- * If a right-click follows within COMBO_WINDOW_TICKS, it plays a katana
- * slice as the follow-up, same deal. The actual functional stun/damage
+ * If a right-click follows within the combo window (only opening once the
+ * stab has actually finished playing), it plays a katana slice as the
+ * follow-up, same deal. Both moves return to combat_idle once they finish
+ * instead of holding their own end pose. The actual functional stun/damage
  * (SwordComboHandler, server-side) still only ever triggers on a real hit
  * - that's a separate system and unaffected by this.
  */
 public class AttackSwingController {
 
-	private static final int COMBO_WINDOW_TICKS = 20;
+	// Matches attack_swing.animation.json's length (1.4s) - the finisher
+	// can't start until the stab has actually finished playing, not
+	// mid-swing.
+	private static final int STAB_ANIMATION_TICKS = 28;
+	private static final int COMBO_WINDOW_TICKS = 60;
 
 	private static boolean lastSwinging = false;
 	private static boolean lastUseDown = false;
+	private static int comboReadyTick = -1;
 	private static int comboExpireTick = -1;
+
+	// Called whenever combat_idle becomes authoritative again (fresh draw,
+	// or SwordDrawController re-applying the pose after detecting the synced
+	// drawn attachment coming on).
+	public static void resetAttackPose() {
+		comboReadyTick = -1;
+		comboExpireTick = -1;
+	}
 
 	public static void tick(Minecraft client) {
 		Player player = client.player;
@@ -27,29 +42,34 @@ public class AttackSwingController {
 			return;
 		}
 
-		boolean drawn = SwordDrawController.isDrawn();
+		boolean drawn = SwordDrawController.isDrawn(player);
 
 		boolean swinging = player.swinging;
 		boolean newSwing = swinging && !lastSwinging;
 		lastSwinging = swinging;
 
 		if (newSwing && drawn) {
-			// Holds on the stab's own final frame (its extended/struck pose)
-			// instead of chaining back to combat_idle - tuning this move to
-			// stop and stay at its end position, not snap back to rest.
-			PlayerHandAnimator.trigger(player,
-					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getAttackSwingAnimation()));
-			comboExpireTick = player.tickCount + COMBO_WINDOW_TICKS;
+			// Plays the stab, then eases back to combat_idle via its own
+			// dedicated return animation instead of snapping straight into
+			// combat_idle's near-instant single frame.
+			PlayerHandAnimator.trigger(player, RawAnimation.begin()
+					.thenPlay(TwoHeavensPlayerAnimation.getAttackSwingAnimation())
+					.thenPlayAndHold(TwoHeavensPlayerAnimation.getAttackSwingReturnAnimation()));
+			comboReadyTick = player.tickCount + STAB_ANIMATION_TICKS;
+			comboExpireTick = comboReadyTick + COMBO_WINDOW_TICKS;
 		}
 
 		boolean useDown = client.options.keyUse.isDown();
 		boolean useJustPressed = useDown && !lastUseDown;
 		lastUseDown = useDown;
 
-		if (useJustPressed && drawn && player.tickCount <= comboExpireTick) {
+		if (useJustPressed && drawn && player.tickCount >= comboReadyTick && player.tickCount <= comboExpireTick) {
+			// Plays the finisher, then eases back to combat_idle via its own
+			// dedicated (exact-reverse) return animation.
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceAnimation())
-					.thenPlayAndHold(TwoHeavensPlayerAnimation.getCombatIdleAnimation()));
+					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceReturnAnimation()));
+			comboReadyTick = -1;
 			comboExpireTick = -1;
 		}
 	}

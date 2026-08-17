@@ -32,7 +32,9 @@ public class TwoHeavensPlayerAnimation {
 	private static Map<String, Animation> drawSwordsAnimations;
 	private static Map<String, Animation> sheatheSwordsAnimations;
 	private static Map<String, Animation> attackSwingAnimations;
+	private static Map<String, Animation> attackSwingReturnAnimations;
 	private static Map<String, Animation> katanaSliceAnimations;
+	private static Map<String, Animation> katanaSliceReturnAnimations;
 	private static Map<String, Animation> combatIdleAnimations;
 
 	// Animations are loaded once and cached (below), so an F3+T resource
@@ -43,7 +45,9 @@ public class TwoHeavensPlayerAnimation {
 		drawSwordsAnimations = null;
 		sheatheSwordsAnimations = null;
 		attackSwingAnimations = null;
+		attackSwingReturnAnimations = null;
 		katanaSliceAnimations = null;
+		katanaSliceReturnAnimations = null;
 		combatIdleAnimations = null;
 	}
 
@@ -100,11 +104,25 @@ public class TwoHeavensPlayerAnimation {
 		return attackSwingAnimations.get("animation.twoheavens.attack_swing");
 	}
 
+	public static Animation getAttackSwingReturnAnimation() {
+		if (attackSwingReturnAnimations == null) {
+			attackSwingReturnAnimations = loadAnimations("attack_swing_return.animation.json");
+		}
+		return attackSwingReturnAnimations.get("animation.twoheavens.attack_swing_return");
+	}
+
 	public static Animation getKatanaSliceAnimation() {
 		if (katanaSliceAnimations == null) {
 			katanaSliceAnimations = loadAnimations("katana_slice.animation.json");
 		}
 		return katanaSliceAnimations.get("animation.twoheavens.katana_slice");
+	}
+
+	public static Animation getKatanaSliceReturnAnimation() {
+		if (katanaSliceReturnAnimations == null) {
+			katanaSliceReturnAnimations = loadAnimations("katana_slice_return.animation.json");
+		}
+		return katanaSliceReturnAnimations.get("animation.twoheavens.katana_slice_return");
 	}
 
 	public static Animation getCombatIdleAnimation() {
