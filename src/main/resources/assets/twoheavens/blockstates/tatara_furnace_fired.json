@@ -91,7 +91,8 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "0"
+        "smelt_stage": "0",
+        "redness_stage": "0"
       }
     },
     {
@@ -100,7 +101,8 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "1"
+        "smelt_stage": "1",
+        "redness_stage": "1"
       }
     },
     {
@@ -109,7 +111,8 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "2"
+        "smelt_stage": "2",
+        "redness_stage": "2"
       }
     },
     {
@@ -118,7 +121,8 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "3"
+        "smelt_stage": "3",
+        "redness_stage": "3"
       }
     },
     {
@@ -127,7 +131,18 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "4"
+        "smelt_stage": "4",
+        "redness_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage5_red4"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "5",
+        "redness_stage": "4"
       }
     },
     {
@@ -136,7 +151,28 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "5"
+        "smelt_stage": "5",
+        "redness_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage6_red4"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "6",
+        "redness_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage6_red5"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "6",
+        "redness_stage": "5"
       }
     },
     {
@@ -145,7 +181,38 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "6"
+        "smelt_stage": "6",
+        "redness_stage": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage7_red4"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "7",
+        "redness_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage7_red5"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "7",
+        "redness_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage7_red6"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "7",
+        "redness_stage": "6"
       }
     },
     {
@@ -154,7 +221,48 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "7"
+        "smelt_stage": "7",
+        "redness_stage": "7"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage8_red4"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "8",
+        "redness_stage": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage8_red5"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "8",
+        "redness_stage": "5"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage8_red6"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "8",
+        "redness_stage": "6"
+      }
+    },
+    {
+      "apply": {
+        "model": "twoheavens:block/tatara_furnace_smelt_stage8_red7"
+      },
+      "when": {
+        "lit": "true",
+        "smelt_stage": "8",
+        "redness_stage": "7"
       }
     },
     {
@@ -163,7 +271,8 @@
       },
       "when": {
         "lit": "true",
-        "smelt_stage": "8"
+        "smelt_stage": "8",
+        "redness_stage": "8"
       }
     },
     {

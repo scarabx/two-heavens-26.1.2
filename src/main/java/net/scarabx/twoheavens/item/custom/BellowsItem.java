@@ -28,20 +28,30 @@ public class BellowsItem extends Item {
 		if (!(level.getBlockEntity(pos) instanceof TataraFurnaceFiredBlockEntity fired)) {
 			return InteractionResult.PASS;
 		}
-		fired.onBellowsUsed();
 
-		if (!level.isClientSide()) {
-			level.playSound(null, pos, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.BLOCKS, 0.6F, 1.6F);
-			ItemStack stack = context.getItemInHand();
-			if (player != null) {
-				stack.hurtAndBreak(1, player, context.getHand().asEquipmentSlot());
-			}
+		if (level.isClientSide()) {
+			return InteractionResult.SUCCESS;
+		}
 
-			if (level instanceof ServerLevel serverLevel) {
-				serverLevel.sendParticles(ParticleTypes.GUST,
-						pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
-						6, 0.3, 0.2, 0.3, 0.05);
-			}
+		TataraFurnaceFiredBlockEntity.BellowsResult result = fired.onBellowsUsed();
+		if (result != TataraFurnaceFiredBlockEntity.BellowsResult.ACKNOWLEDGED) {
+			// Too early (still in the passive-only first half) or mashed
+			// again within the anti-spam debounce - no durability spent, no
+			// sound, so spamming the button doesn't waste the bellows or
+			// blast the gust sound every tick.
+			return InteractionResult.SUCCESS;
+		}
+
+		level.playSound(null, pos, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.BLOCKS, 0.6F, 1.6F);
+		ItemStack stack = context.getItemInHand();
+		if (player != null) {
+			stack.hurtAndBreak(1, player, context.getHand().asEquipmentSlot());
+		}
+
+		if (level instanceof ServerLevel serverLevel) {
+			serverLevel.sendParticles(ParticleTypes.GUST,
+					pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+					6, 0.3, 0.2, 0.3, 0.05);
 		}
 
 		return InteractionResult.SUCCESS;

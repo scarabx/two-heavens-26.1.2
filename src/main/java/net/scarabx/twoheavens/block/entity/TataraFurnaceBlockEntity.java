@@ -3,6 +3,8 @@ package net.scarabx.twoheavens.block.entity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -17,7 +19,18 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 
 	public static final int CURING_DURATION_TICKS = 1200; // 1 minute
 
+	// No interaction here (no bellows equivalent for curing) - heat still
+	// climbs in the same discrete-step style as the fired furnace's passive
+	// phase, one step every 7.5s, purely off the clock. The burn/color
+	// stage is derived from heat rather than directly from curingTicks, for
+	// the same reason - it's what's actually "cooking" the furnace, time is
+	// just what drives it up.
+	private static final float MAX_HEAT = 100.0F;
+	private static final int STEP_TICKS = CURING_DURATION_TICKS / 8; // 150 ticks = 7.5s
+	private static final float STEP_HEAT = MAX_HEAT / 8.0F;
+
 	private int curingTicks = 0;
+	private float heat = 0.0F;
 
 	public TataraFurnaceBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.TATARA_FURNACE, pos, state);
@@ -25,6 +38,7 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 
 	public void startCuring() {
 		this.curingTicks = 0;
+		this.heat = 0.0F;
 		this.setChanged();
 	}
 
@@ -35,7 +49,10 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 
 		this.curingTicks++;
 
-		int burnStage = Math.min(8, this.curingTicks * 8 / CURING_DURATION_TICKS);
+		int completedSteps = Math.min(8, this.curingTicks / STEP_TICKS);
+		this.heat = Math.min(MAX_HEAT, STEP_HEAT * completedSteps);
+
+		int burnStage = Math.max(0, Math.min(8, (int) (this.heat / STEP_HEAT)));
 		int colorStage = burnStage;
 		if (state.getValue(TataraFurnaceBlock.BURN_STAGE) != burnStage || state.getValue(TataraFurnaceBlock.COLOR_STAGE) != colorStage) {
 			level.setBlock(pos, state.setValue(TataraFurnaceBlock.BURN_STAGE, burnStage).setValue(TataraFurnaceBlock.COLOR_STAGE, colorStage), 3);
@@ -51,6 +68,14 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 						pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
 						smokeCount, 0.2, 0.1, 0.2, 0.01);
 			}
+
+			// Quiet, intermittent crackle for the whole curing process - kept
+			// low/infrequent on purpose so it never competes with an actual
+			// event sound landing on top of it.
+			if (random.nextInt(40) == 0) {
+				level.playSound(null, pos, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS,
+						0.5F, 0.8F + random.nextFloat() * 0.4F);
+			}
 		}
 
 		if (this.curingTicks >= CURING_DURATION_TICKS) {
@@ -62,11 +87,13 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 	protected void saveAdditional(ValueOutput output) {
 		super.saveAdditional(output);
 		output.putInt("CuringTicks", this.curingTicks);
+		output.putFloat("Heat", this.heat);
 	}
 
 	@Override
 	protected void loadAdditional(ValueInput input) {
 		super.loadAdditional(input);
 		this.curingTicks = input.getIntOr("CuringTicks", 0);
+		this.heat = input.getFloatOr("Heat", 0.0F);
 	}
 }

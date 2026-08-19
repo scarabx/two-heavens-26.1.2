@@ -1,8 +1,8 @@
 {
   "textures": {
-    "particle": "twoheavens:block/tatara_satetsu_glow8",
-    "charcoal": "twoheavens:block/tatara_furnace_charcoal_glow8",
-    "satetsu": "twoheavens:block/tatara_satetsu_glow8"
+    "particle": "twoheavens:block/tatara_satetsu_glow7",
+    "charcoal": "twoheavens:block/tatara_furnace_charcoal_glow7",
+    "satetsu": "twoheavens:block/tatara_satetsu_glow7"
   },
   "elements": [
     {

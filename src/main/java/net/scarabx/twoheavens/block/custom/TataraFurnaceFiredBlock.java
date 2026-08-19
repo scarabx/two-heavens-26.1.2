@@ -32,7 +32,13 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 	public static final BooleanProperty LIT = BooleanProperty.create("lit");
 	public static final IntegerProperty CHARCOAL_LEVEL = IntegerProperty.create("charcoal_level", 0, 4);
 	public static final IntegerProperty SATETSU_LEVEL = IntegerProperty.create("satetsu_level", 0, 4);
+	// SMELT_STAGE is the layer HEIGHT - a high-water mark that only ever
+	// climbs, never regrows down. REDNESS_STAGE is the current heat-driven
+	// glow/color, which can dip back down without the layer height
+	// following it - matches the geometry never un-melting while the color
+	// still fades if it cools off.
 	public static final IntegerProperty SMELT_STAGE = IntegerProperty.create("smelt_stage", 0, 8);
+	public static final IntegerProperty REDNESS_STAGE = IntegerProperty.create("redness_stage", 0, 8);
 	public static final BooleanProperty KERA_FORMED = BooleanProperty.create("kera_formed");
 	public static final IntegerProperty CRACK_STAGE = IntegerProperty.create("crack_stage", 0, 4);
 
@@ -43,13 +49,14 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 				.setValue(CHARCOAL_LEVEL, 0)
 				.setValue(SATETSU_LEVEL, 0)
 				.setValue(SMELT_STAGE, 0)
+				.setValue(REDNESS_STAGE, 0)
 				.setValue(KERA_FORMED, false)
 				.setValue(CRACK_STAGE, 0));
 	}
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(LIT, CHARCOAL_LEVEL, SATETSU_LEVEL, SMELT_STAGE, KERA_FORMED, CRACK_STAGE);
+		builder.add(LIT, CHARCOAL_LEVEL, SATETSU_LEVEL, SMELT_STAGE, REDNESS_STAGE, KERA_FORMED, CRACK_STAGE);
 	}
 
 	@Override
@@ -102,7 +109,7 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 			}
 
 			if (!level.isClientSide()) {
-				level.setBlock(pos, state.setValue(LIT, true).setValue(SMELT_STAGE, 0), 3);
+				level.setBlock(pos, state.setValue(LIT, true).setValue(SMELT_STAGE, 0).setValue(REDNESS_STAGE, 0), 3);
 				level.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
 				stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
 
