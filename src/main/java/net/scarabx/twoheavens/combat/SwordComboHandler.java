@@ -14,6 +14,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -49,7 +51,12 @@ public class SwordComboHandler {
 	private static final double FINISHER_REACH_DISTANCE = 4.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
-	private static final int STUN_DURATION_TICKS = 100;
+	private static final float SOLO_FINISHER_DAMAGE_CAP = 20.0F;
+	// The two real boss encounters (phases/mechanics, not just high HP) are
+	// exempt from the combo finisher's instakill - everything else, Iron
+	// Golem/Ravager tankiness included, still dies in one hit.
+	private static final float BOSS_FINISHER_DAMAGE = 50.0F;
+	private static final int STUN_DURATION_TICKS = 50;
 	// Covers the whole stun window so the finisher stays usable for as long
 	// as the target is actually stunned, not a shorter arbitrary cutoff.
 	private static final int COMBO_WINDOW_TICKS = STUN_DURATION_TICKS;
@@ -147,14 +154,20 @@ public class SwordComboHandler {
 				target.removeEffect(MobEffects.SLOWNESS);
 				target.removeEffect(MobEffects.WEAKNESS);
 				// Paired with a landed wakizashi stab - instakill regardless
-				// of remaining health/armor/resistance.
-				target.hurt(level.damageSources().playerAttack(player), Float.MAX_VALUE);
+				// of remaining health/armor/resistance, except the Wither
+				// and Ender Dragon, whose actual boss fights shouldn't be
+				// skippable with one combo.
+				boolean isRealBoss = target instanceof WitherBoss || target instanceof EnderDragon;
+				target.hurt(level.damageSources().playerAttack(player),
+						isRealBoss ? BOSS_FINISHER_DAMAGE : Float.MAX_VALUE);
 			} else {
 				// Katana on its own, no wakizashi stab in progress - same
 				// slice, same animation, but not an instakill: half the
-				// target's max health per hit so it always takes exactly
-				// two solo slices regardless of what the target actually is.
-				target.hurt(level.damageSources().playerAttack(player), target.getMaxHealth() * 0.5F);
+				// target's max health per hit, capped at 20 (an Enderman's
+				// own half-health value, 40 max HP / 2) so it doesn't keep
+				// scaling up forever against tankier mobs.
+				target.hurt(level.damageSources().playerAttack(player),
+						Math.min(target.getMaxHealth() * 0.5F, SOLO_FINISHER_DAMAGE_CAP));
 			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 		}

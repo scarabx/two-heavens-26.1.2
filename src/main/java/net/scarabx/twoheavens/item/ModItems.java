@@ -6,7 +6,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ToolMaterial;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.scarabx.twoheavens.item.custom.BellowsItem;
 import net.scarabx.twoheavens.item.custom.DaishoSayaItem;
@@ -25,10 +24,14 @@ import net.scarabx.twoheavens.item.custom.WakizashiTsukaItem;
 
 public class ModItems {
 
+	// Plain items, no ToolMaterial/sword() tie-in - no ATTACK_DAMAGE/ATTACK_SPEED
+	// attributes and no Tool (mining) component, so hitting with these never
+	// scales down with swing timing. Damage is applied entirely manually in
+	// KatanaItem/WakizashiItem#hurtEnemy instead.
 	public static final Item KATANA = registerItem("katana", KatanaItem::new,
-			new Item.Properties().sword(ToolMaterial.IRON, 9.0F, -2.4F));
+			new Item.Properties().stacksTo(1));
 	public static final Item WAKIZASHI = registerItem("wakizashi", WakizashiItem::new,
-			new Item.Properties().sword(ToolMaterial.IRON, 4.0F, -2.4F));
+			new Item.Properties().stacksTo(1));
 	public static final Item DAISHO = registerItem("daisho", DaishoItem::new);
 	public static final Item KATANA_TSUKA = registerItem("katana_tsuka", KatanaTsukaItem::new);
 	public static final Item KATANA_BLADE = registerItem("katana_blade", KatanaBladeItem::new);
