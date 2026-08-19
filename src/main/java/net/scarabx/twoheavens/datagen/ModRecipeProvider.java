@@ -56,7 +56,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.unlockedBy("has_wakizashi", this.has(ModItems.WAKIZASHI))
 						.save(output);
 
-				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModItems.TATARA_CLAY)
+				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModItems.TATARA_CLAY, 4)
 						.requires(Items.SUGAR_CANE)
 						.requires(Items.CHARCOAL)
 						.requires(Items.CLAY_BALL)
@@ -98,9 +98,8 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.save(output);
 
 				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.TOOLS, ModItems.TONGS)
-						.pattern("I  ")
-						.pattern(" I ")
-						.pattern("  I")
+						.pattern("I")
+						.pattern("I")
 						.define('I', Items.IRON_INGOT)
 						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);
@@ -143,9 +142,9 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.save(output);
 
 				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.TSUBA)
-						.pattern(" I ")
-						.pattern("I I")
-						.pattern(" I ")
+						.pattern("   ")
+						.pattern("III")
+						.pattern("   ")
 						.define('I', Items.IRON_INGOT)
 						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);
@@ -153,8 +152,9 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, ModBlocks.SMITHING_ANVIL)
 						.pattern("III")
 						.pattern(" I ")
-						.pattern("III")
+						.pattern("CCC")
 						.define('I', Items.IRON_INGOT)
+						.define('C', Items.COBBLESTONE)
 						.unlockedBy("has_iron_ingot", this.has(Items.IRON_INGOT))
 						.save(output);
 			}

@@ -5,9 +5,9 @@
     "I": "minecraft:iron_ingot"
   },
   "pattern": [
-    " I ",
-    "I I",
-    " I "
+    "   ",
+    "III",
+    "   "
   ],
   "result": {
     "id": "twoheavens:tsuba"
