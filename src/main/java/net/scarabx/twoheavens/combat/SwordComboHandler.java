@@ -39,9 +39,9 @@ import java.util.UUID;
  */
 public class SwordComboHandler {
 
-	// Matches attack_swing.animation.json's total length (1.4s) - the point
+	// Matches attack_swing.animation.json's total length (1.1s) - the point
 	// where the blade actually reaches full extension, not when you click.
-	private static final int STAB_REACH_DELAY_TICKS = 28;
+	private static final int STAB_REACH_DELAY_TICKS = 22;
 	private static final double STAB_REACH_DISTANCE = 4.0;
 
 	// Matches katana_slice.animation.json's total length (0.864s = 17 ticks)
