@@ -63,9 +63,12 @@ public class AttackSwingController {
 		boolean useJustPressed = useDown && !lastUseDown;
 		lastUseDown = useDown;
 
-		if (useJustPressed && drawn && player.tickCount >= comboReadyTick && player.tickCount <= comboExpireTick) {
-			// Plays the finisher, then eases back to combat_idle via its own
-			// dedicated (exact-reverse) return animation.
+		// Same slice, same animation whether it's landing as the paired
+		// finisher after a wakizashi stab or on its own with no stab in
+		// progress - the katana works standalone too (the functional
+		// server-side difference between the two is handled entirely by
+		// SwordComboHandler, not here).
+		if (useJustPressed && drawn) {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceReturnAnimation()));

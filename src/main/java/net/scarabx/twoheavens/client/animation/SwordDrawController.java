@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.scarabx.twoheavens.combat.DrawSwordsPayload;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
+import net.scarabx.twoheavens.combat.FakeDrawnSword;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -71,9 +72,9 @@ public class SwordDrawController {
 					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getDrawSwordsAnimation()));
 
 			pending.add(new PendingSwap(DRAW_KATANA_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.KATANA))));
+					p.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana())));
 			pending.add(new PendingSwap(DRAW_WAKIZASHI_DELAY_TICKS - DRAW_KATANA_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ModItems.WAKIZASHI))));
+					p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
 			AttackSwingController.resetAttackPose();
 			predictedDrawn = true;
 		} else {

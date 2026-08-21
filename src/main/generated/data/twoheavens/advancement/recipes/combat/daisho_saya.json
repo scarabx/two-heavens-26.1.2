@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_katana": {
+      "conditions": {
+        "items": [
+          {
+            "items": "twoheavens:katana"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "twoheavens:daisho_saya"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_wakizashi": {
+      "conditions": {
+        "items": [
+          {
+            "items": "twoheavens:wakizashi"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_katana",
+      "has_wakizashi"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "twoheavens:daisho_saya"
+    ]
+  }
+}

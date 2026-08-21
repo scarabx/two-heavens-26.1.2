@@ -3,7 +3,8 @@
 	"package": "net.scarabx.twoheavens.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"InventoryClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

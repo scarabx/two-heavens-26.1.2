@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -43,8 +44,7 @@ public class SwordDrawServerHandler {
 		ServerPlayerEvents.ALLOW_DEATH.register((player, source, amount) -> {
 			DrawnSwordsAttachment.StoredItems stored = player.removeAttached(DrawnSwordsAttachment.TYPE);
 			if (stored != null) {
-				player.setItemInHand(InteractionHand.MAIN_HAND, stored.mainHand());
-				player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+				restoreStoredItems(player, stored);
 			}
 			return true;
 		});
@@ -60,8 +60,8 @@ public class SwordDrawServerHandler {
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
 			if (newPlayer.hasAttached(DrawnSwordsAttachment.TYPE)
 					&& TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_SAYA_OBI)) {
-				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.KATANA));
-				newPlayer.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ModItems.WAKIZASHI));
+				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana());
+				newPlayer.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi());
 			}
 		});
 	}
@@ -78,13 +78,40 @@ public class SwordDrawServerHandler {
 				return;
 			}
 			player.setAttached(DrawnSwordsAttachment.TYPE, new DrawnSwordsAttachment.StoredItems(
+					player.getInventory().getSelectedSlot(),
 					player.getMainHandItem().copy(), player.getOffhandItem().copy()));
-			player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.KATANA));
-			player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ModItems.WAKIZASHI));
+			player.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana());
+			player.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi());
 		} else {
 			player.removeAttached(DrawnSwordsAttachment.TYPE);
-			player.setItemInHand(InteractionHand.MAIN_HAND, current.mainHand());
-			player.setItemInHand(InteractionHand.OFF_HAND, current.offHand());
+			restoreStoredItems(player, current);
 		}
+	}
+
+	// Sheathe must always fully clear the fake katana/wakizashi no matter
+	// where in the inventory the player moved them to - relying on them
+	// still being in main/off hand left stragglers behind (never removed,
+	// and the stored real items would overwrite whatever was actually in
+	// main/off hand at the time instead of restoring cleanly). Slot
+	// switching while drawn is separately blocked (client + server mixins),
+	// so this is mostly a defensive sweep now, but still covers drag/drop
+	// within the inventory screen itself.
+	//
+	// The stored real main-hand item is written back to the EXACT hotbar
+	// slot it was pulled from at draw time (StoredItems.mainHandSlot), not
+	// "whatever slot is currently selected" - if those two ever drifted
+	// apart, the real item would land in the wrong slot while a stray real
+	// katana/wakizashi from a previous draw cycle sat untouched in the old
+	// slot, making the next draw look like it conjured a third sword.
+	private static void restoreStoredItems(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
+		Inventory inventory = player.getInventory();
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			if (FakeDrawnSword.isFake(inventory.getItem(i))) {
+				inventory.setItem(i, ItemStack.EMPTY);
+			}
+		}
+		inventory.setSelectedSlot(stored.mainHandSlot());
+		inventory.setItem(stored.mainHandSlot(), stored.mainHand());
+		player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
 	}
 }

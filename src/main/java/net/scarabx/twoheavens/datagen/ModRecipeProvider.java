@@ -41,6 +41,21 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.unlockedBy("has_obi", this.has(ModItems.OBI))
 						.save(output);
 
+				ShapedRecipeBuilder.shaped(this.items, RecipeCategory.COMBAT, ModItems.OBI)
+						.pattern("   ")
+						.pattern("WWW")
+						.pattern("   ")
+						.define('W', ItemTags.WOOL)
+						.unlockedBy("has_wool", this.has(ItemTags.WOOL))
+						.save(output);
+
+				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.COMBAT, ModItems.DAISHO_SAYA)
+						.requires(ModItems.KATANA)
+						.requires(ModItems.WAKIZASHI)
+						.unlockedBy("has_katana", this.has(ModItems.KATANA))
+						.unlockedBy("has_wakizashi", this.has(ModItems.WAKIZASHI))
+						.save(output);
+
 				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.MISC, ModItems.TATARA_CLAY)
 						.requires(Items.SUGAR_CANE)
 						.requires(Items.CHARCOAL)

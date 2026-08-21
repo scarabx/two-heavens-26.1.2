@@ -31,8 +31,9 @@ import java.util.UUID;
  * damage/stun for when the attack_swing animation actually reaches full
  * extension (STAB_REACH_DELAY_TICKS later), re-checking range at that
  * moment - a click doesn't guarantee a hit if the target moves out of
- * range during the wind-up. The katana finisher stays instant (its own
- * animation has no comparable wind-up).
+ * range during the wind-up. The katana finisher works the same way now,
+ * landing near the end of katana_slice.animation.json instead of
+ * instantly on click.
  */
 public class SwordComboHandler {
 
@@ -40,6 +41,12 @@ public class SwordComboHandler {
 	// where the blade actually reaches full extension, not when you click.
 	private static final int STAB_REACH_DELAY_TICKS = 28;
 	private static final double STAB_REACH_DISTANCE = 4.0;
+
+	// Matches katana_slice.animation.json's total length (0.864s = 17 ticks)
+	// - the finisher lands near the end of the slice, not the instant you
+	// right-click.
+	private static final int FINISHER_REACH_DELAY_TICKS = 17;
+	private static final double FINISHER_REACH_DISTANCE = 4.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
 	private static final int STUN_DURATION_TICKS = 100;
@@ -49,6 +56,7 @@ public class SwordComboHandler {
 
 	private static final Map<UUID, ComboState> activeCombos = new HashMap<>();
 	private static final Map<UUID, PendingStab> pendingStabs = new HashMap<>();
+	private static final Map<UUID, PendingFinisher> pendingFinishers = new HashMap<>();
 
 	public static void register() {
 		AttackEntityCallback.EVENT.register(SwordComboHandler::onAttackEntity);
@@ -67,6 +75,13 @@ public class SwordComboHandler {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
 			return InteractionResult.PASS;
 		}
+		PendingFinisher busyFinisher = pendingFinishers.get(player.getUUID());
+		if (busyFinisher != null && !busyFinisher.comboFinisher()) {
+			// Katana is mid-slice on its own (no wakizashi stab paired with
+			// it) - the wakizashi can't jump in and start a new stab until
+			// that solo slice resolves.
+			return InteractionResult.PASS;
+		}
 
 		pendingStabs.put(player.getUUID(),
 				new PendingStab(target.getUUID(), serverPlayer.tickCount + STAB_REACH_DELAY_TICKS));
@@ -75,19 +90,19 @@ public class SwordComboHandler {
 	}
 
 	private static void onServerTick(net.minecraft.server.MinecraftServer server) {
-		Iterator<Map.Entry<UUID, PendingStab>> iterator = pendingStabs.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Map.Entry<UUID, PendingStab> entry = iterator.next();
+		Iterator<Map.Entry<UUID, PendingStab>> stabIterator = pendingStabs.entrySet().iterator();
+		while (stabIterator.hasNext()) {
+			Map.Entry<UUID, PendingStab> entry = stabIterator.next();
 			PendingStab pending = entry.getValue();
 
 			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
 			if (player == null || player.tickCount < pending.applyTick()) {
 				if (player == null) {
-					iterator.remove();
+					stabIterator.remove();
 				}
 				continue;
 			}
-			iterator.remove();
+			stabIterator.remove();
 
 			ServerLevel level = player.level();
 			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
@@ -105,6 +120,44 @@ public class SwordComboHandler {
 			activeCombos.put(player.getUUID(),
 					new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
 		}
+
+		Iterator<Map.Entry<UUID, PendingFinisher>> finisherIterator = pendingFinishers.entrySet().iterator();
+		while (finisherIterator.hasNext()) {
+			Map.Entry<UUID, PendingFinisher> entry = finisherIterator.next();
+			PendingFinisher pending = entry.getValue();
+
+			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+			if (player == null || player.tickCount < pending.applyTick()) {
+				if (player == null) {
+					finisherIterator.remove();
+				}
+				continue;
+			}
+			finisherIterator.remove();
+
+			ServerLevel level = player.level();
+			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
+				continue;
+			}
+			if (player.distanceTo(target) > FINISHER_REACH_DISTANCE) {
+				continue;
+			}
+
+			if (pending.comboFinisher()) {
+				target.removeEffect(MobEffects.SLOWNESS);
+				target.removeEffect(MobEffects.WEAKNESS);
+				// Paired with a landed wakizashi stab - instakill regardless
+				// of remaining health/armor/resistance.
+				target.hurt(level.damageSources().playerAttack(player), Float.MAX_VALUE);
+			} else {
+				// Katana on its own, no wakizashi stab in progress - same
+				// slice, same animation, but not an instakill: half the
+				// target's max health per hit so it always takes exactly
+				// two solo slices regardless of what the target actually is.
+				target.hurt(level.damageSources().playerAttack(player), target.getMaxHealth() * 0.5F);
+			}
+			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
+		}
 	}
 
 	private static InteractionResult onUseEntity(Player player, Level level, InteractionHand hand,
@@ -115,22 +168,21 @@ public class SwordComboHandler {
 		if (!(entity instanceof LivingEntity target)) {
 			return InteractionResult.PASS;
 		}
+		if (player.getMainHandItem().getItem() != ModItems.KATANA) {
+			return InteractionResult.PASS;
+		}
 
 		ComboState combo = activeCombos.get(player.getUUID());
-		if (combo == null || player.tickCount > combo.expireTick() || !combo.targetId().equals(target.getUUID())) {
-			return InteractionResult.PASS;
-		}
-		if (!(player.getMainHandItem().getItem() == ModItems.KATANA)) {
-			return InteractionResult.PASS;
+		boolean comboFinisher = combo != null && player.tickCount <= combo.expireTick()
+				&& combo.targetId().equals(target.getUUID());
+		if (comboFinisher) {
+			activeCombos.remove(player.getUUID());
 		}
 
-		activeCombos.remove(player.getUUID());
-		target.removeEffect(MobEffects.SLOWNESS);
-		target.removeEffect(MobEffects.WEAKNESS);
-		// Instakill - the finisher always ends the target regardless of
-		// remaining health/armor/resistance.
-		target.hurt(level.damageSources().playerAttack(player), Float.MAX_VALUE);
-		playSweepEffect(level, target.getX(), target.getY(), target.getZ());
+		if (player instanceof ServerPlayer serverPlayer) {
+			pendingFinishers.put(player.getUUID(), new PendingFinisher(
+					target.getUUID(), serverPlayer.tickCount + FINISHER_REACH_DELAY_TICKS, comboFinisher));
+		}
 
 		return InteractionResult.FAIL;
 	}
@@ -151,5 +203,8 @@ public class SwordComboHandler {
 	}
 
 	private record PendingStab(UUID targetId, int applyTick) {
+	}
+
+	private record PendingFinisher(UUID targetId, int applyTick, boolean comboFinisher) {
 	}
 }

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    "twoheavens:katana",
+    "twoheavens:wakizashi"
+  ],
+  "result": {
+    "id": "twoheavens:daisho_saya"
+  }
+}

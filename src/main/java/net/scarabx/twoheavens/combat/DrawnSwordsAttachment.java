@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.scarabx.twoheavens.TwoHeavens;
@@ -34,13 +35,24 @@ public class DrawnSwordsAttachment {
 	public static void touch() {
 	}
 
-	public record StoredItems(ItemStack mainHand, ItemStack offHand) {
+	// mainHandSlot is the hotbar slot the real main-hand item was pulled
+	// from at draw time - sheathe writes it back to that exact slot instead
+	// of "whatever the currently selected slot happens to be". Without this,
+	// any drift between the selected slot at draw-time and at sheathe-time
+	// (e.g. a stray Inventory#setSelectedSlot call slipping past the
+	// hotbar-lock mixins) would drop the real item into the wrong slot while
+	// leaving the original slot - and the stray real katana/wakizashi
+	// already sitting there from a previous draw cycle - untouched, so the
+	// next draw looked like it conjured a THIRD sword.
+	public record StoredItems(int mainHandSlot, ItemStack mainHand, ItemStack offHand) {
 		public static final Codec<StoredItems> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Codec.INT.fieldOf("main_hand_slot").forGetter(StoredItems::mainHandSlot),
 				ItemStack.OPTIONAL_CODEC.fieldOf("main_hand").forGetter(StoredItems::mainHand),
 				ItemStack.OPTIONAL_CODEC.fieldOf("off_hand").forGetter(StoredItems::offHand)
 		).apply(instance, StoredItems::new));
 
 		public static final StreamCodec<RegistryFriendlyByteBuf, StoredItems> STREAM_CODEC = StreamCodec.composite(
+				ByteBufCodecs.VAR_INT.cast(), StoredItems::mainHandSlot,
 				ItemStack.OPTIONAL_STREAM_CODEC, StoredItems::mainHand,
 				ItemStack.OPTIONAL_STREAM_CODEC, StoredItems::offHand,
 				StoredItems::new);
