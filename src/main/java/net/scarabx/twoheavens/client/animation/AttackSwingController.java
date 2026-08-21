@@ -17,10 +17,10 @@ import net.minecraft.world.entity.player.Player;
  */
 public class AttackSwingController {
 
-	// Matches attack_swing.animation.json's length (1.1s) - the finisher
+	// Matches attack_swing.animation.json's length (0.2s) - the finisher
 	// can't start until the stab has actually finished playing, not
 	// mid-swing.
-	private static final int STAB_ANIMATION_TICKS = 22;
+	private static final int STAB_ANIMATION_TICKS = 4;
 	private static final int COMBO_WINDOW_TICKS = 60;
 
 	private static boolean lastSwinging = false;

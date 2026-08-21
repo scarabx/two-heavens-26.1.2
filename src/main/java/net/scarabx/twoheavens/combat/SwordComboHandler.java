@@ -39,15 +39,17 @@ import java.util.UUID;
  */
 public class SwordComboHandler {
 
-	// Matches attack_swing.animation.json's total length (1.1s) - the point
-	// where the blade actually reaches full extension, not when you click.
-	private static final int STAB_REACH_DELAY_TICKS = 22;
+	// Matches attack_swing.animation.json's lunge-completion keyframe
+	// (0.155s) - the point where the blade actually reaches full extension,
+	// not the animation's full length (which now includes extra hold time
+	// after the motion finishes) and not when you click.
+	private static final int STAB_REACH_DELAY_TICKS = 3;
 	private static final double STAB_REACH_DISTANCE = 4.0;
 
-	// Matches katana_slice.animation.json's total length (0.864s = 17 ticks)
+	// Matches katana_slice.animation.json's total length (0.432s = ~9 ticks)
 	// - the finisher lands near the end of the slice, not the instant you
 	// right-click.
-	private static final int FINISHER_REACH_DELAY_TICKS = 17;
+	private static final int FINISHER_REACH_DELAY_TICKS = 9;
 	private static final double FINISHER_REACH_DISTANCE = 4.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
