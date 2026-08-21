@@ -5,6 +5,7 @@ import eu.pb4.trinkets.api.TrinketsApi;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.scarabx.twoheavens.combat.DrawSwordsPayload;
+import net.scarabx.twoheavens.combat.DrawTiming;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.FakeDrawnSword;
 import net.minecraft.sounds.SoundEvents;
@@ -32,15 +33,6 @@ import java.util.function.Consumer;
  * its own echo.
  */
 public class SwordDrawController {
-
-	// Ticks from the trigger of draw_swords.animation.json until each sword
-	// should appear - matched to that animation's right_arm/left_arm arc
-	// keyframes (20 ticks/second).
-	private static final int DRAW_KATANA_DELAY_TICKS = 11;
-	private static final int DRAW_WAKIZASHI_DELAY_TICKS = 14;
-
-	private static final int SHEATHE_WAKIZASHI_DELAY_TICKS = 6;
-	private static final int SHEATHE_KATANA_DELAY_TICKS = 17;
 
 	private static boolean predictedDrawn = false;
 	private static boolean awaitingServerConfirmation = false;
@@ -71,9 +63,9 @@ public class SwordDrawController {
 			PlayerHandAnimator.trigger(player,
 					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getDrawSwordsAnimation()));
 
-			pending.add(new PendingSwap(DRAW_KATANA_DELAY_TICKS, p ->
+			pending.add(new PendingSwap(DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana())));
-			pending.add(new PendingSwap(DRAW_WAKIZASHI_DELAY_TICKS - DRAW_KATANA_DELAY_TICKS, p ->
+			pending.add(new PendingSwap(DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS - DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
 			AttackSwingController.resetAttackPose();
 			predictedDrawn = true;
@@ -81,9 +73,9 @@ public class SwordDrawController {
 			PlayerHandAnimator.trigger(player,
 					RawAnimation.begin().thenPlay(TwoHeavensPlayerAnimation.getSheatheSwordsAnimation()));
 
-			pending.add(new PendingSwap(SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
+			pending.add(new PendingSwap(DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.OFF_HAND, storedOffHand)));
-			pending.add(new PendingSwap(SHEATHE_KATANA_DELAY_TICKS - SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
+			pending.add(new PendingSwap(DrawTiming.SHEATHE_KATANA_DELAY_TICKS - DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.MAIN_HAND, storedMainHand)));
 			predictedDrawn = false;
 		}
