@@ -9,7 +9,7 @@
 	],
 	"contact": {},
 	"license": "CC0-1.0",
-	"icon": "assets/twoheavens/icon.png",
+	"icon": "assets/twoheavens/two_heavens_logo.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -37,5 +37,10 @@
 		"trinkets": "*",
 		"geckolib": "*",
 		"player_animation_library": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"icon": "assets/twoheavens/two_heavens_logo.png"
+		}
 	}
 }
