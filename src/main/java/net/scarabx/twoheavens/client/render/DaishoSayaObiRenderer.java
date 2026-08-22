@@ -31,6 +31,11 @@ public class DaishoSayaObiRenderer extends GeoItemRenderer<DaishoSayaObiItem> {
 	@Override
 	public void adjustRenderPose(RenderPassInfo<GeoRenderState> pass) {
 		super.adjustRenderPose(pass);
+		// This model's geo is authored so its coordinates match the item model's
+		// elements 1:1, and its display transforms were tuned against that. Undo
+		// GeoItemRenderer's 0.5/0.51/0.5 centering so those values stay correct.
+		// Obi/DaishoSaya deliberately do NOT do this - their geo is origin-centred.
+		ItemPoseTuning.cancelGeckolibCentering(pass.poseStack());
 		ItemDisplayContext context = pass.renderState().getGeckolibData(DataTickets.ITEM_RENDER_PERSPECTIVE);
 		if (context != null) {
 			ItemPoseTuning.apply(pass.poseStack(), context, TUNING);
