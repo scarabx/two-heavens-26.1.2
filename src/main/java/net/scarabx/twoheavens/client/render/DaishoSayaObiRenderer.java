@@ -31,7 +31,6 @@ public class DaishoSayaObiRenderer extends GeoItemRenderer<DaishoSayaObiItem> {
 	@Override
 	public void adjustRenderPose(RenderPassInfo<GeoRenderState> pass) {
 		super.adjustRenderPose(pass);
-		ItemPoseTuning.cancelGeckolibCentering(pass.poseStack());
 		ItemDisplayContext context = pass.renderState().getGeckolibData(DataTickets.ITEM_RENDER_PERSPECTIVE);
 		if (context != null) {
 			ItemPoseTuning.apply(pass.poseStack(), context, TUNING);
