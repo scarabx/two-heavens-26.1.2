@@ -1,25 +1,25 @@
 {
-  "textures": {
-    "particle": "twoheavens:block/tatara_furnace_charcoal",
-    "inside": "twoheavens:block/tatara_furnace_charcoal"
-  },
-  "elements": [
-    {
-      "from": [
-        2,
-        0,
-        2
-      ],
-      "to": [
-        14,
-        8,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#inside"
-        }
-      }
-    }
-  ]
+	"textures": {
+		"particle": "twoheavens:block/tatara_furnace_charcoal",
+		"inside": "twoheavens:block/tatara_furnace_charcoal"
+	},
+	"elements": [
+		{
+			"from": [
+				2,
+				0,
+				2
+			],
+			"to": [
+				14,
+				7.99,
+				14
+			],
+			"faces": {
+				"up": {
+					"texture": "#inside"
+				}
+			}
+		}
+	]
 }
