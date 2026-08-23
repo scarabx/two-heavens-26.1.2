@@ -50,7 +50,10 @@ public class SmithingAnvilBlock extends HorizontalDirectionalBlock {
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
-		return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+		// The model's long axis runs along Z, so pointing FACING straight at the player
+		// presents the narrow 10-wide end. Turn it a quarter so the long side faces them,
+		// which is also the side you actually work from.
+		return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getClockWise());
 	}
 
 	@Override
