@@ -30,7 +30,6 @@ public class TwoHeavens implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-
 		ModBlocks.registerModBlocks();
 		ModBlockEntities.registerModBlockEntities();
 		ModItems.registerModItems();
