@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.scarabx.twoheavens.block.custom.KeraBlock;
+import net.scarabx.twoheavens.block.custom.KeraStaticBlock;
 import net.scarabx.twoheavens.block.custom.SatetsuSandBlock;
 import net.scarabx.twoheavens.block.custom.SmithingAnvilBlock;
 import net.scarabx.twoheavens.block.custom.TataraClayBlock;
@@ -36,11 +37,11 @@ public class ModBlocks {
 	public static final Block TATARA_FURNACE_FIRED = registerBlockWithItem("tatara_furnace_fired", TataraFurnaceFiredBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
 
-	public static final Block KERA = registerBlockWithItem("kera", Block::new,
-			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops());
+	public static final Block KERA = registerBlockWithItem("kera", KeraStaticBlock::new,
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion());
 
 	public static final Block KERA_BLOCK = registerBlockWithItem("kera_block", KeraBlock::new,
-			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE).noOcclusion());
 
 	public static final Block SMITHING_ANVIL = registerBlockWithItem("smithing_anvil", SmithingAnvilBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops()

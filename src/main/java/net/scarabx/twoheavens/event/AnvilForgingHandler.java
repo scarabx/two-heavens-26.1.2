@@ -33,7 +33,6 @@ import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.item.ModItems;
 import net.scarabx.twoheavens.item.custom.HammerItem;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -240,8 +239,8 @@ public class AnvilForgingHandler {
 			}
 
 			// Blade phases (5-6) without tongs: nothing happens, bare hands can't safely
-			// pull a hot blade off the anvil. Every other phase (Kera shrinking, Ingot,
-			// Flat Ingot) gives back exactly whatever is currently displayed.
+			// pull a hot blade off the anvil. Every other phase (Kera, Ingot, Flat Ingot)
+			// gives back exactly whatever is currently displayed.
 			if (hitsAtPickup < 5) {
 				ItemStack pickedUp = display.getItemStack().copy();
 				if (!player.getInventory().add(pickedUp)) {
@@ -257,20 +256,9 @@ public class AnvilForgingHandler {
 					net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
 
 			int hits = currentHits(display);
-			if (hits < 2) {
-				hits++;
-				float scale = 1.0F / (1 << hits); // 1st hit -> 0.5, 2nd hit -> 0.25
-				// The model's pivot is centered, not bottom-anchored - scaling around it
-				// alone lifts the bottom off the anvil surface, so push it back down to compensate.
-				float dropToStayGrounded = -(1.0F - scale) * 0.5F;
-				display.setTransformation(new Transformation(
-						new Vector3f(0.0F, dropToStayGrounded, 0.0F),
-						null,
-						new Vector3f(scale, scale, scale),
-						null));
-				display.addTag(HIT_TAG_PREFIX + hits);
-				stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
-			} else if (hits == 2) {
+			// The Kera is already flat coming out of the furnace, so it no longer shrinks
+			// across two hits first - the opening strike works it straight into an ingot.
+			if (hits == 0) {
 				display.setItemStack(new ItemStack(ModItems.TAMAHAGANE_INGOT));
 				display.setTransformation(new Transformation(null, anvilFacingRotation(level, pos), null, null));
 				display.addTag(HIT_TAG_PREFIX + 3);

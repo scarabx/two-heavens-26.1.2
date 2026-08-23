@@ -1,6 +1,78 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "twoheavens:block/kera_stage3"
-  }
+	"parent": "block/block",
+	"textures": {
+		"all": "twoheavens:block/kera_stage3",
+		"particle": "twoheavens:block/kera_stage3"
+	},
+	"elements": [
+		{
+			"from": [
+				2,
+				0,
+				2
+			],
+			"to": [
+				14,
+				2,
+				14
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						2,
+						14,
+						14,
+						16
+					],
+					"texture": "#all"
+				},
+				"east": {
+					"uv": [
+						2,
+						14,
+						14,
+						16
+					],
+					"texture": "#all"
+				},
+				"south": {
+					"uv": [
+						2,
+						14,
+						14,
+						16
+					],
+					"texture": "#all"
+				},
+				"west": {
+					"uv": [
+						2,
+						14,
+						14,
+						16
+					],
+					"texture": "#all"
+				},
+				"up": {
+					"uv": [
+						2,
+						2,
+						14,
+						14
+					],
+					"texture": "#all"
+				},
+				"down": {
+					"uv": [
+						2,
+						2,
+						14,
+						14
+					],
+					"texture": "#all",
+					"cullface": "down"
+				}
+			}
+		}
+	]
 }
