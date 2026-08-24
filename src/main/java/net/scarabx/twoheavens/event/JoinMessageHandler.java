@@ -15,12 +15,17 @@ import net.scarabx.twoheavens.TwoHeavens;
  */
 public final class JoinMessageHandler {
 
-	private static final Style ICON_STYLE = Style.EMPTY.withFont(new FontDescription.Resource(TwoHeavens.id("icons")));
+	// withoutShadow keeps chat's drop shadow off the item pictures - on a glyph it
+	// smears a dark copy under the sprite rather than reading as depth.
+	private static final Style ICON_STYLE = Style.EMPTY
+			.withFont(new FontDescription.Resource(TwoHeavens.id("icons")))
+			.withoutShadow();
 
 	private static final String SATETSU = "";
 	private static final String SUGAR_CANE = "";
 	private static final String CHARCOAL = "";
 	private static final String CLAY = "";
+	private static final String TATARA_CLAY = "";
 
 	private JoinMessageHandler() {
 	}
@@ -49,6 +54,8 @@ public final class JoinMessageHandler {
 				.append(icon(CHARCOAL))
 				.append(Component.literal(" and 16 Clay ").withStyle(ChatFormatting.GRAY))
 				.append(icon(CLAY))
-				.append(Component.literal(" into 64 Tatara Clay.").withStyle(ChatFormatting.GRAY));
+				.append(Component.literal(" into 64 Tatara Clay ").withStyle(ChatFormatting.GRAY))
+				.append(icon(TATARA_CLAY))
+				.append(Component.literal(".").withStyle(ChatFormatting.GRAY));
 	}
 }

@@ -2,31 +2,48 @@
 	"providers": [
 		{
 			"type": "bitmap",
-			"file": "twoheavens:block/satetsu_sand.png",
-			"ascent": 7,
-			"height": 8,
-			"chars": [""]
+			"file": "twoheavens:item/satetsu_sand_iso.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				""
+			]
 		},
 		{
 			"type": "bitmap",
 			"file": "minecraft:item/sugar_cane.png",
 			"ascent": 7,
 			"height": 8,
-			"chars": [""]
+			"chars": [
+				""
+			]
 		},
 		{
 			"type": "bitmap",
 			"file": "minecraft:item/charcoal.png",
 			"ascent": 7,
 			"height": 8,
-			"chars": [""]
+			"chars": [
+				""
+			]
 		},
 		{
 			"type": "bitmap",
 			"file": "minecraft:item/clay_ball.png",
 			"ascent": 7,
 			"height": 8,
-			"chars": [""]
+			"chars": [
+				""
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "twoheavens:item/tatara_clay.png",
+			"ascent": 7,
+			"height": 8,
+			"chars": [
+				""
+			]
 		}
 	]
 }
