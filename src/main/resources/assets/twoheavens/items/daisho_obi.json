@@ -1,7 +1,7 @@
 {
 	"model": {
 		"type": "minecraft:special",
-		"base": "twoheavens:item/daisho_saya_obi",
+		"base": "twoheavens:item/daisho_obi",
 		"model": {
 			"type": "geckolib:geckolib"
 		}

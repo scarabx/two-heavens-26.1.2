@@ -20,7 +20,7 @@ import java.util.Deque;
 import java.util.function.Consumer;
 
 /**
- * Draws/sheathes the katana and wakizashi from the Daisho Saya Obi trinket.
+ * Draws/sheathes the katana and wakizashi from the Daisho Obi trinket.
  * "Drawn" is server-authoritative via DrawnSwordsAttachment on the player
  * entity, synced to the client automatically by Fabric's attachment system.
  * That sync always lags our own local action by a tick or more, even on an
@@ -36,6 +36,14 @@ public class SwordDrawController {
 
 	private static boolean predictedDrawn = false;
 	private static boolean awaitingServerConfirmation = false;
+	/**
+	 * How long to keep suppressing the external-change detector before giving up.
+	 * Without this, a toggle the server never acts on - a dropped packet, or a
+	 * rejection - leaves the suppression latched on forever, so the client can never
+	 * notice it has diverged and never resyncs.
+	 */
+	private static final int CONFIRMATION_TIMEOUT_TICKS = 40;
+	private static int confirmationWaitTicks = 0;
 
 	public static boolean isDrawn(Player player) {
 		return player.hasAttached(DrawnSwordsAttachment.TYPE);
@@ -50,7 +58,7 @@ public class SwordDrawController {
 		if (!pending.isEmpty()) {
 			return;
 		}
-		if (!TrinketsApi.getAttachment(player).isEquipped(ModItems.DAISHO_SAYA_OBI)) {
+		if (!TrinketsApi.getAttachment(player).isEquipped(ModItems.DAISHO_OBI)) {
 			return;
 		}
 
@@ -80,6 +88,7 @@ public class SwordDrawController {
 			predictedDrawn = false;
 		}
 		awaitingServerConfirmation = true;
+		confirmationWaitTicks = 0;
 	}
 
 	public static void tick(Minecraft client) {
@@ -94,6 +103,11 @@ public class SwordDrawController {
 			// own action's sync still in flight, not a real external change.
 			if (serverDrawn == predictedDrawn) {
 				awaitingServerConfirmation = false;
+			} else if (++confirmationWaitTicks >= CONFIRMATION_TIMEOUT_TICKS) {
+				// The server never came back with our state. Stop suppressing and let
+				// the correction below put us back in step on the next tick.
+				awaitingServerConfirmation = false;
+				pending.clear();
 			}
 		} else if (serverDrawn != predictedDrawn) {
 			// A genuine external change (join, respawn, death forcing

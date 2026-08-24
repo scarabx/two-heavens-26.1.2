@@ -75,7 +75,7 @@ public class SwordDrawServerHandler {
 		});
 
 		// Without keepInventory, dying drops the whole inventory including
-		// the Daisho Saya Obi itself - if that happened, there's no obi left
+		// the Daisho Obi itself - if that happened, there's no obi left
 		// to sheathe the swords back into. Re-equip the fake swords on
 		// respawn if still marked drawn (attachments survive death since
 		// they're copied via .copyOnDeath() is NOT set here deliberately -
@@ -85,7 +85,7 @@ public class SwordDrawServerHandler {
 		// Instant, same as death - there's no draw animation playing here.
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
 			if (newPlayer.hasAttached(DrawnSwordsAttachment.TYPE)
-					&& TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_SAYA_OBI)) {
+					&& TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_OBI)) {
 				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana());
 				newPlayer.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi());
 			}
@@ -113,13 +113,24 @@ public class SwordDrawServerHandler {
 	}
 
 	private static void toggle(ServerPlayer player) {
-		// Ignore a new toggle while a previous draw/sheathe still has delayed
-		// swaps in flight - mirrors the client's own `pending.isEmpty()`
-		// guard, which normally stops it from even sending this packet
-		// again mid-animation, but this keeps the server safe against that
-		// too (reordered packets, a modified client, etc.).
-		if (pendingSwaps.containsKey(player.getUUID())) {
-			return;
+		// A toggle arriving while swaps are still in flight must NOT be dropped.
+		// The client's own `pending.isEmpty()` guard clears on ITS timeline, but the
+		// server's queue starts a tick or more later (the packet is deferred through
+		// server.execute, plus latency), so there is a window where the client will
+		// happily send another toggle while this queue is still draining. Silently
+		// returning there left the client predicting one state and the server holding
+		// the other, with no way for the client to find out - the swords would then
+		// get overwritten back into the player's hands by the authoritative inventory
+		// sync, dropping them out of combat pose.
+		//
+		// Flushing instead means the server always ends up in the state the client
+		// asked for. Spamming the key snaps through the animation, which is what the
+		// client is doing visually anyway.
+		Deque<PendingSwap> inFlight = pendingSwaps.remove(player.getUUID());
+		if (inFlight != null) {
+			while (!inFlight.isEmpty()) {
+				inFlight.poll().action().accept(player);
+			}
 		}
 
 		// Deliberately not re-derived from current inventory contents each
@@ -129,7 +140,7 @@ public class SwordDrawServerHandler {
 		DrawnSwordsAttachment.StoredItems current = player.getAttached(DrawnSwordsAttachment.TYPE);
 
 		if (current == null) {
-			if (!TrinketsApi.getAttachment(player).isEquipped(ModItems.DAISHO_SAYA_OBI)) {
+			if (!TrinketsApi.getAttachment(player).isEquipped(ModItems.DAISHO_OBI)) {
 				return;
 			}
 			player.setAttached(DrawnSwordsAttachment.TYPE, new DrawnSwordsAttachment.StoredItems(
@@ -170,8 +181,13 @@ public class SwordDrawServerHandler {
 		}
 	}
 
+	// Deliberately does NOT run the stripFakeSwords sweep. This fires first, at the
+	// wakizashi's keyframe, and the sweep clears EVERY fake sword - so running it here
+	// also wiped the katana out of the main hand, leaving that hand empty for the rest
+	// of the animation until restoreMainHand put the real item back. Setting the
+	// offhand alone replaces the fake wakizashi and leaves the katana on screen until
+	// its own keyframe, which is what the animation is showing.
 	private static void restoreOffHand(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
-		stripFakeSwords(player.getInventory());
 		player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
 	}
 

@@ -1,6 +1,9 @@
 package net.scarabx.twoheavens.block.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -25,6 +28,8 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 	public static final int SMELT_DURATION_TICKS = 1200;
 	private static final int STEP_TICKS = SMELT_DURATION_TICKS / 8; // 150 ticks = 7.5s
 	private static final int PASSIVE_PHASE_TICKS = SMELT_DURATION_TICKS / 2;
+	/** Who hears the "tend the furnace" call - anyone plausibly still working it. */
+	private static final int TEND_ALERT_RANGE = 24;
 	private static final float STARTING_HEAT = 0.0F;
 	private static final float MAX_HEAT = 100.0F;
 	private static final float PASSIVE_CAP = MAX_HEAT / 2.0F;
@@ -94,6 +99,16 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 		}
 
 		this.smeltTicks++;
+
+		// The passive half just ended - from here neglect costs heat, so tell anyone
+		// nearby to pick up the bellows. Nothing on the block itself signals this.
+		if (this.smeltTicks == PASSIVE_PHASE_TICKS && level instanceof ServerLevel serverLevel) {
+			Component tend = Component.translatable("message.twoheavens.tend_furnace")
+					.withStyle(ChatFormatting.GOLD);
+			for (ServerPlayer player : serverLevel.getPlayers(p -> p.blockPosition().closerThan(pos, TEND_ALERT_RANGE))) {
+				player.sendSystemMessage(tend);
+			}
+		}
 
 		if (this.smeltTicks % STEP_TICKS == 0) {
 			if (this.smeltTicks <= PASSIVE_PHASE_TICKS) {

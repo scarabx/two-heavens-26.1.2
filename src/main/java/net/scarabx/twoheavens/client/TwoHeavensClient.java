@@ -17,7 +17,12 @@ import net.scarabx.twoheavens.client.animation.AttackSwingController;
 import net.scarabx.twoheavens.client.animation.PlayerHandAnimator;
 import net.scarabx.twoheavens.client.animation.SwordDrawController;
 import net.scarabx.twoheavens.client.animation.TwoHeavensPlayerAnimation;
-import net.scarabx.twoheavens.client.render.DaishoSayaObiTrinketRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
+import net.scarabx.twoheavens.client.hud.FurnaceHintHud;
+import net.scarabx.twoheavens.client.render.DaishoObiTrinketRenderer;
+import net.scarabx.twoheavens.client.tooltip.ClientRecipeTooltip;
+import net.scarabx.twoheavens.item.ModRecipeTooltips;
+import net.scarabx.twoheavens.item.RecipeTooltipData;
 import net.scarabx.twoheavens.item.ModItems;
 
 public class TwoHeavensClient implements ClientModInitializer {
@@ -33,9 +38,14 @@ public class TwoHeavensClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		TrinketRendererRegistry.registerRenderer(ModItems.DAISHO_SAYA_OBI, new DaishoSayaObiTrinketRenderer());
+		TrinketRendererRegistry.registerRenderer(ModItems.DAISHO_OBI, new DaishoObiTrinketRenderer());
 
 		TwoHeavensPlayerAnimation.register();
+
+		ModRecipeTooltips.register();
+		FurnaceHintHud.register();
+		ClientTooltipComponentCallback.EVENT.register(data ->
+				data instanceof RecipeTooltipData recipe ? new ClientRecipeTooltip(recipe) : null);
 
 		// Lets F3+T pick up edited animation JSON without a full game
 		// restart - our animations are cached in memory the first time

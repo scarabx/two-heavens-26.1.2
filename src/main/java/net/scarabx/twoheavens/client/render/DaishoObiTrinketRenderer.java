@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.lang.reflect.Field;
 
-public class DaishoSayaObiTrinketRenderer implements TrinketRenderer {
+public class DaishoObiTrinketRenderer implements TrinketRenderer {
 
 	// LevelRenderer.levelRenderState is private in vanilla; GeckoLib's own
 	// access widener makes it public for GeckoLib's compiled code but Loom

@@ -10,6 +10,7 @@ import net.scarabx.twoheavens.combat.SwordComboHandler;
 import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import net.scarabx.twoheavens.event.AnvilForgingHandler;
 import net.scarabx.twoheavens.event.JoinMessageHandler;
+import net.scarabx.twoheavens.event.TutorialProgressAttachment;
 import net.scarabx.twoheavens.item.ModItemGroups;
 import net.scarabx.twoheavens.item.ModItems;
 import net.scarabx.twoheavens.worldgen.ModWorldGeneration;
@@ -46,6 +47,7 @@ public class TwoHeavens implements ModInitializer {
 		// up front rather than on first use.
 		DrawnSwordsAttachment.touch();
 		SwordDrawServerHandler.register();
+		TutorialProgressAttachment.touch();
 		JoinMessageHandler.register();
 	}
 

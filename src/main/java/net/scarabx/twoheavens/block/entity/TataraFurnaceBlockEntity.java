@@ -79,6 +79,9 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 		}
 
 		if (this.curingTicks >= CURING_DURATION_TICKS) {
+			// Fired ceramic settling, deliberately quieter than the kera's whoosh -
+			// curing is a step, not the payoff, and the two should not read alike.
+			level.playSound(null, pos, SoundEvents.DECORATED_POT_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
 			level.setBlockAndUpdate(pos, ModBlocks.TATARA_FURNACE_FIRED.defaultBlockState());
 		}
 	}

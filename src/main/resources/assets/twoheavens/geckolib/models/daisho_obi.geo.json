@@ -3,7 +3,7 @@
 	"minecraft:geometry": [
 		{
 			"description": {
-				"identifier": "geometry.daisho_saya_obi",
+				"identifier": "geometry.daisho_obi",
 				"texture_width": 16,
 				"texture_height": 16,
 				"visible_bounds_width": 6,

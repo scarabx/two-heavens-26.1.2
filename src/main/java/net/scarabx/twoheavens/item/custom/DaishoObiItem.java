@@ -5,13 +5,13 @@ import com.geckolib.animatable.client.GeoRenderProvider;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
@@ -19,15 +19,17 @@ import net.scarabx.twoheavens.item.DisassembleHelper;
 import net.scarabx.twoheavens.item.ModItems;
 
 import java.util.function.Consumer;
-import net.scarabx.twoheavens.client.render.DaishoSayaRenderer;
+import net.minecraft.world.item.ItemStack;
+import net.scarabx.twoheavens.client.render.DaishoObiArmorRenderer;
+import net.scarabx.twoheavens.client.render.DaishoObiRenderer;
 
 import java.util.function.Consumer;
 
-public class DaishoSayaItem extends Item implements GeoItem {
+public class DaishoObiItem extends Item implements GeoItem {
 
 	private final AnimatableInstanceCache animatableInstanceCache = new SingletonAnimatableInstanceCache(this);
 
-	public DaishoSayaItem(Properties properties) {
+	public DaishoObiItem(Properties properties) {
 		super(properties);
 	}
 
@@ -44,7 +46,7 @@ public class DaishoSayaItem extends Item implements GeoItem {
 
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
-		return DisassembleHelper.splitInto(level, player, hand, ModItems.KATANA, ModItems.WAKIZASHI);
+		return DisassembleHelper.splitInto(level, player, hand, ModItems.OBI, ModItems.DAISHO_SAYA);
 	}
 
 	@Override
@@ -59,14 +61,23 @@ public class DaishoSayaItem extends Item implements GeoItem {
 	@Override
 	public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
 		consumer.accept(new GeoRenderProvider() {
-			private DaishoSayaRenderer renderer;
+			private DaishoObiRenderer itemRenderer;
+			private DaishoObiArmorRenderer armorRenderer;
 
 			@Override
 			public com.geckolib.renderer.GeoItemRenderer<?> getGeoItemRenderer() {
-				if (this.renderer == null) {
-					this.renderer = new DaishoSayaRenderer();
+				if (this.itemRenderer == null) {
+					this.itemRenderer = new DaishoObiRenderer();
 				}
-				return this.renderer;
+				return this.itemRenderer;
+			}
+
+			@Override
+			public com.geckolib.renderer.GeoArmorRenderer<?, ?> getGeoArmorRenderer(ItemStack stack, EquipmentSlot slot) {
+				if (this.armorRenderer == null) {
+					this.armorRenderer = new DaishoObiArmorRenderer();
+				}
+				return this.armorRenderer;
 			}
 		});
 	}

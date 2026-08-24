@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "twoheavens:daisho_saya_obi"
+        "recipe": "twoheavens:daisho_obi"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -26,7 +26,7 @@
   ],
   "rewards": {
     "recipes": [
-      "twoheavens:daisho_saya_obi"
+      "twoheavens:daisho_obi"
     ]
   }
 }

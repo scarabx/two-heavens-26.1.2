@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"ExampleClientMixin",
-		"InventoryClientMixin"
+		"InventoryClientMixin",
+		"ItemTooltipMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

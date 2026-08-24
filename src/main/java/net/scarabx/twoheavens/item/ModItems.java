@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.scarabx.twoheavens.item.custom.BellowsItem;
 import net.scarabx.twoheavens.item.custom.DaishoSayaItem;
-import net.scarabx.twoheavens.item.custom.DaishoSayaObiItem;
+import net.scarabx.twoheavens.item.custom.DaishoObiItem;
 import net.scarabx.twoheavens.item.custom.HammerItem;
 import net.scarabx.twoheavens.item.custom.ObiItem;
 import net.scarabx.twoheavens.item.custom.TataraClayItem;
@@ -52,7 +52,7 @@ public class ModItems {
 			new Item.Properties().durability(64));
 	public static final Item OBI = registerItem("obi", ObiItem::new);
 	public static final Item DAISHO_SAYA = registerItem("daisho_saya", DaishoSayaItem::new);
-	public static final Item DAISHO_SAYA_OBI = registerItem("daisho_saya_obi", DaishoSayaObiItem::new);
+	public static final Item DAISHO_OBI = registerItem("daisho_obi", DaishoObiItem::new);
 
 	private static Item registerItem(String name, java.util.function.Function<Item.Properties, Item> itemFactory) {
 		return registerItem(name, itemFactory, new Item.Properties());

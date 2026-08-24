@@ -5,11 +5,11 @@ import com.geckolib.renderer.GeoItemRenderer;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.scarabx.twoheavens.item.custom.DaishoSayaObiItem;
+import net.scarabx.twoheavens.item.custom.DaishoObiItem;
 
 import java.util.Map;
 
-public class DaishoSayaObiRenderer extends GeoItemRenderer<DaishoSayaObiItem> {
+public class DaishoObiRenderer extends GeoItemRenderer<DaishoObiItem> {
 
 	// EDIT THESE NUMBERS, then rebuild + restart the game to see the change.
 	// offsetX/Y/Z are in blocks (1/16 = one pixel). rotX/Y/Z are in degrees. scale is a multiplier.
@@ -24,8 +24,8 @@ public class DaishoSayaObiRenderer extends GeoItemRenderer<DaishoSayaObiItem> {
 		// TUNING.put(ItemDisplayContext.FIXED, new ItemPoseTuning.Entry(0f, 0f, 0f, 0f, 0f, 0f, 1f));
 	}
 
-	public DaishoSayaObiRenderer() {
-		super(new DaishoSayaObiModel());
+	public DaishoObiRenderer() {
+		super(new DaishoObiModel());
 	}
 
 	@Override

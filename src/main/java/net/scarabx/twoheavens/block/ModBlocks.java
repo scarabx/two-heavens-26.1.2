@@ -35,7 +35,8 @@ public class ModBlocks {
 			BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN).strength(1.25F, 4.5F).sound(SoundType.STONE));
 
 	public static final Block TATARA_FURNACE_FIRED = registerBlockWithItem("tatara_furnace_fired", TataraFurnaceFiredBlock::new,
-			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(-1.0F, 3600000.0F).sound(SoundType.STONE));
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(2.0F, 6.0F).sound(SoundType.STONE)
+					.requiresCorrectToolForDrops());
 
 	public static final Block KERA = registerBlockWithItem("kera", KeraStaticBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion());

@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "block/block",
 	"textures": {
-		"0": "twoheavens:item/daisho_saya_obi",
-		"particle": "twoheavens:item/daisho_saya_obi"
+		"0": "twoheavens:item/daisho_obi",
+		"particle": "twoheavens:item/daisho_obi"
 	},
 	"elements": [
 		{
