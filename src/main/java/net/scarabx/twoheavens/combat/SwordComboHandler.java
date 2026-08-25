@@ -19,7 +19,7 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.item.ModItems;
 
 import java.util.HashMap;
@@ -326,26 +326,23 @@ public class SwordComboHandler {
 	}
 
 	/**
-	 * Sweep for a move that hit nothing. Spawned a short way along the player's look
-	 * vector at chest height rather than at the player's position - their position is
-	 * their feet, where the particle is hidden inside the model and reads as no
-	 * particle at all, which is how a swing at air ended up silent-looking while a
-	 * landed hit (spawned at the target) showed correctly.
+	 * Sweep for a move that hit nothing.
+	 *
+	 * Spawned a short way along the player's look vector at chest height rather than
+	 * at the player's position - their position is their feet, where the particle is
+	 * hidden inside the model and reads as no particle at all.
+	 *
+	 * Deliberately NOT vanilla's placement from Player#attack (one block out along
+	 * the yaw at mid-body height, count 0, direction as velocity). That was tried and
+	 * looked worse here: this version reads better against these animations, and
+	 * matches how the on-hit sweep is spawned so a miss and a hit look alike.
 	 */
 	private static void playSweepAt(ServerPlayer player) {
-		// Placed exactly as vanilla's own sweep in Player#attack: one block out along
-		// the yaw at mid-body height, count 0, with the direction passed as the
-		// velocity vector. That last part is what orients the arc along the swing -
-		// count 1 with zero velocity spawns an unoriented puff that does not read as
-		// travelling with the blade.
-		double dx = -Mth.sin(player.getYRot() * (float) (Math.PI / 180.0));
-		double dz = Mth.cos(player.getYRot() * (float) (Math.PI / 180.0));
-		ServerLevel level = player.level();
-		level.sendParticles(ParticleTypes.SWEEP_ATTACK,
-				player.getX() + dx, player.getY(0.5), player.getZ() + dz,
-				0, dx, 0.0, dz, 0.0);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8F, 1.0F);
+		Vec3 look = player.getLookAngle();
+		playSweepEffect(player.level(),
+				player.getX() + look.x * 1.5,
+				player.getY() + player.getEyeHeight() * 0.75 + look.y * 1.5,
+				player.getZ() + look.z * 1.5);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
