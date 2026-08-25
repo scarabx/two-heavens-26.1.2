@@ -3,7 +3,11 @@ package net.scarabx.twoheavens.combat;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.scarabx.twoheavens.TwoHeavens;
 
 /**
@@ -32,8 +36,44 @@ public final class StunAttachment {
 	public static void touch() {
 	}
 
+	// -100% movement speed. Freezing the entity by zeroing its delta movement does
+	// not work: LivingEntity#travel recomputes the delta from the AI's input vector
+	// inside the same call, discarding anything set beforehand. The speed attribute
+	// is what that calculation reads, so this is the point that actually holds.
+	private static final Identifier SLOW_ID = TwoHeavens.id("stunned");
+	private static final AttributeModifier SLOW = new AttributeModifier(
+			SLOW_ID, -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
 	public static void stun(LivingEntity target, int durationTicks) {
 		target.setAttached(TYPE, target.level().getGameTime() + durationTicks);
+		applyModifier(target);
+	}
+
+	/**
+	 * Keeps the speed modifier in step with the expiry. Called every tick from
+	 * StunnedMovementMixin: nothing counts the stun down, so this is what notices
+	 * that it has run out and gives the entity its speed back.
+	 */
+	public static void sync(LivingEntity entity) {
+		if (isStunned(entity)) {
+			applyModifier(entity);
+		} else {
+			removeModifier(entity);
+		}
+	}
+
+	private static void applyModifier(LivingEntity entity) {
+		AttributeInstance speed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+		if (speed != null && !speed.hasModifier(SLOW_ID)) {
+			speed.addTransientModifier(SLOW);
+		}
+	}
+
+	private static void removeModifier(LivingEntity entity) {
+		AttributeInstance speed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+		if (speed != null) {
+			speed.removeModifier(SLOW_ID);
+		}
 	}
 
 	public static boolean isStunned(LivingEntity entity) {
@@ -43,5 +83,6 @@ public final class StunAttachment {
 
 	public static void clear(LivingEntity entity) {
 		entity.removeAttached(TYPE);
+		removeModifier(entity);
 	}
 }
