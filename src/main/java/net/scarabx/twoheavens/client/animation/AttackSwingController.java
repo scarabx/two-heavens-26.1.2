@@ -5,8 +5,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.entity.player.Player;
-import net.scarabx.twoheavens.combat.MoveSweepPayload;
-import net.scarabx.twoheavens.combat.WakizashiCutPayload;
+import net.scarabx.twoheavens.combat.MovePayload;
 import net.scarabx.twoheavens.item.ModItems;
 
 /**
@@ -56,6 +55,11 @@ public class AttackSwingController {
 		comboExpireTick = -1;
 	}
 
+	/** Whatever is under the crosshair, or -1 - the server acquires its own if none. */
+	private static int aimedEntityId(Minecraft client) {
+		return client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
+	}
+
 	public static void tick(Minecraft client) {
 		Player player = client.player;
 		if (player == null) {
@@ -87,8 +91,7 @@ public class AttackSwingController {
 					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutAnimation())
 					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutReturnAnimation()));
 
-			int targetId = client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
-			ClientPlayNetworking.send(new WakizashiCutPayload(targetId));
+			ClientPlayNetworking.send(new MovePayload(MovePayload.CUT, aimedEntityId(client)));
 		}
 
 		if (newSwing && drawn) {
@@ -98,7 +101,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getAttackSwingAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getAttackSwingReturnAnimation()));
-			ClientPlayNetworking.send(new MoveSweepPayload());
+			ClientPlayNetworking.send(new MovePayload(MovePayload.STAB, aimedEntityId(client)));
 			comboReadyTick = player.tickCount + STAB_ANIMATION_TICKS;
 			comboExpireTick = comboReadyTick + COMBO_WINDOW_TICKS;
 		}
@@ -121,8 +124,7 @@ public class AttackSwingController {
 					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutOffhandAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getWakizashiCutOffhandReturnAnimation()));
 
-			int cutTarget = client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
-			ClientPlayNetworking.send(new WakizashiCutPayload(cutTarget));
+			ClientPlayNetworking.send(new MovePayload(MovePayload.CUT, aimedEntityId(client)));
 		}
 
 		boolean useDown = client.options.keyUse.isDown();
@@ -138,7 +140,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceReturnAnimation()));
-			ClientPlayNetworking.send(new MoveSweepPayload());
+			ClientPlayNetworking.send(new MovePayload(MovePayload.KATANA, aimedEntityId(client)));
 			comboReadyTick = -1;
 			comboExpireTick = -1;
 		} else if (useJustPressed && holdingKatana) {
@@ -154,7 +156,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloAnimation())
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloReturnAnimation()));
-			ClientPlayNetworking.send(new MoveSweepPayload());
+			ClientPlayNetworking.send(new MovePayload(MovePayload.KATANA, aimedEntityId(client)));
 		}
 	}
 }

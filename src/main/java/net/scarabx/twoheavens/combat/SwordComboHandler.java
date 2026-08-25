@@ -19,6 +19,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.item.ModItems;
@@ -89,17 +90,11 @@ public class SwordComboHandler {
 
 	public static void register() {
 		AttackEntityCallback.EVENT.register(SwordComboHandler::onAttackEntity);
-		PayloadTypeRegistry.serverboundPlay().register(WakizashiCutPayload.TYPE, WakizashiCutPayload.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(MoveSweepPayload.TYPE, MoveSweepPayload.CODEC);
-		ServerPlayNetworking.registerGlobalReceiver(MoveSweepPayload.TYPE, (payload, context) -> {
-			ServerPlayer sweeper = context.player();
-			context.server().execute(() -> playSweepAt(sweeper));
+		PayloadTypeRegistry.serverboundPlay().register(MovePayload.TYPE, MovePayload.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(MovePayload.TYPE, (payload, context) -> {
+			ServerPlayer mover = context.player();
+			context.server().execute(() -> onMove(mover, payload.move(), payload.targetId()));
 		});
-		ServerPlayNetworking.registerGlobalReceiver(WakizashiCutPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			context.server().execute(() -> onWakizashiCut(player, payload.targetId()));
-		});
-		UseEntityCallback.EVENT.register(SwordComboHandler::onUseEntity);
 		ServerTickEvents.END_SERVER_TICK.register(SwordComboHandler::onServerTick);
 	}
 
@@ -129,51 +124,90 @@ public class SwordComboHandler {
 		if (!isWakizashiDrawn(player)) {
 			// The undrawn wakizashi's cut does NOT arrive here: its left-click is
 			// intercepted client-side before vanilla runs the attack, so this callback
-			// never fires for it. It comes in over WakizashiCutPayload instead.
+			// never fires for it. Every move comes in over MovePayload instead.
 			return InteractionResult.PASS;
 		}
-		if (!(player instanceof ServerPlayer serverPlayer)) {
-			return InteractionResult.PASS;
-		}
-		PendingFinisher busyFinisher = pendingFinishers.get(player.getUUID());
-		if (busyFinisher != null && !busyFinisher.comboFinisher()) {
-			// Katana is mid-slice on its own (no wakizashi stab paired with
-			// it) - the wakizashi can't jump in and start a new stab until
-			// that solo slice resolves.
-			return InteractionResult.PASS;
-		}
-
-		pendingStabs.put(player.getUUID(),
-				new PendingStab(target.getUUID(), serverPlayer.tickCount + STAB_REACH_DELAY_TICKS));
-
+		// Cancel vanilla's attack and nothing more - the stab itself is scheduled from
+		// MovePayload, so that a target the crosshair missed can still be acquired.
 		return InteractionResult.FAIL;
 	}
 
 	/**
-	 * The undrawn wakizashi's cut, reported by the client because vanilla's attack
-	 * path is intercepted before the server would otherwise hear about it. Everything
-	 * that matters is re-checked here: the client is trusted only for which entity
-	 * was under the crosshair.
+	 * Every move arrives here, scheduled the same way: sweep immediately, resolve a
+	 * target, re-validate, then apply a few ticks later when the blade arrives.
+	 *
+	 * Scheduling lives here rather than in the Fabric callbacks because those only
+	 * fire when vanilla already found an entity under the crosshair. A mob below the
+	 * aim point - a chicken at your feet, a spider you are standing over - was never
+	 * acquired at all, so the move did nothing rather than missing. The callbacks
+	 * still run, but only to cancel vanilla's own attack.
 	 */
-	private static void onWakizashiCut(ServerPlayer player, int targetId) {
-		// Two ways to reach this move: undrawn with the wakizashi in the main hand
-		// (left-click), or drawn with it in the off hand (middle-click).
-		boolean undrawnCut = !isWakizashiDrawn(player)
-				&& player.getMainHandItem().getItem() == ModItems.WAKIZASHI;
-		if (!undrawnCut && !isWakizashiDrawn(player)) {
+	private static void onMove(ServerPlayer player, int move, int targetId) {
+		if (!isMoveAllowed(player, move)) {
 			return;
 		}
-		// Before any target check: the move was made, so it sounds and looks like one
-		// even when it hits nothing.
+		// Before any target resolution: the move was made, so it sounds and looks like
+		// one even if it hits nothing.
 		playSweepAt(player);
-		if (targetId < 0 || !(player.level().getEntity(targetId) instanceof LivingEntity target)) {
+
+		double reach = switch (move) {
+			case MovePayload.STAB -> STAB_REACH_DISTANCE;
+			case MovePayload.CUT -> CUT_REACH_DISTANCE;
+			default -> FINISHER_REACH_DISTANCE;
+		};
+		LivingEntity target = resolveTarget(player, targetId, reach);
+		if (target == null) {
 			return;
 		}
-		if (target == player || !target.isAlive()) {
-			return;
+
+		UUID id = player.getUUID();
+		switch (move) {
+			case MovePayload.STAB -> {
+				PendingFinisher busy = pendingFinishers.get(id);
+				if (busy != null && !busy.comboFinisher()) {
+					// Katana is mid-slice on its own - the wakizashi can't jump in and
+					// start a new stab until that solo slice resolves.
+					return;
+				}
+				pendingStabs.put(id, new PendingStab(target.getUUID(),
+						player.tickCount + STAB_REACH_DELAY_TICKS));
+			}
+			case MovePayload.CUT -> pendingCuts.put(id, new PendingCut(target.getUUID(),
+					player.tickCount + CUT_REACH_DELAY_TICKS));
+			default -> {
+				ComboState combo = activeCombos.get(id);
+				boolean comboFinisher = combo != null && player.tickCount <= combo.expireTick()
+						&& combo.targetId().equals(target.getUUID());
+				if (comboFinisher) {
+					activeCombos.remove(id);
+				}
+				pendingFinishers.put(id, new PendingFinisher(target.getUUID(),
+						player.tickCount + FINISHER_REACH_DELAY_TICKS, comboFinisher));
+			}
 		}
-		pendingCuts.put(player.getUUID(),
-				new PendingCut(target.getUUID(), player.tickCount + CUT_REACH_DELAY_TICKS));
+	}
+
+	private static boolean isMoveAllowed(ServerPlayer player, int move) {
+		return switch (move) {
+			case MovePayload.STAB -> isWakizashiDrawn(player);
+			// Undrawn with the wakizashi in the main hand (left-click), or drawn with
+			// it in the off hand (middle-click).
+			case MovePayload.CUT -> isWakizashiDrawn(player)
+					|| player.getMainHandItem().getItem() == ModItems.WAKIZASHI;
+			default -> player.getMainHandItem().getItem() == ModItems.KATANA;
+		};
+	}
+
+	private static LivingEntity resolveTarget(ServerPlayer player, int targetId, double reach) {
+		LivingEntity target = targetId >= 0
+				&& player.level().getEntity(targetId) instanceof LivingEntity aimed ? aimed : null;
+		if (target == null) {
+			target = acquireTarget(player, reach);
+		}
+		if (target == null || target == player || !target.isAlive()) {
+			return null;
+		}
+		return target;
 	}
 
 	private static void onServerTick(net.minecraft.server.MinecraftServer server) {
@@ -195,7 +229,7 @@ public class SwordComboHandler {
 			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
 				continue;
 			}
-			if (player.distanceTo(target) > STAB_REACH_DISTANCE) {
+			if (outOfReach(player, target, STAB_REACH_DISTANCE)) {
 				continue;
 			}
 
@@ -230,7 +264,7 @@ public class SwordComboHandler {
 			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
 				continue;
 			}
-			if (player.distanceTo(target) > CUT_REACH_DISTANCE) {
+			if (outOfReach(player, target, CUT_REACH_DISTANCE)) {
 				continue;
 			}
 
@@ -258,7 +292,7 @@ public class SwordComboHandler {
 			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
 				continue;
 			}
-			if (player.distanceTo(target) > FINISHER_REACH_DISTANCE) {
+			if (outOfReach(player, target, FINISHER_REACH_DISTANCE)) {
 				continue;
 			}
 
@@ -300,18 +334,7 @@ public class SwordComboHandler {
 			return InteractionResult.PASS;
 		}
 
-		ComboState combo = activeCombos.get(player.getUUID());
-		boolean comboFinisher = combo != null && player.tickCount <= combo.expireTick()
-				&& combo.targetId().equals(target.getUUID());
-		if (comboFinisher) {
-			activeCombos.remove(player.getUUID());
-		}
-
-		if (player instanceof ServerPlayer serverPlayer) {
-			pendingFinishers.put(player.getUUID(), new PendingFinisher(
-					target.getUUID(), serverPlayer.tickCount + FINISHER_REACH_DELAY_TICKS, comboFinisher));
-		}
-
+		// Cancel vanilla's interaction and nothing more - scheduled from MovePayload.
 		return InteractionResult.FAIL;
 	}
 
@@ -360,6 +383,73 @@ public class SwordComboHandler {
 	 * spread and a slight outward drift so it reads as a spray off the cut rather
 	 * than a static cloud.
 	 */
+	/**
+	 * Reach measured generously: the move connects if EITHER the old feet-to-feet
+	 * distance OR the eye-to-bounding-box distance is within range.
+	 *
+	 * Entity#position is the point between the feet, and distanceTo compares those
+	 * points while ignoring the bounding box - so a spider 1.4 blocks wide could be
+	 * touching the player with its centre outside reach. Measuring eye-to-box fixes
+	 * that, but measuring from the eyes adds the player's own height against short
+	 * mobs at their feet, which made low targets harder to land in practice.
+	 *
+	 * Taking whichever is smaller keeps the box benefit for wide and tall mobs
+	 * without ever being stricter than the original check for low ones. Reach is a
+	 * feel value, not a simulation - erring generous is correct here.
+	 *
+	 * No slack beyond that: this is re-checked when the move LANDS, a few ticks after
+	 * the click, so a mob's knockback can still shove the player out of range and
+	 * steal the hit. That is deliberate - a target that gets away is not hit.
+	 */
+	/**
+	 * Finds a target when the crosshair has none.
+	 *
+	 * Every move needs an entity to act on, and the crosshair only reports what the
+	 * player is looking AT - so a chicken or a spider below the aim point is never
+	 * acquired, and the move does nothing at all rather than missing. A blade swung
+	 * down through something standing at your feet should connect.
+	 *
+	 * Picks the closest living entity whose box is within reach and in front of the
+	 * player (dot product against the look vector), so this only ever helps with
+	 * targets the player was plausibly swinging at - never something behind them.
+	 */
+	private static LivingEntity acquireTarget(ServerPlayer player, double reach) {
+		Vec3 look = player.getLookAngle();
+		Vec3 eye = player.getEyePosition();
+		LivingEntity best = null;
+		double bestDistance = Double.MAX_VALUE;
+
+		for (LivingEntity candidate : player.level().getEntitiesOfClass(LivingEntity.class,
+				player.getBoundingBox().inflate(reach))) {
+			if (candidate == player || !candidate.isAlive() || outOfReach(player, candidate, reach)) {
+				continue;
+			}
+			Vec3 toCandidate = candidate.getBoundingBox().getCenter().subtract(eye);
+			if (toCandidate.dot(look) <= 0.0) {
+				continue;
+			}
+			double distance = toCandidate.lengthSqr();
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				best = candidate;
+			}
+		}
+		return best;
+	}
+
+	private static boolean outOfReach(ServerPlayer player, LivingEntity target, double reach) {
+		if (player.distanceTo(target) <= reach) {
+			return false;
+		}
+
+		Vec3 eye = player.getEyePosition();
+		AABB box = target.getBoundingBox();
+		double dx = Math.max(box.minX - eye.x, Math.max(0.0, eye.x - box.maxX));
+		double dy = Math.max(box.minY - eye.y, Math.max(0.0, eye.y - box.maxY));
+		double dz = Math.max(box.minZ - eye.z, Math.max(0.0, eye.z - box.maxZ));
+		return dx * dx + dy * dy + dz * dz > reach * reach;
+	}
+
 	private static void playBloodEffect(ServerLevel level, ServerPlayer attacker, LivingEntity target) {
 		Vec3 toAttacker = attacker.position().subtract(target.position());
 		double length = toAttacker.horizontalDistance();

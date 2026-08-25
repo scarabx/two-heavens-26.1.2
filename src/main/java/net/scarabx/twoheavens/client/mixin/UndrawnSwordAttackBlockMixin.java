@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *   ours - spamming the cut intermittently produced vanilla's upward slice
  *   instead. Blocking vanilla's swing leaves the button free for our own, which
  *   AttackSwingController triggers directly off the key press and reports to the
- *   server with WakizashiCutPayload.
+ *   server with MovePayload.
  *
  * Client-side by nature (startAttack is the sole caller of cannotAttackWithItem).
  */
