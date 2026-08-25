@@ -52,6 +52,12 @@ public class SwordComboHandler {
 
 	private static final float STAB_DAMAGE = 1.0F;
 	private static final float SOLO_FINISHER_DAMAGE_CAP = 20.0F;
+	// Floor under the half-max-health scaling. Without it the percentage makes
+	// EVERY target under 40 max HP die in exactly two hits - a cow takes 5 twice
+	// just like a creeper takes 10 twice - so the blade feels identical against a
+	// chicken and a zombie. Matches KatanaItem's own flat hit damage, so a slice
+	// is never weaker than a plain katana blow.
+	private static final float SOLO_FINISHER_DAMAGE_FLOOR = 12.0F;
 	// The two real boss encounters (phases/mechanics, not just high HP) are
 	// exempt from the combo finisher's instakill - everything else, Iron
 	// Golem/Ravager tankiness included, still dies in one hit.
@@ -73,19 +79,22 @@ public class SwordComboHandler {
 
 	private static InteractionResult onAttackEntity(Player player, Level level, InteractionHand hand,
 			Entity entity, EntityHitResult hitResult) {
-		if (hand != InteractionHand.MAIN_HAND || level.isClientSide()) {
+		if (hand != InteractionHand.MAIN_HAND) {
 			return InteractionResult.PASS;
 		}
 		if (!(entity instanceof LivingEntity target)) {
 			return InteractionResult.PASS;
 		}
-		if (!isWakizashiDrawn(player)) {
-			// Undrawn, the katana is a right-click weapon only - left-click does
-			// nothing at all rather than falling through to a vanilla hit. FAIL
-			// cancels the attack outright.
-			if (player.getMainHandItem().getItem() == ModItems.KATANA) {
-				return InteractionResult.FAIL;
-			}
+		// Undrawn, the katana is a right-click weapon only - left-click does
+		// nothing at all rather than falling through to a vanilla hit. This runs
+		// on BOTH sides deliberately: Fabric fires this callback client-side too,
+		// where a non-PASS result cancels MultiPlayerGameMode#attack before it
+		// swings the arm or sends the attack packet. Blocking server-side alone
+		// stopped the damage but left the click looking like it connected.
+		if (!isWakizashiDrawn(player) && player.getMainHandItem().getItem() == ModItems.KATANA) {
+			return InteractionResult.FAIL;
+		}
+		if (level.isClientSide() || !isWakizashiDrawn(player)) {
 			return InteractionResult.PASS;
 		}
 		if (!(player instanceof ServerPlayer serverPlayer)) {
@@ -176,9 +185,12 @@ public class SwordComboHandler {
 				// slice, same animation, but not an instakill: half the
 				// target's max health per hit, capped at 20 (an Enderman's
 				// own half-health value, 40 max HP / 2) so it doesn't keep
-				// scaling up forever against tankier mobs.
+				// scaling up forever against tankier mobs, and floored at 12
+				// so weak mobs die in one hit instead of the percentage making
+				// everything under 40 max HP a uniform two-hit kill.
+				float scaled = Math.min(target.getMaxHealth() * 0.5F, SOLO_FINISHER_DAMAGE_CAP);
 				target.hurt(level.damageSources().playerAttack(player),
-						Math.min(target.getMaxHealth() * 0.5F, SOLO_FINISHER_DAMAGE_CAP));
+						Math.max(scaled, SOLO_FINISHER_DAMAGE_FLOOR));
 			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 		}
