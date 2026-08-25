@@ -6,7 +6,6 @@ import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -33,15 +32,19 @@ public class DaishoObiItem extends Item implements GeoItem {
 		super(properties);
 	}
 
-	// Added before the super call so it sits above the recipe prompt that
-	// ItemTooltipMixin appends. Calling super matters: that mixin targets
-	// Item#appendHoverText, so skipping it here would drop the prompt entirely.
+	// Ordered by when a player needs each line: equipping blocks everything, drawing
+	// is the point of the item, and taking it apart is the only one you could not
+	// possibly need on first contact. Never an ingredient, so no recipe prompt here.
+	//
+	// Trinkets adds its own "Equippable in the Belt trinket slot" line, so these
+	// deliberately say what it cannot: how to reach that slot, and the key to use.
 	@Override
 	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
 								Consumer<Component> consumer, TooltipFlag flag) {
-		consumer.accept(Component.translatable("tooltip.twoheavens.take_apart")
-				.withStyle(ChatFormatting.DARK_GRAY));
 		super.appendHoverText(stack, context, display, consumer, flag);
+		consumer.accept(Component.translatable("tooltip.twoheavens.obi_equip"));
+		consumer.accept(Component.translatable("tooltip.twoheavens.obi_draw"));
+		consumer.accept(Component.translatable("tooltip.twoheavens.take_apart"));
 	}
 
 	@Override

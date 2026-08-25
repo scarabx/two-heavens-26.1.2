@@ -6,7 +6,9 @@
 		"ExampleMixin",
 		"LivingEntitySwingMixin",
 		"ServerGamePacketListenerImplMixin",
-		"InventoryAddMixin"
+		"InventoryAddMixin",
+		"StunnedMovementMixin",
+		"StunnedAttackMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

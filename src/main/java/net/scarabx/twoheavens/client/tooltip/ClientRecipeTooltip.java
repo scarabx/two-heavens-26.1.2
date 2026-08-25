@@ -33,7 +33,8 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 	private static final int SLOT_INTERIOR = 0xFF8B8B8B;
 	private static final int SLOT_SHADOW = 0xFF373737;
 	private static final int SLOT_HIGHLIGHT = 0xFFFFFFFF;
-	private static final int NAME_COLOR = 0xFFAAAAAA;
+	// Same white vanilla uses for a common item's name.
+	private static final int NAME_COLOR = 0xFFFFFFFF;
 
 	private final RecipeTooltipData data;
 

@@ -10,8 +10,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -122,8 +120,11 @@ public class SwordComboHandler {
 			}
 
 			target.hurt(level.damageSources().playerAttack(player), STAB_DAMAGE);
-			target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, STUN_DURATION_TICKS, 9));
-			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_DURATION_TICKS, 9));
+			// Not a mob effect: a sword landing should not read as a thrown potion, and
+			// Weakness only zeroed the damage while the mob kept swinging. StunAttachment
+			// holds the target still and blocks its attacks outright, with no particles,
+			// no HUD icon, and nothing milk can wash off. Same duration as before.
+			StunAttachment.stun(target, STUN_DURATION_TICKS);
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 
 			activeCombos.put(player.getUUID(),
@@ -153,8 +154,7 @@ public class SwordComboHandler {
 			}
 
 			if (pending.comboFinisher()) {
-				target.removeEffect(MobEffects.SLOWNESS);
-				target.removeEffect(MobEffects.WEAKNESS);
+				StunAttachment.clear(target);
 				// Paired with a landed wakizashi stab - instakill regardless
 				// of remaining health/armor/resistance, except the Wither
 				// and Ender Dragon, whose actual boss fights shouldn't be
@@ -202,8 +202,20 @@ public class SwordComboHandler {
 		return InteractionResult.FAIL;
 	}
 
+	/**
+	 * The paired stab is the Daisho Obi's reward, so it needs the swords actually
+	 * drawn - not merely a katana and wakizashi happening to be in the two hands.
+	 * Checking the held items alone let a player hand-assemble the loadout and use
+	 * the combo without ever equipping an obi.
+	 *
+	 * The katana's solo slice is deliberately NOT gated this way: it is what makes
+	 * a freshly forged sword feel like more than a retextured vanilla one, and
+	 * having it fail would turn the payoff of the whole smithing chain into a
+	 * suspected bug.
+	 */
 	private static boolean isWakizashiDrawn(Player player) {
-		return player.getMainHandItem().getItem() == ModItems.KATANA
+		return player.hasAttached(DrawnSwordsAttachment.TYPE)
+				&& player.getMainHandItem().getItem() == ModItems.KATANA
 				&& player.getOffhandItem().getItem() == ModItems.WAKIZASHI;
 	}
 

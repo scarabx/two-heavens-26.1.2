@@ -5,11 +5,13 @@ import com.geckolib.animatable.client.GeoRenderProvider;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.scarabx.twoheavens.item.ItemRecipeTooltip;
+import java.util.Optional;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -31,15 +33,18 @@ public class DaishoSayaItem extends Item implements GeoItem {
 		super(properties);
 	}
 
-	// Added before the super call so it sits above the recipe prompt that
-	// ItemTooltipMixin appends. Calling super matters: that mixin targets
-	// Item#appendHoverText, so skipping it here would drop the prompt entirely.
+	// Disassembly line first, then the recipe prompt underneath it.
 	@Override
 	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
 								Consumer<Component> consumer, TooltipFlag flag) {
-		consumer.accept(Component.translatable("tooltip.twoheavens.take_apart")
-				.withStyle(ChatFormatting.DARK_GRAY));
+		consumer.accept(Component.translatable("tooltip.twoheavens.take_apart"));
 		super.appendHoverText(stack, context, display, consumer, flag);
+		ItemRecipeTooltip.appendPrompt(stack, consumer);
+	}
+
+	@Override
+	public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+		return ItemRecipeTooltip.image(stack);
 	}
 
 	@Override

@@ -3,9 +3,23 @@ package net.scarabx.twoheavens.client.animation;
 import com.zigythebird.playeranimcore.animation.RawAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import net.scarabx.twoheavens.item.ModItems;
 
 /**
- * Client-only combo visuals: while the katana/wakizashi are drawn
+ * Client-only combat visuals, split the same way the mechanics are:
+ *
+ * - Drawn from a Daisho Obi: the full two-sword set. A left-click swing plays the
+ *   wakizashi lunge/stab, and a right-click plays the paired katana slice.
+ * - Katana alone, no obi: the solo slice only, using the one-handed variant. The
+ *   paired animation holds the left arm in the offhand wakizashi pose, which looks
+ *   wrong on an empty hand.
+ *
+ * These conditions deliberately mirror SwordComboHandler's. Previously the visuals
+ * gated on drawn while the mechanics gated on held items, so a katana used without
+ * an obi dealt its solo damage with no animation at all - the mod's signature move
+ * firing invisibly, which read as a plain vanilla sword.
+ *
+ * Original note: while the katana/wakizashi are drawn
  * (SwordDrawController), any left-click swing plays a wakizashi lunge/stab
  * - no entity needs to be in range, so the move can be tested/tuned freely.
  * If a right-click follows within the combo window (only opening once the
@@ -43,6 +57,7 @@ public class AttackSwingController {
 		}
 
 		boolean drawn = SwordDrawController.isDrawn(player);
+		boolean holdingKatana = player.getMainHandItem().getItem() == ModItems.KATANA;
 
 		boolean swinging = player.swinging;
 		boolean newSwing = swinging && !lastSwinging;
@@ -74,6 +89,12 @@ public class AttackSwingController {
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceReturnAnimation()));
 			comboReadyTick = -1;
 			comboExpireTick = -1;
+		} else if (useJustPressed && holdingKatana) {
+			// Undrawn: the solo slice still lands (SwordComboHandler does not gate it),
+			// so it gets the one-handed animation rather than nothing.
+			PlayerHandAnimator.trigger(player, RawAnimation.begin()
+					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloAnimation())
+					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceSoloReturnAnimation()));
 		}
 	}
 }

@@ -1,5 +1,13 @@
 package net.scarabx.twoheavens.item.custom;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.scarabx.twoheavens.item.ItemRecipeTooltip;
+import java.util.Optional;
+
 import com.geckolib.animatable.GeoItem;
 import com.geckolib.animatable.client.GeoRenderProvider;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -40,5 +48,17 @@ public class ObiItem extends Item implements GeoItem {
 				return this.renderer;
 			}
 		});
+	}
+
+	@Override
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+								Consumer<Component> consumer, TooltipFlag flag) {
+		super.appendHoverText(stack, context, display, consumer, flag);
+		ItemRecipeTooltip.appendPrompt(stack, consumer);
+	}
+
+	@Override
+	public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+		return ItemRecipeTooltip.image(stack);
 	}
 }

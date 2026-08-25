@@ -1,8 +1,9 @@
 package net.scarabx.twoheavens.client.mixin;
 
-import net.minecraft.ChatFormatting;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.scarabx.twoheavens.TwoHeavens;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
@@ -30,6 +31,11 @@ import java.util.function.Consumer;
 @Mixin(Item.class)
 public class ItemTooltipMixin {
 
+	/** Our own items handle this in their item classes, so this mixin leaves them alone. */
+	private static boolean twoheavens$isOurs(ItemStack stack) {
+		return BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(TwoHeavens.MOD_ID);
+	}
+
 	/** Screen.hasShiftDown() no longer exists in this version - poll the window directly. */
 	private static boolean twoheavens$shiftDown() {
 		return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), InputConstants.KEY_LSHIFT)
@@ -39,16 +45,16 @@ public class ItemTooltipMixin {
 	@Inject(method = "appendHoverText", at = @At("TAIL"))
 	private void twoheavens$recipePrompt(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
 										  Consumer<Component> consumer, TooltipFlag flag, CallbackInfo ci) {
-		if (ModRecipeTooltips.forIngredient(stack.getItem()) == null || twoheavens$shiftDown()) {
+		if (twoheavens$isOurs(stack) || ModRecipeTooltips.forIngredient(stack.getItem()) == null
+				|| twoheavens$shiftDown()) {
 			return;
 		}
-		consumer.accept(Component.translatable("tooltip.twoheavens.shift_for_recipe")
-				.withStyle(ChatFormatting.DARK_GRAY));
+		consumer.accept(Component.translatable("tooltip.twoheavens.shift_for_recipe"));
 	}
 
 	@Inject(method = "getTooltipImage", at = @At("HEAD"), cancellable = true)
 	private void twoheavens$recipeGrid(ItemStack stack, CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
-		if (!twoheavens$shiftDown()) {
+		if (twoheavens$isOurs(stack) || !twoheavens$shiftDown()) {
 			return;
 		}
 		RecipeTooltipData data = ModRecipeTooltips.forIngredient(stack.getItem());

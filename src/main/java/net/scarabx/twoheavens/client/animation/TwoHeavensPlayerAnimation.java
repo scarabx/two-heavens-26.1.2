@@ -35,6 +35,8 @@ public class TwoHeavensPlayerAnimation {
 	private static Map<String, Animation> attackSwingReturnAnimations;
 	private static Map<String, Animation> katanaSliceAnimations;
 	private static Map<String, Animation> katanaSliceReturnAnimations;
+	private static Map<String, Animation> katanaSliceSoloAnimations;
+	private static Map<String, Animation> katanaSliceSoloReturnAnimations;
 	private static Map<String, Animation> combatIdleAnimations;
 
 	// Animations are loaded once and cached (below), so an F3+T resource
@@ -48,6 +50,8 @@ public class TwoHeavensPlayerAnimation {
 		attackSwingReturnAnimations = null;
 		katanaSliceAnimations = null;
 		katanaSliceReturnAnimations = null;
+		katanaSliceSoloAnimations = null;
+		katanaSliceSoloReturnAnimations = null;
 		combatIdleAnimations = null;
 	}
 
@@ -123,6 +127,26 @@ public class TwoHeavensPlayerAnimation {
 			katanaSliceReturnAnimations = loadAnimations("katana_slice_return.animation.json");
 		}
 		return katanaSliceReturnAnimations.get("animation.twoheavens.katana_slice_return");
+	}
+
+	/**
+	 * One-handed slice, for a katana held without the wakizashi. Same right-arm
+	 * motion as the paired version; the left arm track is absent because that
+	 * bone is a static hold at the offhand wakizashi pose, which would pin an
+	 * empty arm into gripping a sword that is not there.
+	 */
+	public static Animation getKatanaSliceSoloAnimation() {
+		if (katanaSliceSoloAnimations == null) {
+			katanaSliceSoloAnimations = loadAnimations("katana_slice_solo.animation.json");
+		}
+		return katanaSliceSoloAnimations.get("animation.twoheavens.katana_slice_solo");
+	}
+
+	public static Animation getKatanaSliceSoloReturnAnimation() {
+		if (katanaSliceSoloReturnAnimations == null) {
+			katanaSliceSoloReturnAnimations = loadAnimations("katana_slice_solo_return.animation.json");
+		}
+		return katanaSliceSoloReturnAnimations.get("animation.twoheavens.katana_slice_solo_return");
 	}
 
 	public static Animation getCombatIdleAnimation() {

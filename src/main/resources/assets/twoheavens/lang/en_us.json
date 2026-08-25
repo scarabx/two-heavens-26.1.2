@@ -42,5 +42,9 @@
   "hud.twoheavens.furnace_wait_short": "30 sec",
   "message.twoheavens.tend_furnace": "Tend to furnace",
   "hud.twoheavens.furnace_bellows": "every 5 sec, for 30 sec",
-  "tooltip.twoheavens.take_apart": "Sneak + right-click to take apart"
+  "tooltip.twoheavens.take_apart": "Sneak + right-click to take apart",
+  "tooltip.twoheavens.obi_equip": "Hover over the leggings slot to reveal the belt slot",
+  "tooltip.twoheavens.obi_draw": "Press R to draw and sheathe your swords",
+  "tooltip.twoheavens.wakizashi_combat": "Draw from a Daisho Obi to stab and stun",
+  "tooltip.twoheavens.katana_combat": "Draw from a Daisho Obi to slice, or finish a stunned target"
 }

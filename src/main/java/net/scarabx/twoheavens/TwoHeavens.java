@@ -6,6 +6,7 @@ import net.minecraft.resources.Identifier;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.ModBlocks;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
+import net.scarabx.twoheavens.combat.StunAttachment;
 import net.scarabx.twoheavens.combat.SwordComboHandler;
 import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import net.scarabx.twoheavens.event.AnvilForgingHandler;
@@ -46,6 +47,7 @@ public class TwoHeavens implements ModInitializer {
 		// persist/sync correctly, same as items/blocks needing registration
 		// up front rather than on first use.
 		DrawnSwordsAttachment.touch();
+		StunAttachment.touch();
 		SwordDrawServerHandler.register();
 		TutorialProgressAttachment.touch();
 		JoinMessageHandler.register();

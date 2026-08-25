@@ -1,5 +1,13 @@
 package net.scarabx.twoheavens.item.custom;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.scarabx.twoheavens.item.ItemRecipeTooltip;
+import java.util.Optional;
+import java.util.function.Consumer;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -34,5 +42,21 @@ public class WakizashiItem extends Item {
 		if (attacker instanceof Player player) {
 			player.getCooldowns().addCooldown(stack, 10);
 		}
+	}
+
+	@Override
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+								Consumer<Component> consumer, TooltipFlag flag) {
+		super.appendHoverText(stack, context, display, consumer, flag);
+		// Names the Daisho Obi rather than the R key on purpose: this is the first
+		// place a player meets "draw", and pressing R without an obi does nothing.
+		// The obi's own tooltip teaches the key, so neither repeats the other.
+		consumer.accept(Component.translatable("tooltip.twoheavens.wakizashi_combat"));
+		ItemRecipeTooltip.appendPrompt(stack, consumer);
+	}
+
+	@Override
+	public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+		return ItemRecipeTooltip.image(stack);
 	}
 }

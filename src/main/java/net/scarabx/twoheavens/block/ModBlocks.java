@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.scarabx.twoheavens.TwoHeavens;
+import net.scarabx.twoheavens.item.ModBlockItem;
 import net.scarabx.twoheavens.block.custom.KeraBlock;
 import net.scarabx.twoheavens.block.custom.KeraStaticBlock;
 import net.scarabx.twoheavens.block.custom.SatetsuSandBlock;
@@ -53,7 +54,7 @@ public class ModBlocks {
 		Block block = Registry.register(BuiltInRegistries.BLOCK, blockKey, blockFactory.apply(blockProperties.setId(blockKey)));
 
 		ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(TwoHeavens.MOD_ID, name));
-		Registry.register(BuiltInRegistries.ITEM, itemKey, new BlockItem(block, new Item.Properties().setId(itemKey)));
+		Registry.register(BuiltInRegistries.ITEM, itemKey, new ModBlockItem(block, new Item.Properties().setId(itemKey)));
 
 		return block;
 	}
