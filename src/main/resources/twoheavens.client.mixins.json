@@ -5,7 +5,8 @@
 	"client": [
 		"ExampleClientMixin",
 		"InventoryClientMixin",
-		"ItemTooltipMixin"
+		"ItemTooltipMixin",
+		"KatanaAttackBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
