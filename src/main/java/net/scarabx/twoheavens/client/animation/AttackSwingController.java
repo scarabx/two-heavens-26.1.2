@@ -92,9 +92,16 @@ public class AttackSwingController {
 		} else if (useJustPressed && holdingKatana) {
 			// Undrawn: the solo slice still lands (SwordComboHandler does not gate it),
 			// so it gets the one-handed animation rather than nothing.
+			//
+			// thenPlay, NOT thenPlayAndHold. Holding is right when drawn, because
+			// combat_idle is a real resting pose to settle into. Undrawn there is no
+			// stance to hold, so holding left our layer asserting a pose forever while
+			// vanilla tried to animate its own swing underneath - the two fought and
+			// produced a small forward lurch on the next left-click. Letting the return
+			// finish releases the arm back to vanilla.
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloAnimation())
-					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceSoloReturnAnimation()));
+					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloReturnAnimation()));
 		}
 	}
 }

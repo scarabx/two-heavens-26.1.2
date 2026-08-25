@@ -39,6 +39,12 @@ public class LivingEntitySwingMixin {
 		if (item != ModItems.KATANA && item != ModItems.WAKIZASHI) {
 			return;
 		}
+		// An undrawn katana's left-click is cancelled outright (SwordComboHandler),
+		// so it must not announce itself with a sweep either - that read as the swing
+		// having done something when it had not.
+		if (item == ModItems.KATANA) {
+			return;
+		}
 		SweepEffect.playFromSwing(player);
 	}
 }

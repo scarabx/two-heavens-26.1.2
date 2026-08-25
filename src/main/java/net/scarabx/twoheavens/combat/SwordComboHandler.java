@@ -76,7 +76,16 @@ public class SwordComboHandler {
 		if (hand != InteractionHand.MAIN_HAND || level.isClientSide()) {
 			return InteractionResult.PASS;
 		}
-		if (!(entity instanceof LivingEntity target) || !isWakizashiDrawn(player)) {
+		if (!(entity instanceof LivingEntity target)) {
+			return InteractionResult.PASS;
+		}
+		if (!isWakizashiDrawn(player)) {
+			// Undrawn, the katana is a right-click weapon only - left-click does
+			// nothing at all rather than falling through to a vanilla hit. FAIL
+			// cancels the attack outright.
+			if (player.getMainHandItem().getItem() == ModItems.KATANA) {
+				return InteractionResult.FAIL;
+			}
 			return InteractionResult.PASS;
 		}
 		if (!(player instanceof ServerPlayer serverPlayer)) {
