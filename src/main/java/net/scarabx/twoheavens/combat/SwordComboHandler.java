@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,6 +53,9 @@ public class SwordComboHandler {
 	// right-click.
 	private static final int FINISHER_REACH_DELAY_TICKS = 9;
 	private static final double FINISHER_REACH_DISTANCE = 4.0;
+
+	// Dark red dust - vanilla has no blood particle.
+	private static final DustParticleOptions BLOOD = new DustParticleOptions(0xAA0000, 1.0F);
 
 	private static final float STAB_DAMAGE = 1.0F;
 	// The wakizashi's no-obi cut. Deliberately shorter reach than the katana's
@@ -202,6 +206,7 @@ public class SwordComboHandler {
 			// no HUD icon, and nothing milk can wash off. Same duration as before.
 			StunAttachment.stun(target, STUN_DURATION_TICKS);
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
+			playBloodEffect(level, player, target);
 
 			activeCombos.put(player.getUUID(),
 					new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
@@ -232,6 +237,7 @@ public class SwordComboHandler {
 			target.hurt(level.damageSources().playerAttack(player), CUT_DAMAGE);
 			StunAttachment.slow(target, CUT_SLOW_TICKS);
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
+			playBloodEffect(level, player, target);
 		}
 
 		Iterator<Map.Entry<UUID, PendingFinisher>> finisherIterator = pendingFinishers.entrySet().iterator();
@@ -278,6 +284,7 @@ public class SwordComboHandler {
 						Math.max(scaled, SOLO_FINISHER_DAMAGE_FLOOR));
 			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
+			playBloodEffect(level, player, target);
 		}
 	}
 
@@ -343,6 +350,27 @@ public class SwordComboHandler {
 				player.getX() + look.x * 1.5,
 				player.getY() + player.getEyeHeight() * 0.75 + look.y * 1.5,
 				player.getZ() + look.z * 1.5);
+	}
+
+	/**
+	 * Blood at the point the blade meets the mob: on the target's near side, facing
+	 * the attacker, at roughly chest height rather than at its feet-anchored position.
+	 *
+	 * Vanilla has no blood particle, so this is dust tinted dark red. Spawned with a
+	 * spread and a slight outward drift so it reads as a spray off the cut rather
+	 * than a static cloud.
+	 */
+	private static void playBloodEffect(ServerLevel level, ServerPlayer attacker, LivingEntity target) {
+		Vec3 toAttacker = attacker.position().subtract(target.position());
+		double length = toAttacker.horizontalDistance();
+		Vec3 facing = length < 1.0E-4 ? new Vec3(0.0, 0.0, 1.0) : toAttacker.scale(1.0 / length);
+		double reach = target.getBbWidth() * 0.5;
+
+		level.sendParticles(BLOOD,
+				target.getX() + facing.x * reach,
+				target.getY() + target.getBbHeight() * 0.6,
+				target.getZ() + facing.z * reach,
+				12, 0.15, 0.2, 0.15, 0.02);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
