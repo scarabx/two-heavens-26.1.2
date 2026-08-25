@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.entity.player.Player;
+import net.scarabx.twoheavens.combat.MoveSweepPayload;
 import net.scarabx.twoheavens.combat.WakizashiCutPayload;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -97,6 +98,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getAttackSwingAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getAttackSwingReturnAnimation()));
+			ClientPlayNetworking.send(new MoveSweepPayload());
 			comboReadyTick = player.tickCount + STAB_ANIMATION_TICKS;
 			comboExpireTick = comboReadyTick + COMBO_WINDOW_TICKS;
 		}
@@ -136,6 +138,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceAnimation())
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getKatanaSliceReturnAnimation()));
+			ClientPlayNetworking.send(new MoveSweepPayload());
 			comboReadyTick = -1;
 			comboExpireTick = -1;
 		} else if (useJustPressed && holdingKatana) {
@@ -151,6 +154,7 @@ public class AttackSwingController {
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloAnimation())
 					.thenPlay(TwoHeavensPlayerAnimation.getKatanaSliceSoloReturnAnimation()));
+			ClientPlayNetworking.send(new MoveSweepPayload());
 		}
 	}
 }

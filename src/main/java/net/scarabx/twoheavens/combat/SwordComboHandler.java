@@ -19,6 +19,7 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.util.Mth;
 import net.scarabx.twoheavens.item.ModItems;
 
 import java.util.HashMap;
@@ -85,6 +86,11 @@ public class SwordComboHandler {
 	public static void register() {
 		AttackEntityCallback.EVENT.register(SwordComboHandler::onAttackEntity);
 		PayloadTypeRegistry.serverboundPlay().register(WakizashiCutPayload.TYPE, WakizashiCutPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(MoveSweepPayload.TYPE, MoveSweepPayload.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(MoveSweepPayload.TYPE, (payload, context) -> {
+			ServerPlayer sweeper = context.player();
+			context.server().execute(() -> playSweepAt(sweeper));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(WakizashiCutPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> onWakizashiCut(player, payload.targetId()));
@@ -153,6 +159,9 @@ public class SwordComboHandler {
 		if (!undrawnCut && !isWakizashiDrawn(player)) {
 			return;
 		}
+		// Before any target check: the move was made, so it sounds and looks like one
+		// even when it hits nothing.
+		playSweepAt(player);
 		if (targetId < 0 || !(player.level().getEntity(targetId) instanceof LivingEntity target)) {
 			return;
 		}
@@ -314,6 +323,29 @@ public class SwordComboHandler {
 		return player.hasAttached(DrawnSwordsAttachment.TYPE)
 				&& player.getMainHandItem().getItem() == ModItems.KATANA
 				&& player.getOffhandItem().getItem() == ModItems.WAKIZASHI;
+	}
+
+	/**
+	 * Sweep for a move that hit nothing. Spawned a short way along the player's look
+	 * vector at chest height rather than at the player's position - their position is
+	 * their feet, where the particle is hidden inside the model and reads as no
+	 * particle at all, which is how a swing at air ended up silent-looking while a
+	 * landed hit (spawned at the target) showed correctly.
+	 */
+	private static void playSweepAt(ServerPlayer player) {
+		// Placed exactly as vanilla's own sweep in Player#attack: one block out along
+		// the yaw at mid-body height, count 0, with the direction passed as the
+		// velocity vector. That last part is what orients the arc along the swing -
+		// count 1 with zero velocity spawns an unoriented puff that does not read as
+		// travelling with the blade.
+		double dx = -Mth.sin(player.getYRot() * (float) (Math.PI / 180.0));
+		double dz = Mth.cos(player.getYRot() * (float) (Math.PI / 180.0));
+		ServerLevel level = player.level();
+		level.sendParticles(ParticleTypes.SWEEP_ATTACK,
+				player.getX() + dx, player.getY(0.5), player.getZ() + dz,
+				0, dx, 0.0, dz, 0.0);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+				SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8F, 1.0F);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
