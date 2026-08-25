@@ -3,6 +3,8 @@ package net.scarabx.twoheavens.combat;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,6 +53,14 @@ public class SwordComboHandler {
 	private static final double FINISHER_REACH_DISTANCE = 4.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
+	// The wakizashi's no-obi cut. Deliberately shorter reach than the katana's
+	// 4.0: the short blade has to be stepped in with, which is what turns "same
+	// family, shorter weapon" from a look into something the player feels.
+	private static final int CUT_REACH_DELAY_TICKS = 2;
+	private static final double CUT_REACH_DISTANCE = 2.5;
+	private static final float CUT_DAMAGE = 7.0F;
+	private static final int CUT_SLOW_TICKS = 20;
+
 	private static final float SOLO_FINISHER_DAMAGE_CAP = 20.0F;
 	// Floor under the half-max-health scaling. Without it the percentage makes
 	// EVERY target under 40 max HP die in exactly two hits - a cow takes 5 twice
@@ -70,9 +80,15 @@ public class SwordComboHandler {
 	private static final Map<UUID, ComboState> activeCombos = new HashMap<>();
 	private static final Map<UUID, PendingStab> pendingStabs = new HashMap<>();
 	private static final Map<UUID, PendingFinisher> pendingFinishers = new HashMap<>();
+	private static final Map<UUID, PendingCut> pendingCuts = new HashMap<>();
 
 	public static void register() {
 		AttackEntityCallback.EVENT.register(SwordComboHandler::onAttackEntity);
+		PayloadTypeRegistry.serverboundPlay().register(WakizashiCutPayload.TYPE, WakizashiCutPayload.CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(WakizashiCutPayload.TYPE, (payload, context) -> {
+			ServerPlayer player = context.player();
+			context.server().execute(() -> onWakizashiCut(player, payload.targetId()));
+		});
 		UseEntityCallback.EVENT.register(SwordComboHandler::onUseEntity);
 		ServerTickEvents.END_SERVER_TICK.register(SwordComboHandler::onServerTick);
 	}
@@ -94,7 +110,16 @@ public class SwordComboHandler {
 		if (!isWakizashiDrawn(player) && player.getMainHandItem().getItem() == ModItems.KATANA) {
 			return InteractionResult.FAIL;
 		}
-		if (level.isClientSide() || !isWakizashiDrawn(player)) {
+		// Server-only from here. The wakizashi's branch in particular must NOT run
+		// client-side: a non-PASS result there cancels the swing, and the swing is
+		// what AttackSwingController watches to play the cut animation.
+		if (level.isClientSide()) {
+			return InteractionResult.PASS;
+		}
+		if (!isWakizashiDrawn(player)) {
+			// The undrawn wakizashi's cut does NOT arrive here: its left-click is
+			// intercepted client-side before vanilla runs the attack, so this callback
+			// never fires for it. It comes in over WakizashiCutPayload instead.
 			return InteractionResult.PASS;
 		}
 		if (!(player instanceof ServerPlayer serverPlayer)) {
@@ -112,6 +137,30 @@ public class SwordComboHandler {
 				new PendingStab(target.getUUID(), serverPlayer.tickCount + STAB_REACH_DELAY_TICKS));
 
 		return InteractionResult.FAIL;
+	}
+
+	/**
+	 * The undrawn wakizashi's cut, reported by the client because vanilla's attack
+	 * path is intercepted before the server would otherwise hear about it. Everything
+	 * that matters is re-checked here: the client is trusted only for which entity
+	 * was under the crosshair.
+	 */
+	private static void onWakizashiCut(ServerPlayer player, int targetId) {
+		// Two ways to reach this move: undrawn with the wakizashi in the main hand
+		// (left-click), or drawn with it in the off hand (middle-click).
+		boolean undrawnCut = !isWakizashiDrawn(player)
+				&& player.getMainHandItem().getItem() == ModItems.WAKIZASHI;
+		if (!undrawnCut && !isWakizashiDrawn(player)) {
+			return;
+		}
+		if (targetId < 0 || !(player.level().getEntity(targetId) instanceof LivingEntity target)) {
+			return;
+		}
+		if (target == player || !target.isAlive()) {
+			return;
+		}
+		pendingCuts.put(player.getUUID(),
+				new PendingCut(target.getUUID(), player.tickCount + CUT_REACH_DELAY_TICKS));
 	}
 
 	private static void onServerTick(net.minecraft.server.MinecraftServer server) {
@@ -147,6 +196,33 @@ public class SwordComboHandler {
 
 			activeCombos.put(player.getUUID(),
 					new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
+		}
+
+		Iterator<Map.Entry<UUID, PendingCut>> cutIterator = pendingCuts.entrySet().iterator();
+		while (cutIterator.hasNext()) {
+			Map.Entry<UUID, PendingCut> entry = cutIterator.next();
+			PendingCut pending = entry.getValue();
+
+			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+			if (player == null || player.tickCount < pending.applyTick()) {
+				if (player == null) {
+					cutIterator.remove();
+				}
+				continue;
+			}
+			cutIterator.remove();
+
+			ServerLevel level = player.level();
+			if (!(level.getEntity(pending.targetId()) instanceof LivingEntity target) || !target.isAlive()) {
+				continue;
+			}
+			if (player.distanceTo(target) > CUT_REACH_DISTANCE) {
+				continue;
+			}
+
+			target.hurt(level.damageSources().playerAttack(player), CUT_DAMAGE);
+			StunAttachment.slow(target, CUT_SLOW_TICKS);
+			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 		}
 
 		Iterator<Map.Entry<UUID, PendingFinisher>> finisherIterator = pendingFinishers.entrySet().iterator();
@@ -254,5 +330,8 @@ public class SwordComboHandler {
 	}
 
 	private record PendingFinisher(UUID targetId, int applyTick, boolean comboFinisher) {
+	}
+
+	private record PendingCut(UUID targetId, int applyTick) {
 	}
 }

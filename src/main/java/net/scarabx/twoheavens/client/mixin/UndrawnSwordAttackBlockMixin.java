@@ -10,27 +10,36 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Stops the undrawn katana's left-click dead, swing included.
+ * Stops vanilla's left-click dead for an undrawn katana or wakizashi.
  *
- * Cancelling AttackEntityCallback is not enough on its own: Minecraft#startAttack
- * ends with an unconditional player.swing(MAIN_HAND) after its hit-type switch, so
- * the arm moves whether the attack was cancelled, whether a block was hit, or
- * whether the click landed on nothing at all. The only veto that runs early enough
- * is cannotAttackWithItem - startAttack returns immediately on true, before the
- * entity attack, the block hit and the swing.
+ * Minecraft#startAttack ends with an unconditional player.swing(MAIN_HAND) after
+ * its hit-type switch, so cancelling the attack alone still leaves the arm
+ * swinging. cannotAttackWithItem is the only veto that runs early enough:
+ * startAttack returns immediately on true, before the entity attack, the block
+ * hit and the swing.
  *
- * Client-side only by nature (startAttack is its sole caller). SwordComboHandler
- * keeps its own server-side FAIL so a client that ignores this still cannot land
- * the hit.
+ * The two swords need this for opposite reasons:
+ *
+ * - Katana: its move is right-click, so left-click should do nothing at all.
+ * - Wakizashi: its move IS left-click, but vanilla's swing animation was fighting
+ *   ours - spamming the cut intermittently produced vanilla's upward slice
+ *   instead. Blocking vanilla's swing leaves the button free for our own, which
+ *   AttackSwingController triggers directly off the key press and reports to the
+ *   server with WakizashiCutPayload.
+ *
+ * Client-side by nature (startAttack is the sole caller of cannotAttackWithItem).
  */
 @Mixin(Player.class)
-public class KatanaAttackBlockMixin {
+public class UndrawnSwordAttackBlockMixin {
 
 	@Inject(at = @At("HEAD"), method = "cannotAttackWithItem", cancellable = true)
-	private void twoheavens$blockUndrawnKatanaAttack(ItemStack itemStack, int tolerance,
+	private void twoheavens$blockUndrawnSwordAttack(ItemStack itemStack, int tolerance,
 			CallbackInfoReturnable<Boolean> info) {
 		Player self = (Player) (Object) this;
-		if (itemStack.getItem() == ModItems.KATANA && !self.hasAttached(DrawnSwordsAttachment.TYPE)) {
+		if (self.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			return;
+		}
+		if (itemStack.getItem() == ModItems.KATANA || itemStack.getItem() == ModItems.WAKIZASHI) {
 			info.setReturnValue(true);
 		}
 	}

@@ -1,8 +1,11 @@
 package net.scarabx.twoheavens.client.animation;
 
 import com.zigythebird.playeranimcore.animation.RawAnimation;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.entity.player.Player;
+import net.scarabx.twoheavens.combat.WakizashiCutPayload;
 import net.scarabx.twoheavens.item.ModItems;
 
 /**
@@ -39,6 +42,8 @@ public class AttackSwingController {
 
 	private static boolean lastSwinging = false;
 	private static boolean lastUseDown = false;
+	private static boolean lastAttackDown = false;
+	private static boolean lastPickDown = false;
 	private static int comboReadyTick = -1;
 	private static int comboExpireTick = -1;
 
@@ -58,10 +63,32 @@ public class AttackSwingController {
 
 		boolean drawn = SwordDrawController.isDrawn(player);
 		boolean holdingKatana = player.getMainHandItem().getItem() == ModItems.KATANA;
+		boolean holdingWakizashi = player.getMainHandItem().getItem() == ModItems.WAKIZASHI;
 
 		boolean swinging = player.swinging;
 		boolean newSwing = swinging && !lastSwinging;
 		lastSwinging = swinging;
+
+		boolean attackDown = client.options.keyAttack.isDown();
+		boolean attackJustPressed = attackDown && !lastAttackDown;
+		lastAttackDown = attackDown;
+
+		if (attackJustPressed && !drawn && holdingWakizashi) {
+			// The wakizashi's no-obi move. Triggered off the key rather than
+			// player.swinging, because vanilla's swing is now suppressed for an
+			// undrawn wakizashi (UndrawnSwordAttackBlockMixin) - it was intermittently
+			// beating our animation and showing vanilla's upward slice instead. That
+			// also means the server never sees the attack, hence the payload.
+			//
+			// thenPlay, not thenPlayAndHold: undrawn there is no combat_idle stance to
+			// settle into, and holding would leave this layer asserting a pose forever.
+			PlayerHandAnimator.trigger(player, RawAnimation.begin()
+					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutAnimation())
+					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutReturnAnimation()));
+
+			int targetId = client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
+			ClientPlayNetworking.send(new WakizashiCutPayload(targetId));
+		}
 
 		if (newSwing && drawn) {
 			// Plays the stab, then eases back to combat_idle via its own
@@ -72,6 +99,28 @@ public class AttackSwingController {
 					.thenPlayAndHold(TwoHeavensPlayerAnimation.getAttackSwingReturnAnimation()));
 			comboReadyTick = player.tickCount + STAB_ANIMATION_TICKS;
 			comboExpireTick = comboReadyTick + COMBO_WINDOW_TICKS;
+		}
+
+		// Middle-click while drawn: the wakizashi's cut as a third move, alongside the
+		// stab on left and the katana on right. A direct binding rather than a mode -
+		// left-click always means stab, with no state to remember mid-fight.
+		//
+		// Pick-block is safe to take over here: in survival it only reselects a hotbar
+		// slot, and hotbar switching is already suppressed while drawn.
+		boolean pickDown = client.options.keyPickItem.isDown();
+		boolean pickJustPressed = pickDown && !lastPickDown;
+		lastPickDown = pickDown;
+
+		if (pickJustPressed && drawn) {
+			// Drawn, the wakizashi sits in the off hand, so this is the mirrored
+			// left-arm animation. thenPlayAndHold, unlike the undrawn cut: drawn there
+			// IS a stance to settle back into.
+			PlayerHandAnimator.trigger(player, RawAnimation.begin()
+					.thenPlay(TwoHeavensPlayerAnimation.getWakizashiCutOffhandAnimation())
+					.thenPlayAndHold(TwoHeavensPlayerAnimation.getWakizashiCutOffhandReturnAnimation()));
+
+			int cutTarget = client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
+			ClientPlayNetworking.send(new WakizashiCutPayload(cutTarget));
 		}
 
 		boolean useDown = client.options.keyUse.isDown();

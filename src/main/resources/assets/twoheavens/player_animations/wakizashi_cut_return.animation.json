@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.twoheavens.wakizashi_cut_return": {
+			"loop": false,
+			"animation_length": 0.2,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": [-60, -30, 90],
+						"0.1": [-70, -20, 90],
+						"0.2": [-60, 40, 90]
+					}
+				}
+			}
+		}
+	}
+}

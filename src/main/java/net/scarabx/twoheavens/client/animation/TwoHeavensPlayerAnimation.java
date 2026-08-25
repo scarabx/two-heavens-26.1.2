@@ -37,6 +37,10 @@ public class TwoHeavensPlayerAnimation {
 	private static Map<String, Animation> katanaSliceReturnAnimations;
 	private static Map<String, Animation> katanaSliceSoloAnimations;
 	private static Map<String, Animation> katanaSliceSoloReturnAnimations;
+	private static Map<String, Animation> wakizashiCutAnimations;
+	private static Map<String, Animation> wakizashiCutReturnAnimations;
+	private static Map<String, Animation> wakizashiCutOffhandAnimations;
+	private static Map<String, Animation> wakizashiCutOffhandReturnAnimations;
 	private static Map<String, Animation> combatIdleAnimations;
 
 	// Animations are loaded once and cached (below), so an F3+T resource
@@ -140,6 +144,39 @@ public class TwoHeavensPlayerAnimation {
 			katanaSliceSoloAnimations = loadAnimations("katana_slice_solo.animation.json");
 		}
 		return katanaSliceSoloAnimations.get("animation.twoheavens.katana_slice_solo");
+	}
+
+	// The wakizashi's own no-obi move: a fast cut across, distinguished from the
+	// katana's downward slice and the paired stab's forward thrust by direction of
+	// travel. Both files are placeholders to be authored in Blockbench.
+	public static Animation getWakizashiCutAnimation() {
+		if (wakizashiCutAnimations == null) {
+			wakizashiCutAnimations = loadAnimations("wakizashi_cut.animation.json");
+		}
+		return wakizashiCutAnimations.get("animation.twoheavens.wakizashi_cut");
+	}
+
+	public static Animation getWakizashiCutReturnAnimation() {
+		if (wakizashiCutReturnAnimations == null) {
+			wakizashiCutReturnAnimations = loadAnimations("wakizashi_cut_return.animation.json");
+		}
+		return wakizashiCutReturnAnimations.get("animation.twoheavens.wakizashi_cut_return");
+	}
+
+	// Drawn, the wakizashi is in the OFF hand - the katana holds the main hand - so
+	// the cut has to be a left-arm animation. Same move, mirrored limb.
+	public static Animation getWakizashiCutOffhandAnimation() {
+		if (wakizashiCutOffhandAnimations == null) {
+			wakizashiCutOffhandAnimations = loadAnimations("wakizashi_cut_offhand.animation.json");
+		}
+		return wakizashiCutOffhandAnimations.get("animation.twoheavens.wakizashi_cut_offhand");
+	}
+
+	public static Animation getWakizashiCutOffhandReturnAnimation() {
+		if (wakizashiCutOffhandReturnAnimations == null) {
+			wakizashiCutOffhandReturnAnimations = loadAnimations("wakizashi_cut_offhand_return.animation.json");
+		}
+		return wakizashiCutOffhandReturnAnimations.get("animation.twoheavens.wakizashi_cut_offhand_return");
 	}
 
 	public static Animation getKatanaSliceSoloReturnAnimation() {
