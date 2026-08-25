@@ -28,6 +28,16 @@ public final class StunAttachment {
 			.persistent(Codec.LONG)
 			.buildAndRegister(TwoHeavens.id("stunned_until"));
 
+	/**
+	 * The wakizashi's no-obi cut applies a brief partial slow rather than a full
+	 * stun - same machinery, smaller amplitude, its own expiry so the two never
+	 * overwrite each other. A stunned target that is also slowed simply keeps both
+	 * modifiers; -100% already wins.
+	 */
+	public static final AttachmentType<Long> SLOW_TYPE = AttachmentRegistry.<Long>builder()
+			.persistent(Codec.LONG)
+			.buildAndRegister(TwoHeavens.id("slowed_until"));
+
 	private StunAttachment() {
 	}
 
@@ -44,6 +54,10 @@ public final class StunAttachment {
 	private static final AttributeModifier SLOW = new AttributeModifier(
 			SLOW_ID, -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
+	private static final Identifier CUT_SLOW_ID = TwoHeavens.id("cut_slowed");
+	private static final AttributeModifier CUT_SLOW = new AttributeModifier(
+			CUT_SLOW_ID, -0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
 	public static void stun(LivingEntity target, int durationTicks) {
 		target.setAttached(TYPE, target.level().getGameTime() + durationTicks);
 		applyModifier(target);
@@ -55,10 +69,63 @@ public final class StunAttachment {
 	 * that it has run out and gives the entity its speed back.
 	 */
 	public static void sync(LivingEntity entity) {
-		if (isStunned(entity)) {
-			applyModifier(entity);
-		} else {
-			removeModifier(entity);
+		Long stunnedUntil = entity.getAttached(TYPE);
+		Long slowedUntil = entity.getAttached(SLOW_TYPE);
+		// The overwhelmingly common case: an entity that has never been hit by a
+		// wakizashi. This runs for every living entity every tick, so it has to cost
+		// two null map lookups and nothing else - no attribute access, no modifier
+		// removal, no game-time read.
+		if (stunnedUntil == null && slowedUntil == null) {
+			return;
+		}
+
+		// From here the attachment is the single source of truth and the modifier is
+		// re-derived from it every tick, rather than being applied once and trusted.
+		//
+		// The attachment is deliberately NOT dropped on expiry. Dropping it sends the
+		// entity back into the cheap path above, after which nothing ever inspects it
+		// again - so a modifier that outlived its attachment for any reason (a missed
+		// removal, death, an NBT round-trip) would be permanent, with no state left
+		// saying why the mob is slow. Keeping the attachment costs one long and makes
+		// every tick self-correcting.
+		long now = entity.level().getGameTime();
+		if (stunnedUntil != null) {
+			if (now < stunnedUntil) {
+				apply(entity, SLOW_ID, SLOW);
+			} else {
+				remove(entity, SLOW_ID);
+			}
+		}
+		if (slowedUntil != null) {
+			if (now < slowedUntil) {
+				apply(entity, CUT_SLOW_ID, CUT_SLOW);
+			} else {
+				remove(entity, CUT_SLOW_ID);
+			}
+		}
+	}
+
+	public static void slow(LivingEntity target, int durationTicks) {
+		target.setAttached(SLOW_TYPE, target.level().getGameTime() + durationTicks);
+		apply(target, CUT_SLOW_ID, CUT_SLOW);
+	}
+
+	public static boolean isSlowed(LivingEntity entity) {
+		Long until = entity.getAttached(SLOW_TYPE);
+		return until != null && entity.level().getGameTime() < until;
+	}
+
+	private static void apply(LivingEntity entity, Identifier id, AttributeModifier modifier) {
+		AttributeInstance speed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+		if (speed != null && !speed.hasModifier(id)) {
+			speed.addTransientModifier(modifier);
+		}
+	}
+
+	private static void remove(LivingEntity entity, Identifier id) {
+		AttributeInstance speed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+		if (speed != null) {
+			speed.removeModifier(id);
 		}
 	}
 
@@ -82,7 +149,9 @@ public final class StunAttachment {
 	}
 
 	public static void clear(LivingEntity entity) {
-		entity.removeAttached(TYPE);
+		// Expire it rather than deleting it, so sync keeps watching this entity and
+		// can strip the modifier again if it ever reappears.
+		entity.setAttached(TYPE, entity.level().getGameTime());
 		removeModifier(entity);
 	}
 }
