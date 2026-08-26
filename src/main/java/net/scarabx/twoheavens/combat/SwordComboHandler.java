@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +19,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -55,8 +56,22 @@ public class SwordComboHandler {
 	private static final int FINISHER_REACH_DELAY_TICKS = 9;
 	private static final double FINISHER_REACH_DISTANCE = 4.0;
 
-	// Dark red dust - vanilla has no blood particle.
-	private static final DustParticleOptions BLOOD = new DustParticleOptions(0xAA0000, 1.0F);
+	// Vanilla has no blood particle. Block fragments rather than dust: dust motes
+	// float and fade in place, while block particles have gravity, so they arc and
+	// fall away. Behaving like a liquid does more for "this is blood" than any amount
+	// of colour tuning. Nothing lands or accumulates - persistent splatter would be a
+	// decal, not a particle.
+	//
+	// The source block is only a texture to tear fragments from - swap it freely.
+	// Redstone block reads bright and slightly speckled; nether wart is darker and
+	// matte, closer to blood.
+	private static final BlockParticleOption BLOOD =
+			new BlockParticleOption(ParticleTypes.BLOCK, Blocks.NETHER_WART_BLOCK.defaultBlockState());
+
+	// Moves are re-validated a few ticks after the click, by which time a mob's
+	// knockback may have shoved the player out of range - the hit then vanishes with
+	// no feedback at all. This margin keeps a swing that was fair when it was made.
+	private static final double REACH_SLACK = 1.0;
 
 	private static final float STAB_DAMAGE = 1.0F;
 	// The wakizashi's no-obi cut. Deliberately shorter reach than the katana's
@@ -379,9 +394,9 @@ public class SwordComboHandler {
 	 * Blood at the point the blade meets the mob: on the target's near side, facing
 	 * the attacker, at roughly chest height rather than at its feet-anchored position.
 	 *
-	 * Vanilla has no blood particle, so this is dust tinted dark red. Spawned with a
-	 * spread and a slight outward drift so it reads as a spray off the cut rather
-	 * than a static cloud.
+	 * Spawned with a spread and an outward drift so it reads as a spray off the cut
+	 * rather than a static cloud - and since these have gravity, they arc away as they
+	 * fade rather than hanging where they were struck.
 	 */
 	/**
 	 * Reach measured generously: the move connects if EITHER the old feet-to-feet
@@ -397,9 +412,10 @@ public class SwordComboHandler {
 	 * without ever being stricter than the original check for low ones. Reach is a
 	 * feel value, not a simulation - erring generous is correct here.
 	 *
-	 * No slack beyond that: this is re-checked when the move LANDS, a few ticks after
-	 * the click, so a mob's knockback can still shove the player out of range and
-	 * steal the hit. That is deliberate - a target that gets away is not hit.
+	 * REACH_SLACK is added on top, because this is re-checked when the move LANDS, a
+	 * few ticks after the click: without it a mob's knockback shoves the player out of
+	 * range mid-swing and the hit vanishes with no feedback at all. A target that
+	 * walks away is still missed - the margin only covers the player being moved.
 	 */
 	/**
 	 * Finds a target when the crosshair has none.
@@ -420,7 +436,7 @@ public class SwordComboHandler {
 		double bestDistance = Double.MAX_VALUE;
 
 		for (LivingEntity candidate : player.level().getEntitiesOfClass(LivingEntity.class,
-				player.getBoundingBox().inflate(reach))) {
+				player.getBoundingBox().inflate(reach + REACH_SLACK))) {
 			if (candidate == player || !candidate.isAlive() || outOfReach(player, candidate, reach)) {
 				continue;
 			}
@@ -438,7 +454,8 @@ public class SwordComboHandler {
 	}
 
 	private static boolean outOfReach(ServerPlayer player, LivingEntity target, double reach) {
-		if (player.distanceTo(target) <= reach) {
+		double allowed = reach + REACH_SLACK;
+		if (player.distanceTo(target) <= allowed) {
 			return false;
 		}
 
@@ -447,7 +464,7 @@ public class SwordComboHandler {
 		double dx = Math.max(box.minX - eye.x, Math.max(0.0, eye.x - box.maxX));
 		double dy = Math.max(box.minY - eye.y, Math.max(0.0, eye.y - box.maxY));
 		double dz = Math.max(box.minZ - eye.z, Math.max(0.0, eye.z - box.maxZ));
-		return dx * dx + dy * dy + dz * dz > reach * reach;
+		return dx * dx + dy * dy + dz * dz > allowed * allowed;
 	}
 
 	private static void playBloodEffect(ServerLevel level, ServerPlayer attacker, LivingEntity target) {
@@ -460,7 +477,7 @@ public class SwordComboHandler {
 				target.getX() + facing.x * reach,
 				target.getY() + target.getBbHeight() * 0.6,
 				target.getZ() + facing.z * reach,
-				12, 0.15, 0.2, 0.15, 0.02);
+				14, 0.15, 0.2, 0.15, 0.08);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
