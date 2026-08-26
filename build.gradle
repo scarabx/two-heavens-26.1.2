@@ -3,8 +3,58 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+// The published version is mod_version plus the Minecraft version as SemVer build
+// metadata. The separator must be '+', not '-': a hyphen makes it a PRE-RELEASE tag,
+// so "0.1-26.1.2" sorts as OLDER than "0.1" in Fabric's dependency resolution.
+version = "${project.mod_version}+${project.minecraft_version}"
 group = project.maven_group
+
+/**
+ * Bumps the patch digit in gradle.properties, so a hotfix release is one command
+ * with no number to type and no jar to rename afterwards:
+ *
+ *   ./gradlew release          0.5.1 -> 0.5.2, then builds
+ *   ./gradlew release -Ppart=minor   0.5.2 -> 0.6.0
+ *   ./gradlew release -Ppart=major   0.6.0 -> 1.0.0
+ *
+ * Deliberately NOT wired into `build` - ordinary dev builds must not churn the
+ * version. The number is a statement about significance, so bumping stays an
+ * explicit act.
+ */
+tasks.register('bumpVersion') {
+	doLast {
+		def propsFile = file('gradle.properties')
+		def current = project.mod_version.toString()
+		def parts = current.tokenize('.')
+		while (parts.size() < 3) {
+			parts << '0'
+		}
+
+		def major = parts[0] as int
+		def minor = parts[1] as int
+		def patch = parts[2] as int
+
+		switch (project.findProperty('part') ?: 'patch') {
+			case 'major' -> { major++; minor = 0; patch = 0 }
+			case 'minor' -> { minor++; patch = 0 }
+			default -> patch++
+		}
+
+		def next = "${major}.${minor}.${patch}"
+		propsFile.text = propsFile.text.replaceFirst(
+				/(?m)^mod_version=.*$/, "mod_version=${next}")
+		logger.lifecycle("mod_version ${current} -> ${next}")
+		logger.lifecycle("Run the build again to produce twoheavens-${next}+${project.minecraft_version}.jar")
+	}
+}
+
+tasks.register('release', GradleBuild) {
+	dependsOn 'bumpVersion'
+	// A second Gradle invocation, because the version is read at configuration time -
+	// bumping it inside this build would not affect the jar this build produces.
+	tasks = ['build']
+	startParameter.projectProperties = [:]
+}
 
 repositories {
 	// Add repositories to retrieve artifacts from in here.
