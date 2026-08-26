@@ -25,6 +25,9 @@ public final class ItemRecipeTooltip {
 		if (ModRecipeTooltips.forIngredient(stack.getItem()) == null || ShiftState.isDown()) {
 			return;
 		}
+		// Plural, and deliberately loose: the tooltip may show how this item is MADE, what
+		// it is USED IN, or both, and the count varies. "for recipe" promised one thing -
+		// this item's own recipe - which is wrong on any plain ingredient.
 		consumer.accept(Component.translatable("tooltip.twoheavens.shift_for_recipe"));
 	}
 

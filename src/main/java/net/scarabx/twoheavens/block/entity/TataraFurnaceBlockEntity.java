@@ -19,7 +19,11 @@ import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 
 public class TataraFurnaceBlockEntity extends BlockEntity {
 
-	public static final int CURING_DURATION_TICKS = 1200; // 1 minute
+	// 30 seconds, halved from a minute. Curing is the one phase with nothing to do at
+	// all - no bellows, no decisions - and it sits in a chain that already asks for a
+	// minute of smelting after it. The smelt earns its length because you tend it;
+	// this did not.
+	public static final int CURING_DURATION_TICKS = 600;
 
 	// No interaction here (no bellows equivalent for curing) - heat still
 	// climbs in the same discrete-step style as the fired furnace's passive
@@ -28,7 +32,7 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 	// the same reason - it's what's actually "cooking" the furnace, time is
 	// just what drives it up.
 	private static final float MAX_HEAT = 100.0F;
-	private static final int STEP_TICKS = CURING_DURATION_TICKS / 8; // 150 ticks = 7.5s
+	private static final int STEP_TICKS = CURING_DURATION_TICKS / 8; // 75 ticks = 3.75s
 	private static final float STEP_HEAT = MAX_HEAT / 8.0F;
 
 	private int curingTicks = 0;

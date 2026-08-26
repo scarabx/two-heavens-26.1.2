@@ -27,9 +27,15 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 	// miss one and that step falls back one level instead, floored at the
 	// passive cap (level 4). Heat only ever moves in these whole-step jumps,
 	// never a smooth per-tick trickle.
-	public static final int SMELT_DURATION_TICKS = 1200;
-	private static final int STEP_TICKS = SMELT_DURATION_TICKS / 8; // 150 ticks = 7.5s
-	private static final int PASSIVE_PHASE_TICKS = SMELT_DURATION_TICKS / 2;
+	// 20 seconds of passive heat, then 15 with the bellows. The two halves are set
+	// separately rather than split from a total, because they are not worth the same:
+	// the passive phase is waiting and the bellows phase is play, so trimming came off
+	// the first. Long enough that the heat visibly rises on its own before you help it.
+	private static final int PASSIVE_PHASE_TICKS = 400;
+	private static final int BELLOWS_PHASE_TICKS = 300;
+	public static final int SMELT_DURATION_TICKS = PASSIVE_PHASE_TICKS + BELLOWS_PHASE_TICKS;
+	/** Four passive heat steps, one per 5 seconds, taking it to the halfway cap. */
+	private static final int STEP_TICKS = PASSIVE_PHASE_TICKS / 4;
 	/** Who hears the "tend the furnace" call - anyone plausibly still working it. */
 	private static final int TEND_ALERT_RANGE = 24;
 	private static final float STARTING_HEAT = 0.0F;
@@ -41,7 +47,6 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 	// happened within this long of that step completing - i.e. bellow at
 	// least once every 5 seconds, same cadence regardless of the 7.5s step
 	// length.
-	private static final int BELLOWS_RECENCY_TICKS = 100; // 5s
 	// Purely an anti-spam debounce on the sound/durability cost, not part of
 	// the actual heat mechanic - mashing the button shouldn't waste durability
 	// or blast the gust sound every tick.
@@ -78,6 +83,16 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 		ACKNOWLEDGED
 	}
 
+	/**
+	 * Each accepted pump raises the heat one step, and heat never falls again.
+	 *
+	 * It used to work the other way: heat rose only if a pump had landed within 5
+	 * seconds of an invisible step boundary, and fell back a step otherwise. That made
+	 * a single missed beat cost double - the step lost plus the step to re-earn - and
+	 * gave no way to see why, since both the window and the boundary were invisible.
+	 * A count you can state ("four pumps") is a rule a player can learn; a cadence
+	 * measured against something they cannot see is not.
+	 */
 	public BellowsResult onBellowsUsed() {
 		if (this.smeltTicks < PASSIVE_PHASE_TICKS) {
 			return BellowsResult.TOO_EARLY;
@@ -90,6 +105,8 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
 		if (this.level != null) {
 			this.lastBellowsGameTime = this.level.getGameTime();
+			this.heat = Math.min(MAX_HEAT, this.heat + STEP_HEAT);
+			setChanged();
 		}
 		this.setChanged();
 		return BellowsResult.ACKNOWLEDGED;
@@ -112,20 +129,11 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 			}
 		}
 
-		if (this.smeltTicks % STEP_TICKS == 0) {
-			if (this.smeltTicks <= PASSIVE_PHASE_TICKS) {
-				// Passive step - always climbs, no bellows involved yet.
-				this.heat = Math.min(PASSIVE_CAP, this.heat + STEP_HEAT);
-			} else {
-				// Bellows step - climbs only if bellowed recently enough,
-				// otherwise falls back one level, never below the passive cap.
-				long ticksSinceBellows = level.getGameTime() - this.lastBellowsGameTime;
-				if (ticksSinceBellows <= BELLOWS_RECENCY_TICKS) {
-					this.heat = Math.min(MAX_HEAT, this.heat + STEP_HEAT);
-				} else {
-					this.heat = Math.max(PASSIVE_CAP, this.heat - STEP_HEAT);
-				}
-			}
+		if (this.smeltTicks % STEP_TICKS == 0 && this.smeltTicks <= PASSIVE_PHASE_TICKS) {
+			// Passive half: heat climbs on its own to the halfway cap. Past that it only
+			// moves when the player pumps, and it never falls - missing a moment costs
+			// nothing but the time you were already spending.
+			this.heat = Math.min(PASSIVE_CAP, this.heat + STEP_HEAT);
 		}
 
 		int currentStage = Math.max(0, Math.min(8, Math.round(this.heat / STEP_HEAT)));

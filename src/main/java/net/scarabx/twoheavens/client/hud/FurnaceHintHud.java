@@ -68,6 +68,8 @@ public final class FurnaceHintHud {
 	private static final int ICON = 16;
 	/** cool_stage's maximum - the kera is fully cool here. */
 	private static final int COOL_STAGE_MAX = 8;
+	/** redness_stage at full heat - what is left below it is pumps still owed. */
+	private static final int MAX_REDNESS_STAGE = 8;
 	private static final int BAR_WIDTH = 80;
 	private static final int BAR_HEIGHT = 5;
 	// Hot orange draining away, on the same dark ground vanilla uses behind its bars.
@@ -118,9 +120,9 @@ public final class FurnaceHintHud {
 				// wait to say what the next stage needs - finding out you lack a flint
 				// and steel halfway through a process is the irritating way to learn it.
 				drawComingUp(graphics, client, List.of(
-						new Ingredient(new ItemStack(Items.CHARCOAL, FIRED_CHARCOAL)),
-						new Ingredient(new ItemStack(ModBlocks.SATETSU_SAND, FIRED_SATETSU)),
-						new Ingredient(new ItemStack(Items.FLINT_AND_STEEL))));
+						new ItemStack(Items.CHARCOAL, FIRED_CHARCOAL),
+						new ItemStack(ModBlocks.SATETSU_SAND, FIRED_SATETSU),
+						new ItemStack(Items.FLINT_AND_STEEL)));
 				return;
 			}
 			int missing = UNFIRED_CHARCOAL - unfired.getValue(TataraFurnaceBlock.CHARCOAL_LEVEL);
@@ -169,14 +171,20 @@ public final class FurnaceHintHud {
 			}
 		} else if (fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) >= BELLOWS_PHASE_STAGE) {
 			// Past the passive half - heat now falls without bellows work.
+			// redness_stage is a block state, so the client already knows how hot it is -
+			// no need to sync the block entity to count down what is left.
+			int pumpsLeft = Math.max(0, MAX_REDNESS_STAGE
+					- fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE));
 			drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
-					Component.translatable("hud.twoheavens.furnace_bellows"), 0, true);
+					Component.translatable(pumpsLeft == 1
+							? "hud.twoheavens.furnace_bellows_one"
+							: "hud.twoheavens.furnace_bellows", pumpsLeft),
+					0, true);
 		}
 		// Lit but still in the passive half: nothing to do yet, so the wait is spent
 		// warning that a bellows is about to be needed.
 		else {
-			drawComingUp(graphics, client,
-					List.of(new Ingredient(new ItemStack(ModItems.BELLOWS))));
+			drawComingUp(graphics, client, List.of(new ItemStack(ModItems.BELLOWS)));
 		}
 	}
 
@@ -337,9 +345,27 @@ public final class FurnaceHintHud {
 	 * something to click now.
 	 */
 	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
-									  List<Ingredient> upcoming) {
-		drawRows(graphics, client, List.of(new Row(upcoming,
-				Component.translatable("hud.twoheavens.coming_up"), 0, false, null, false, null)));
+									  List<ItemStack> upcoming) {
+		// Waiting is the best moment to make what you are about to need, so the same
+		// Shift gesture works here: it expands anything you do not have into how to
+		// make it. Only items with a recipe can offer that - satetsu is mined and
+		// flint and steel is vanilla, so those stay plain icons.
+		List<Ingredient> steps = new ArrayList<>();
+		boolean anyOffered = false;
+		for (ItemStack wanted : upcoming) {
+			steps.addAll(needed(client, wanted));
+			anyOffered |= canOffer(client, wanted);
+		}
+
+		Row main = new Row(steps, Component.translatable("hud.twoheavens.coming_up"),
+				0, false, null, false, null);
+		if (!anyOffered || ShiftState.isDown()) {
+			drawRows(graphics, client, List.of(main));
+			return;
+		}
+		drawRows(graphics, client, List.of(main,
+				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
+						firstIconX(client.font, main, graphics.guiWidth()))));
 	}
 
 	/**
