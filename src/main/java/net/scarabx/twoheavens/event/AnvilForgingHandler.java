@@ -21,7 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.scarabx.twoheavens.block.custom.SmithingAnvilBlock;
@@ -50,8 +49,14 @@ public class AnvilForgingHandler {
 		ServerTickEvents.END_LEVEL_TICK.register(AnvilForgingHandler::onLevelTick);
 	}
 
+	/**
+	 * The Smithing Anvil only. Vanilla anvils used to be accepted as a convenience,
+	 * but it did not work reliably in play and the tooltip now names the Smithing
+	 * Anvil - making it the single answer keeps the chain coherent, since the anvil
+	 * is a step the player crafts rather than one they might stumble on in a village.
+	 */
 	private static boolean isForgeAnvil(Block block) {
-		return block instanceof AnvilBlock || block instanceof SmithingAnvilBlock;
+		return block instanceof SmithingAnvilBlock;
 	}
 
 	private static boolean isBareHotBlade(ItemStack stack) {

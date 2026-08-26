@@ -1,7 +1,6 @@
 package net.scarabx.twoheavens.event;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
@@ -15,6 +14,14 @@ import net.scarabx.twoheavens.item.ModItems;
  * Two starter hints shown on join, each dropping away once its goal is met.
  * The item pictures are glyphs from the twoheavens:icons font
  * (assets/twoheavens/font/icons.json) - chat can't embed textures any other way.
+ *
+ * Counts are written inline before each icon rather than in the corner, the way an
+ * inventory slot shows them. Chat cannot overlay one on the other: it lays glyphs
+ * out left to right with no way back, so a corner number would need a negative-space
+ * font plus a custom small-digit font. Not worth it for two lines.
+ *
+ * Text is left unstyled, which renders white - grey read as disabled against chat's
+ * background.
  */
 public final class JoinMessageHandler {
 
@@ -61,9 +68,9 @@ public final class JoinMessageHandler {
 	}
 
 	private static MutableComponent satetsuLine(int remaining) {
-		return Component.literal("Mine " + remaining + " ").withStyle(ChatFormatting.GRAY)
+		return Component.literal("Mine " + remaining + " ")
 				.append(icon(SATETSU))
-				.append(Component.literal(" Satetsu from sand next to any water").withStyle(ChatFormatting.GRAY));
+				.append(Component.literal(" Satetsu from sand next to any water"));
 	}
 
 	/**
@@ -97,14 +104,14 @@ public final class JoinMessageHandler {
 		int charcoal = Math.max(0, perIngredient - progress.maxCharcoal());
 		int clay = Math.max(0, perIngredient - progress.maxClay());
 
-		return Component.literal(cane + " ").withStyle(ChatFormatting.GRAY)
+		return Component.literal(cane + " ")
 				.append(icon(SUGAR_CANE))
-				.append(Component.literal(" + " + charcoal + " ").withStyle(ChatFormatting.GRAY))
+				.append(Component.literal(" + " + charcoal + " "))
 				.append(icon(CHARCOAL))
-				.append(Component.literal(" + " + clay + " ").withStyle(ChatFormatting.GRAY))
+				.append(Component.literal(" + " + clay + " "))
 				.append(icon(CLAY))
-				.append(Component.literal(" = " + remaining + " ").withStyle(ChatFormatting.GRAY))
+				.append(Component.literal(" = " + remaining + " "))
 				.append(icon(TATARA_CLAY))
-				.append(Component.literal(" Tatara Clay").withStyle(ChatFormatting.GRAY));
+				.append(Component.literal(" Tatara Clay"));
 	}
 }

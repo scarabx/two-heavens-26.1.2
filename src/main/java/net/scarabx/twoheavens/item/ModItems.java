@@ -16,6 +16,7 @@ import net.scarabx.twoheavens.item.custom.TataraClayItem;
 import net.scarabx.twoheavens.item.custom.DaishoItem;
 import net.scarabx.twoheavens.item.custom.KatanaBladeItem;
 import net.scarabx.twoheavens.item.custom.KatanaItem;
+import net.scarabx.twoheavens.item.custom.MoltenKeraItem;
 import net.scarabx.twoheavens.item.custom.KatanaTsukaItem;
 import net.scarabx.twoheavens.item.custom.TsubaItem;
 import net.scarabx.twoheavens.item.custom.WakizashiBladeItem;
@@ -39,7 +40,7 @@ public class ModItems {
 	public static final Item WAKIZASHI_BLADE = registerItem("wakizashi_blade", WakizashiBladeItem::new);
 	public static final Item TSUBA = registerItem("tsuba", TsubaItem::new);
 	public static final Item TATARA_CLAY = registerItem("tatara_clay", TataraClayItem::new);
-	public static final Item MOLTEN_KERA = registerItem("hot_kera_block", Item::new);
+	public static final Item MOLTEN_KERA = registerItem("hot_kera_block", MoltenKeraItem::new);
 	public static final Item TAMAHAGANE_INGOT = registerItem("tamahagane_ingot", Item::new);
 	public static final Item FLAT_TAMAHAGANE_INGOT = registerItem("flat_tamahagane_ingot", Item::new);
 	public static final Item HOT_WAKIZASHI_BLADE = registerItem("hot_wakizashi_blade", Item::new);
