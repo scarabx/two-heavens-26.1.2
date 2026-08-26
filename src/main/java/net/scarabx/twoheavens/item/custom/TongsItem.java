@@ -11,9 +11,14 @@ import net.scarabx.twoheavens.item.ItemRecipeTooltip;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class HammerItem extends Item {
+/**
+ * Tongs had no class at all - a plain Item::new - so they showed nothing on hover
+ * despite having a recipe registered. They also carry the one rule the mod never
+ * stated anywhere: a hot blade burns you unless these are in your off hand.
+ */
+public class TongsItem extends Item {
 
-	public HammerItem(Item.Properties properties) {
+	public TongsItem(Item.Properties properties) {
 		super(properties);
 	}
 
@@ -21,7 +26,7 @@ public class HammerItem extends Item {
 	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
 								Consumer<Component> consumer, TooltipFlag flag) {
 		super.appendHoverText(stack, context, display, consumer, flag);
-		consumer.accept(Component.translatable("tooltip.twoheavens.hammer_use"));
+		consumer.accept(Component.translatable("tooltip.twoheavens.tongs_use"));
 		ItemRecipeTooltip.appendPrompt(stack, consumer);
 	}
 

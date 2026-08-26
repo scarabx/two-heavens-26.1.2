@@ -9,11 +9,18 @@ import net.scarabx.twoheavens.block.ModBlocks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Forward recipe lookup for tooltips: item -> the recipes that consume it.
+ * Recipe lookup for tooltips, in both directions: what an item is MADE FROM, and
+ * what it is USED IN.
+ *
+ * The backward direction matters more than it looks. The forward one answers "what
+ * can I do with this?", but a stuck player's question is the opposite - the furnace
+ * prompt tells them they need a Bellows and nothing tells them how to get one, and a
+ * HUD icon cannot be hovered.
  *
  * MUST be kept in step with ModRecipeProvider by hand. Recipes live server-side
  * in modern versions, so a client tooltip cannot read the real recipe manager;
@@ -32,6 +39,9 @@ public final class ModRecipeTooltips {
 	private static final int GRID_SIZE = 3;
 
 	private static final Map<Item, List<RecipeDef>> USED_IN = new HashMap<>();
+
+	/** Keyed by result: how to make this item. */
+	private static final Map<Item, List<RecipeDef>> MADE_FROM = new HashMap<>();
 
 	/**
 	 * Recipes whose ingredient is a tag rather than one item - wool, for instance,
@@ -137,13 +147,16 @@ public final class ModRecipeTooltips {
 	private static void smelting(Item input, Item result) {
 		RecipeDef def = new RecipeDef(new Item[]{input}, 1, 1, result, 1, true);
 		USED_IN.computeIfAbsent(input, key -> new ArrayList<>()).add(def);
+		record(MADE_FROM, result, def);
 	}
 
 	/** A single row of one tagged ingredient, e.g. any wool. */
 	private static void taggedRow(TagKey<Item> tag, Item icon, int count, Item result, int resultCount) {
 		Item[] cells = new Item[count];
 		java.util.Arrays.fill(cells, icon);
-		USED_IN_TAG.add(new TagEntry(tag, new RecipeDef(cells, count, 1, result, resultCount, false)));
+		RecipeDef def = new RecipeDef(cells, count, 1, result, resultCount, false);
+		USED_IN_TAG.add(new TagEntry(tag, def));
+		record(MADE_FROM, result, def);
 	}
 
 	/**
@@ -158,6 +171,7 @@ public final class ModRecipeTooltips {
 		}
 		RecipeDef def = new RecipeDef(filled, width, height, result, resultCount, false);
 		USED_IN_TAG.add(new TagEntry(tag, def));
+		record(MADE_FROM, result, def);
 		// Also register the plain ingredients so hovering those finds it too.
 		for (Item cell : cells) {
 			if (cell != null) {
@@ -169,6 +183,7 @@ public final class ModRecipeTooltips {
 	/** Registers one recipe against every ingredient it uses. */
 	private static void shaped(Item[] cells, int width, int height, Item result, int resultCount) {
 		RecipeDef def = new RecipeDef(cells, width, height, result, resultCount, false);
+		record(MADE_FROM, result, def);
 		for (Item cell : cells) {
 			if (cell == null) {
 				continue;
@@ -180,12 +195,62 @@ public final class ModRecipeTooltips {
 		}
 	}
 
-	/** Null when this item is not an ingredient in anything. */
+	/**
+	 * What this item is made of, as one stack per distinct ingredient with its count.
+	 *
+	 * For the HUD rather than tooltips: a prompt can name a tool the player does not
+	 * own, and hovering cannot help someone holding nothing. This lets the prompt show
+	 * the ingredients instead, at the moment they are needed.
+	 *
+	 * Empty when the item has no recipe - the kera and the blades come out of a
+	 * furnace and an anvil, not a crafting grid.
+	 */
+	public static List<ItemStack> ingredientsFor(Item result) {
+		List<RecipeDef> defs = MADE_FROM.get(result);
+		if (defs == null || defs.isEmpty()) {
+			return List.of();
+		}
+		RecipeDef def = defs.get(0);
+		Map<Item, Integer> counts = new LinkedHashMap<>();
+		for (Item cell : def.cells()) {
+			if (cell != null) {
+				counts.merge(cell, 1, Integer::sum);
+			}
+		}
+		List<ItemStack> parts = new ArrayList<>(counts.size());
+		for (Map.Entry<Item, Integer> entry : counts.entrySet()) {
+			parts.add(new ItemStack(entry.getKey(), entry.getValue()));
+		}
+		return parts;
+	}
+
+	private static void record(Map<Item, List<RecipeDef>> into, Item key, RecipeDef def) {
+		List<RecipeDef> defs = into.computeIfAbsent(key, k -> new ArrayList<>());
+		if (!defs.contains(def)) {
+			defs.add(def);
+		}
+	}
+
+	/**
+	 * Null when this item neither has a recipe nor appears in one.
+	 *
+	 * How-to-make comes first, because that is the question someone holding an
+	 * unfamiliar item is asking. What-it-makes follows, so an item in the middle of
+	 * the chain shows both without needing a way to page between them.
+	 */
 	public static RecipeTooltipData forIngredient(Item item) {
 		List<RecipeDef> defs = new ArrayList<>();
+		List<RecipeDef> madeFrom = MADE_FROM.get(item);
+		if (madeFrom != null) {
+			defs.addAll(madeFrom);
+		}
 		List<RecipeDef> direct = USED_IN.get(item);
 		if (direct != null) {
-			defs.addAll(direct);
+			for (RecipeDef def : direct) {
+				if (!defs.contains(def)) {
+					defs.add(def);
+				}
+			}
 		}
 		for (TagEntry tagged : USED_IN_TAG) {
 			if (item.builtInRegistryHolder().is(tagged.tag()) && !defs.contains(tagged.def())) {

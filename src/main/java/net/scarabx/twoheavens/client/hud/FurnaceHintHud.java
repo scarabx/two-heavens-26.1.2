@@ -24,6 +24,7 @@ import net.scarabx.twoheavens.block.ModBlocks;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
 import net.scarabx.twoheavens.item.ModItems;
+import net.scarabx.twoheavens.item.ModRecipeTooltips;
 
 /**
  * A prompt shown while an unfired Tatara Furnace is in view: right-click it with
@@ -122,7 +123,7 @@ public final class FurnaceHintHud {
 			// nothing about the block says so - this is where the guidance used to
 			// stop entirely.
 			drawHint(graphics, client,
-					List.of(new Ingredient(new ItemStack(ModItems.HAMMER))),
+					needed(client, new ItemStack(ModItems.HAMMER)),
 					Component.empty(), KERA_HAMMER_STRIKES);
 			return;
 		}
@@ -150,7 +151,7 @@ public final class FurnaceHintHud {
 		} else if (fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) >= BELLOWS_PHASE_STAGE) {
 			// Past the passive half - heat now falls without bellows work.
 			drawHint(graphics, client,
-					List.of(new Ingredient(new ItemStack(ModItems.BELLOWS))),
+					needed(client, new ItemStack(ModItems.BELLOWS)),
 					Component.translatable("hud.twoheavens.furnace_bellows"));
 		}
 		// Lit but still in the passive half: nothing to do yet, so stay quiet.
@@ -201,7 +202,7 @@ public final class FurnaceHintHud {
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
 			// Finished. Only the tongs remain, and picking it up bare-handed burns.
-			drawHint(graphics, client, List.of(new Ingredient(new ItemStack(ModItems.TONGS))),
+			drawHint(graphics, client, needed(client, new ItemStack(ModItems.TONGS)),
 					Component.translatable("hud.twoheavens.tongs_offhand"), 0, false);
 			return true;
 		}
@@ -244,6 +245,30 @@ public final class FurnaceHintHud {
 			}
 		}
 		return ItemStack.EMPTY;
+	}
+
+	/**
+	 * Turns a required item into prompt steps, showing HOW TO MAKE IT when the player
+	 * has none.
+	 *
+	 * A prompt that says "use a bellows" is useless to someone who has never made one,
+	 * and they cannot hover an item they do not own - so the recipe has to come to
+	 * them. The vanilla recipe book technically covers this, but experienced players
+	 * keep it closed, which is exactly who a first-time player of this mod is not.
+	 */
+	private static List<Ingredient> needed(Minecraft client, ItemStack wanted) {
+		if (client.player.getInventory().contains(stack -> stack.is(wanted.getItem()))) {
+			return List.of(new Ingredient(wanted));
+		}
+		List<ItemStack> parts = ModRecipeTooltips.ingredientsFor(wanted.getItem());
+		if (parts.isEmpty()) {
+			return List.of(new Ingredient(wanted));
+		}
+		List<Ingredient> steps = new ArrayList<>(parts.size());
+		for (ItemStack part : parts) {
+			steps.add(new Ingredient(part));
+		}
+		return steps;
 	}
 
 	/** Filled and ready - the only remaining step is striking it alight. */

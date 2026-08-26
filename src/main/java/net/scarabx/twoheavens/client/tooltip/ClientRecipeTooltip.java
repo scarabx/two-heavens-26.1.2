@@ -1,12 +1,18 @@
 package net.scarabx.twoheavens.client.tooltip;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.scarabx.twoheavens.item.RecipeTooltipData;
+
+import java.util.List;
 
 /**
  * Draws each recipe as a crafting grid, an arrow, and the result plus its name.
@@ -22,6 +28,31 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 	private static final int LIT_H = 14;
 	private static final Identifier ARROW_SPRITE = Identifier.withDefaultNamespace("container/villager/trade_arrow");
 	private static final int ARROW_H = 9;
+
+	/** How long each fuel is shown before the next. */
+	private static final long FUEL_CYCLE_MS = 1000L;
+
+	/**
+	 * Every burnable item in the game, cycled in the furnace's fuel slot the way
+	 * recipe mods cycle a tag's members: the slot means "any fuel", and one fixed item
+	 * would read as "this fuel".
+	 *
+	 * Taken from the level's own FuelValues rather than a hand-written list, so it
+	 * covers whatever the pack actually allows - datapack additions and other mods'
+	 * fuels included. Cached because it cannot change without a reload.
+	 */
+	private static List<Item> fuels;
+
+	private static List<Item> fuels() {
+		if (fuels == null) {
+			Level level = Minecraft.getInstance().level;
+			if (level == null) {
+				return List.of(Items.COAL);
+			}
+			fuels = List.copyOf(level.fuelValues().fuelItems());
+		}
+		return fuels;
+	}
 
 	private static final int SLOT = 18;
 	private static final int ARROW_WIDTH = 10;
@@ -42,8 +73,13 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 		this.data = data;
 	}
 
-	/** Furnace layout stacks input over fuel, so it is two slots tall plus the gap. */
-	private static final int FURNACE_GAP = 6;
+	/**
+	 * Furnace layout stacks input over fuel, so it is two slots tall plus the gap.
+	 *
+	 * The gap must be at least LIT_H, or the flame - which is centred in it - hangs
+	 * over the slots above and below. At 6 it covered 4px of each.
+	 */
+	private static final int FURNACE_GAP = LIT_H + 2;
 
 	private static int entryHeight(RecipeTooltipData.Entry entry) {
 		if (entry.smelting()) {
@@ -92,6 +128,10 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 
 				int fuelY = rowY + SLOT + FURNACE_GAP;
 				drawSlot(graphics, x, fuelY);
+				List<Item> burnable = fuels();
+				ItemStack fuel = new ItemStack(burnable.get(
+						(int) ((System.currentTimeMillis() / FUEL_CYCLE_MS) % burnable.size())));
+				graphics.item(fuel, x + 1, fuelY + 1, slotIndex++);
 				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIT_SPRITE,
 						x + (SLOT - LIT_W) / 2, rowY + SLOT + (FURNACE_GAP - LIT_H) / 2, LIT_W, LIT_H);
 			}

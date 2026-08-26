@@ -7,7 +7,16 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.scarabx.twoheavens.item.ItemRecipeTooltip;
+
+import java.util.Optional;
+import java.util.function.Consumer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -55,5 +64,18 @@ public class BellowsItem extends Item {
 		}
 
 		return InteractionResult.SUCCESS;
+	}
+
+	@Override
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+								Consumer<Component> consumer, TooltipFlag flag) {
+		super.appendHoverText(stack, context, display, consumer, flag);
+		consumer.accept(Component.translatable("tooltip.twoheavens.bellows_use"));
+		ItemRecipeTooltip.appendPrompt(stack, consumer);
+	}
+
+	@Override
+	public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+		return ItemRecipeTooltip.image(stack);
 	}
 }

@@ -18,6 +18,7 @@ import net.scarabx.twoheavens.item.custom.KatanaBladeItem;
 import net.scarabx.twoheavens.item.custom.KatanaItem;
 import net.scarabx.twoheavens.item.custom.MoltenKeraItem;
 import net.scarabx.twoheavens.item.custom.KatanaTsukaItem;
+import net.scarabx.twoheavens.item.custom.TongsItem;
 import net.scarabx.twoheavens.item.custom.TsubaItem;
 import net.scarabx.twoheavens.item.custom.WakizashiBladeItem;
 import net.scarabx.twoheavens.item.custom.WakizashiItem;
@@ -45,7 +46,7 @@ public class ModItems {
 	public static final Item FLAT_TAMAHAGANE_INGOT = registerItem("flat_tamahagane_ingot", Item::new);
 	public static final Item HOT_WAKIZASHI_BLADE = registerItem("hot_wakizashi_blade", Item::new);
 	public static final Item HOT_KATANA_BLADE = registerItem("hot_katana_blade", Item::new);
-	public static final Item TONGS = registerItem("tongs", Item::new,
+	public static final Item TONGS = registerItem("tongs", TongsItem::new,
 			new Item.Properties().durability(128));
 	public static final Item HAMMER = registerItem("hammer", HammerItem::new,
 			new Item.Properties().durability(250));
