@@ -1,5 +1,7 @@
 package net.scarabx.twoheavens.block.entity;
 
+import net.scarabx.twoheavens.block.ModDataComponents;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -83,6 +85,23 @@ public class TataraFurnaceBlockEntity extends BlockEntity {
 			// curing is a step, not the payoff, and the two should not read alike.
 			level.playSound(null, pos, SoundEvents.DECORATED_POT_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
 			level.setBlockAndUpdate(pos, ModBlocks.TATARA_FURNACE_FIRED.defaultBlockState());
+		}
+	}
+
+	@Override
+	protected void collectImplicitComponents(net.minecraft.core.component.DataComponentMap.Builder components) {
+		super.collectImplicitComponents(components);
+		components.set(ModDataComponents.FURNACE_PROGRESS,
+				new ModDataComponents.FurnaceProgress(this.curingTicks, this.heat));
+	}
+
+	@Override
+	protected void applyImplicitComponents(net.minecraft.core.component.DataComponentGetter getter) {
+		super.applyImplicitComponents(getter);
+		ModDataComponents.FurnaceProgress progress = getter.get(ModDataComponents.FURNACE_PROGRESS);
+		if (progress != null) {
+			this.curingTicks = progress.ticks();
+			this.heat = progress.heat();
 		}
 	}
 

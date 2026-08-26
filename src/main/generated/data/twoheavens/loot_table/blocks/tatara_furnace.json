@@ -1,5 +1,24 @@
 {
   "type": "minecraft:block",
+  "functions": [
+    {
+      "block": "twoheavens:tatara_furnace",
+      "function": "minecraft:copy_state",
+      "properties": [
+        "lit",
+        "charcoal_level",
+        "burn_stage",
+        "color_stage"
+      ]
+    },
+    {
+      "function": "minecraft:copy_components",
+      "include": [
+        "twoheavens:furnace_progress"
+      ],
+      "source": "block_entity"
+    }
+  ],
   "pools": [
     {
       "bonus_rolls": 0.0,

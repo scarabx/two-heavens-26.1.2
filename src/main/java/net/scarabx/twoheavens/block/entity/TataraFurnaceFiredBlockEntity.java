@@ -1,5 +1,7 @@
 package net.scarabx.twoheavens.block.entity;
 
+import net.scarabx.twoheavens.block.ModDataComponents;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -171,6 +173,23 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 					.setValue(TataraFurnaceFiredBlock.SMELT_STAGE, 8)
 					.setValue(TataraFurnaceFiredBlock.REDNESS_STAGE, 8), 3);
 			level.playSound(null, pos, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS, 1.5F, 0.6F);
+		}
+	}
+
+	@Override
+	protected void collectImplicitComponents(net.minecraft.core.component.DataComponentMap.Builder components) {
+		super.collectImplicitComponents(components);
+		components.set(ModDataComponents.FURNACE_PROGRESS,
+				new ModDataComponents.FurnaceProgress(this.smeltTicks, this.heat));
+	}
+
+	@Override
+	protected void applyImplicitComponents(net.minecraft.core.component.DataComponentGetter getter) {
+		super.applyImplicitComponents(getter);
+		ModDataComponents.FurnaceProgress progress = getter.get(ModDataComponents.FURNACE_PROGRESS);
+		if (progress != null) {
+			this.smeltTicks = progress.ticks();
+			this.heat = progress.heat();
 		}
 	}
 

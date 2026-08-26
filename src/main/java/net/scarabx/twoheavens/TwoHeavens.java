@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.block.ModDataComponents;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.StunAttachment;
 import net.scarabx.twoheavens.combat.SwordComboHandler;
@@ -47,6 +48,7 @@ public class TwoHeavens implements ModInitializer {
 		// persist/sync correctly, same as items/blocks needing registration
 		// up front rather than on first use.
 		DrawnSwordsAttachment.touch();
+		ModDataComponents.touch();
 		StunAttachment.touch();
 		SwordDrawServerHandler.register();
 		TutorialProgressAttachment.touch();

@@ -42,6 +42,10 @@ public class ModBlocks {
 	public static final Block KERA = registerBlockWithItem("kera", KeraStaticBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion());
 
+	// Unbreakable while it cools, on purpose: the wait IS the step, mirroring the real
+	// process where bloom is left to cool before being broken up and reheated. That
+	// only works because the HUD says so - an unbreakable block with no explanation
+	// reads as a bug.
 	public static final Block KERA_BLOCK = registerBlockWithItem("kera_block", KeraBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE).noOcclusion());
 

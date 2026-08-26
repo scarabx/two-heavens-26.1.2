@@ -12,7 +12,11 @@ import net.scarabx.twoheavens.block.custom.KeraBlock;
 
 public class KeraBlockEntity extends BlockEntity {
 
-	public static final int COOL_DURATION_TICKS = 480; // 24 seconds
+	// 10 seconds, down from 24. The kera cannot be broken while it cools, and this
+	// lands straight after a 60-second smelt - so it was a long second wait with
+	// nothing to press, right at the payoff. Long enough to watch the stages play out,
+	// short enough that nobody wanders off.
+	public static final int COOL_DURATION_TICKS = 200;
 
 	private int coolTicks = 0;
 

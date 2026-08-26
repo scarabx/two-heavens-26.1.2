@@ -21,10 +21,12 @@ import java.util.List;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.minecraft.world.level.block.state.BlockState;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.block.custom.KeraBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
 import net.scarabx.twoheavens.item.ModItems;
 import net.scarabx.twoheavens.item.ModRecipeTooltips;
+import net.scarabx.twoheavens.item.ShiftState;
 
 /**
  * A prompt shown while an unfired Tatara Furnace is in view: right-click it with
@@ -64,6 +66,13 @@ public final class FurnaceHintHud {
 	/** Hammer strikes needed to break a formed kera out of the furnace. */
 	private static final int KERA_HAMMER_STRIKES = 4;
 	private static final int ICON = 16;
+	/** cool_stage's maximum - the kera is fully cool here. */
+	private static final int COOL_STAGE_MAX = 8;
+	private static final int BAR_WIDTH = 80;
+	private static final int BAR_HEIGHT = 5;
+	// Hot orange draining away, on the same dark ground vanilla uses behind its bars.
+	private static final int BAR_FILL = 0xFFFF7A2E;
+	private static final int BAR_BACKGROUND = 0xFF1A1A1A;
 	private static final int GAP = 6;
 	/** Vertical space between stacked rows of a multi-line prompt. */
 	private static final int ROW_GAP = 4;
@@ -86,6 +95,10 @@ public final class FurnaceHintHud {
 			return;
 		}
 
+		if (drawCoolingHint(graphics, client)) {
+			return;
+		}
+
 		// Carrying a hot blade beats everything else for urgency: it is cooling, and
 		// without tongs it burns. Quenching is the next step and nothing says so.
 		if (drawQuenchHint(graphics, client)) {
@@ -98,9 +111,16 @@ public final class FurnaceHintHud {
 			return;
 		}
 
-		BlockState unfired = furnaceInView(client, ModBlocks.TATARA_FURNACE);
+		BlockState unfired = blockInView(client, ModBlocks.TATARA_FURNACE);
 		if (unfired != null) {
 			if (unfired.getValue(TataraFurnaceBlock.LIT)) {
+				// Curing: a minute with nothing to do. Rather than stay silent, use the
+				// wait to say what the next stage needs - finding out you lack a flint
+				// and steel halfway through a process is the irritating way to learn it.
+				drawComingUp(graphics, client, List.of(
+						new Ingredient(new ItemStack(Items.CHARCOAL, FIRED_CHARCOAL)),
+						new Ingredient(new ItemStack(ModBlocks.SATETSU_SAND, FIRED_SATETSU)),
+						new Ingredient(new ItemStack(Items.FLINT_AND_STEEL))));
 				return;
 			}
 			int missing = UNFIRED_CHARCOAL - unfired.getValue(TataraFurnaceBlock.CHARCOAL_LEVEL);
@@ -114,7 +134,7 @@ public final class FurnaceHintHud {
 			return;
 		}
 
-		BlockState fired = furnaceInView(client, ModBlocks.TATARA_FURNACE_FIRED);
+		BlockState fired = blockInView(client, ModBlocks.TATARA_FURNACE_FIRED);
 		if (fired == null) {
 			return;
 		}
@@ -122,9 +142,8 @@ public final class FurnaceHintHud {
 			// The kera is ready but sealed in. Four hammer strikes break it out, and
 			// nothing about the block says so - this is where the guidance used to
 			// stop entirely.
-			drawHint(graphics, client,
-					needed(client, new ItemStack(ModItems.HAMMER)),
-					Component.empty(), KERA_HAMMER_STRIKES);
+			drawWithHint(graphics, client, new ItemStack(ModItems.HAMMER),
+					Component.empty(), KERA_HAMMER_STRIKES, false);
 			return;
 		}
 
@@ -150,11 +169,15 @@ public final class FurnaceHintHud {
 			}
 		} else if (fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) >= BELLOWS_PHASE_STAGE) {
 			// Past the passive half - heat now falls without bellows work.
-			drawHint(graphics, client,
-					needed(client, new ItemStack(ModItems.BELLOWS)),
-					Component.translatable("hud.twoheavens.furnace_bellows"));
+			drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
+					Component.translatable("hud.twoheavens.furnace_bellows"), 0, true);
 		}
-		// Lit but still in the passive half: nothing to do yet, so stay quiet.
+		// Lit but still in the passive half: nothing to do yet, so the wait is spent
+		// warning that a bellows is about to be needed.
+		else {
+			drawComingUp(graphics, client,
+					List.of(new Ingredient(new ItemStack(ModItems.BELLOWS))));
+		}
 	}
 
 	/**
@@ -202,7 +225,7 @@ public final class FurnaceHintHud {
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
 			// Finished. Only the tongs remain, and picking it up bare-handed burns.
-			drawHint(graphics, client, needed(client, new ItemStack(ModItems.TONGS)),
+			drawWithHint(graphics, client, new ItemStack(ModItems.TONGS),
 					Component.translatable("hud.twoheavens.tongs_offhand"), 0, false);
 			return true;
 		}
@@ -248,16 +271,20 @@ public final class FurnaceHintHud {
 	}
 
 	/**
-	 * Turns a required item into prompt steps, showing HOW TO MAKE IT when the player
-	 * has none.
+	 * Turns a required item into prompt steps.
 	 *
-	 * A prompt that says "use a bellows" is useless to someone who has never made one,
-	 * and they cannot hover an item they do not own - so the recipe has to come to
-	 * them. The vanilla recipe book technically covers this, but experienced players
-	 * keep it closed, which is exactly who a first-time player of this mod is not.
+	 * Normally just the item. If the player has none of it, holding Shift swaps it for
+	 * its ingredients - the same "Hold [Shift] for recipe" gesture every tooltip in the
+	 * mod already teaches, so it transfers without being explained again.
+	 *
+	 * Shift-gated rather than always shown, because a prompt is meant to be a glance:
+	 * three ingredient icons in place of one tool turns it into something you have to
+	 * read. You cannot hover an item you do not own, so the recipe still has to be
+	 * reachable here - just not in the way.
 	 */
 	private static List<Ingredient> needed(Minecraft client, ItemStack wanted) {
-		if (client.player.getInventory().contains(stack -> stack.is(wanted.getItem()))) {
+		if (!ShiftState.isDown()
+				|| client.player.getInventory().contains(stack -> stack.is(wanted.getItem()))) {
 			return List.of(new Ingredient(wanted));
 		}
 		List<ItemStack> parts = ModRecipeTooltips.ingredientsFor(wanted.getItem());
@@ -269,6 +296,84 @@ public final class FurnaceHintHud {
 			steps.add(new Ingredient(part));
 		}
 		return steps;
+	}
+
+	/**
+	 * The tail for a prompt naming an item the player may not have.
+	 *
+	 * Says "[Shift] for recipe" only when there is one to offer - the player lacks the
+	 * item and it is craftable - so the common case, where you already have the tool
+	 * and are simply being told to use it, stays a bare icon.
+	 *
+	 * The hint has to be spelled out: the tooltips teach this gesture by writing it in
+	 * words, and nobody infers it there either. Assuming it transfers to a different
+	 * surface with no prompt was wishful.
+	 */
+	private static boolean canOffer(Minecraft client, ItemStack wanted) {
+		return !client.player.getInventory().contains(stack -> stack.is(wanted.getItem()))
+				&& !ModRecipeTooltips.ingredientsFor(wanted.getItem()).isEmpty();
+	}
+
+	private static void drawWithHint(GuiGraphicsExtractor graphics, Minecraft client,
+									  ItemStack wanted, Component tail, int clicks,
+									  boolean plusBeforeTail) {
+		Row main = new Row(needed(client, wanted), tail, clicks, plusBeforeTail, null);
+		if (!canOffer(client, wanted) || ShiftState.isDown()) {
+			drawRows(graphics, client, List.of(main));
+			return;
+		}
+		// The hint gets its own line: replacing the tail with it threw away what the
+		// prompt was actually telling you.
+		drawRows(graphics, client, List.of(main,
+				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
+						firstIconX(client.font, main, graphics.guiWidth()))));
+	}
+
+	/**
+	 * A heads-up shown during the waiting periods, when there is nothing to do and the
+	 * prompt would otherwise be blank: these are what the NEXT stage will ask for.
+	 *
+	 * No mouse icon - it is not an instruction, and showing one would suggest there is
+	 * something to click now.
+	 */
+	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
+									  List<Ingredient> upcoming) {
+		drawRows(graphics, client, List.of(new Row(upcoming,
+				Component.translatable("hud.twoheavens.coming_up"), 0, false, null, false, null)));
+	}
+
+	/**
+	 * A cooling kera cannot be broken - the wait is the step. That only works if the
+	 * player is told, so this shows a bar that empties as it cools: an unbreakable
+	 * block with no explanation is indistinguishable from a bug.
+	 *
+	 * A bar rather than a number because the point is "nearly there", not a countdown
+	 * to read.
+	 */
+	private static boolean drawCoolingHint(GuiGraphicsExtractor graphics, Minecraft client) {
+		BlockState kera = blockInView(client, ModBlocks.KERA_BLOCK);
+		if (kera == null) {
+			return false;
+		}
+
+		// cool_stage counts up as it cools, so the remaining time is what is left of it.
+		int stage = kera.getValue(KeraBlock.COOL_STAGE);
+		float remaining = 1.0F - (stage / (float) COOL_STAGE_MAX);
+
+		Font font = client.font;
+		Component label = Component.translatable("hud.twoheavens.kera_cooling");
+		int labelWidth = font.width(label);
+		int width = Math.max(labelWidth, BAR_WIDTH);
+		int x = (graphics.guiWidth() - width) / 2;
+		int y = graphics.guiHeight() - BOTTOM_OFFSET;
+
+		graphics.text(font, label, x + (width - labelWidth) / 2, y, 0xFFFFFFFF);
+
+		int barX = x + (width - BAR_WIDTH) / 2;
+		int barY = y + font.lineHeight + 3;
+		graphics.fill(barX - 1, barY - 1, barX + BAR_WIDTH + 1, barY + BAR_HEIGHT + 1, BAR_BACKGROUND);
+		graphics.fill(barX, barY, barX + Math.round(BAR_WIDTH * remaining), barY + BAR_HEIGHT, BAR_FILL);
+		return true;
 	}
 
 	/** Filled and ready - the only remaining step is striking it alight. */
@@ -324,20 +429,61 @@ public final class FurnaceHintHud {
 	 *                       a sentence.
 	 */
 	private record Row(List<Ingredient> ingredients, Component tail, int clicks,
-					   boolean plusBeforeTail, Ingredient outcome) {
+					   boolean plusBeforeTail, Ingredient outcome, boolean mouse, Integer alignX) {
+
+		Row(List<Ingredient> ingredients, Component tail, int clicks,
+				boolean plusBeforeTail, Ingredient outcome) {
+			this(ingredients, tail, clicks, plusBeforeTail, outcome, true, null);
+		}
+
+		/**
+		 * A bare line of text - no mouse icon, no items - drawn at an absolute x rather
+		 * than centred, so the Shift hint sits under the item it refers to instead of
+		 * wandering with its own width.
+		 */
+		static Row text(Component text, int alignX) {
+			return new Row(List.of(), text, 0, false, null, false, alignX);
+		}
 	}
 
 	/**
 	 * Rows are stacked and each centred independently, so a two-row fork reads as two
-	 * complete instructions rather than one wrapped sentence. The block as a whole
-	 * stays anchored at BOTTOM_OFFSET, growing upward.
+	 * complete instructions rather than one wrapped sentence.
+	 *
+	 * The FIRST row is anchored at BOTTOM_OFFSET and extra rows grow downward. Growing
+	 * upward instead made the main message jump up the moment a second row appeared -
+	 * so walking up to a furnace without a bellows moved the prompt you were reading.
 	 */
 	private static void drawRows(GuiGraphicsExtractor graphics, Minecraft client, List<Row> rows) {
 		int rowHeight = MOUSE_H + ROW_GAP;
-		int top = graphics.guiHeight() - BOTTOM_OFFSET - (rows.size() - 1) * rowHeight;
+		int top = graphics.guiHeight() - BOTTOM_OFFSET;
 		for (int i = 0; i < rows.size(); i++) {
 			drawRow(graphics, client, rows.get(i), top + i * rowHeight);
 		}
+	}
+
+	private static int rowWidth(Font font, Row row) {
+		int plusWidth = font.width(Component.literal("+"));
+		int width = row.mouse() ? MOUSE_W : 0;
+		for (Ingredient ignored : row.ingredients()) {
+			width += GAP + plusWidth + GAP + ICON;
+		}
+		if (row.outcome() != null) {
+			width += GAP + font.width(Component.literal("\u2192")) + GAP + ICON;
+		}
+		if (!row.tail().getString().isEmpty()) {
+			width += GAP + font.width(row.tail());
+			if (row.plusBeforeTail()) {
+				width += plusWidth + GAP;
+			}
+		}
+		return width;
+	}
+
+	/** Where the first item icon lands in a centred row - what the hint aligns to. */
+	private static int firstIconX(Font font, Row row, int guiWidth) {
+		int x = (guiWidth - rowWidth(font, row)) / 2;
+		return x + (row.mouse() ? MOUSE_W : 0) + GAP + font.width(Component.literal("+")) + GAP;
 	}
 
 	private static void drawRow(GuiGraphicsExtractor graphics, Minecraft client, Row row, int y) {
@@ -348,35 +494,25 @@ public final class FurnaceHintHud {
 		int plusWidth = font.width(plus);
 		int arrowWidth = font.width(arrow);
 
-		int width = MOUSE_W;
-		for (Ingredient ignored : row.ingredients()) {
-			width += GAP + plusWidth + GAP + ICON;
-		}
-		if (row.outcome() != null) {
-			width += GAP + arrowWidth + GAP + ICON;
-		}
+		int width = rowWidth(font, row);
 		boolean hasTail = !row.tail().getString().isEmpty();
-		if (hasTail) {
-			width += GAP + font.width(row.tail());
-			if (row.plusBeforeTail()) {
-				width += plusWidth + GAP;
-			}
-		}
 
 		// Centred above the hotbar, where vanilla shows the held item name - somewhere
 		// players already scan, and out of the crosshair's way.
-		int x = (graphics.guiWidth() - width) / 2;
+		int x = row.alignX() != null ? row.alignX() : (graphics.guiWidth() - width) / 2;
 		int textY = y + (MOUSE_H - font.lineHeight) / 2;
 
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, MOUSE_ICON, x, y, MOUSE_W, MOUSE_H);
-		if (row.clicks() > 0) {
+		if (row.mouse()) {
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, MOUSE_ICON, x, y, MOUSE_W, MOUSE_H);
+		}
+		if (row.mouse() && row.clicks() > 0) {
 			Component count = Component.literal(Integer.toString(row.clicks()));
 			graphics.text(font, count,
 					x + MOUSE_W - font.width(count) + 2,
 					y + MOUSE_H - font.lineHeight + 2,
 					0xFFFFFFFF);
 		}
-		int cursor = x + MOUSE_W;
+		int cursor = row.mouse() ? x + MOUSE_W : x;
 
 		for (Ingredient ingredient : row.ingredients()) {
 			// A plus between every step, including after the mouse, so the whole
@@ -395,7 +531,9 @@ public final class FurnaceHintHud {
 		}
 
 		if (hasTail) {
-			cursor += GAP;
+			if (row.mouse() || !row.ingredients().isEmpty()) {
+				cursor += GAP;
+			}
 			if (row.plusBeforeTail()) {
 				graphics.text(font, plus, cursor, textY, 0xFFFFFFFF);
 				cursor += plusWidth + GAP;
@@ -418,7 +556,7 @@ public final class FurnaceHintHud {
 
 
 	/** True when any furnace of the given kind within RANGE sits inside the player's forward cone. */
-	private static BlockState furnaceInView(Minecraft client, net.minecraft.world.level.block.Block block) {
+	private static BlockState blockInView(Minecraft client, net.minecraft.world.level.block.Block block) {
 		Level level = client.level;
 		Vec3 eye = client.player.getEyePosition();
 		Vec3 look = client.player.getLookAngle().normalize();
