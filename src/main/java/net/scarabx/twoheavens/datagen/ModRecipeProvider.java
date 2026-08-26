@@ -45,8 +45,8 @@ public class ModRecipeProvider extends FabricRecipeProvider {
 						.pattern("   ")
 						.pattern("WWW")
 						.pattern("   ")
-						.define('W', ItemTags.WOOL)
-						.unlockedBy("has_wool", this.has(ItemTags.WOOL))
+						.define('W', Items.WHITE_WOOL)
+						.unlockedBy("has_wool", this.has(Items.WHITE_WOOL))
 						.save(output);
 
 				ShapelessRecipeBuilder.shapeless(this.items, RecipeCategory.COMBAT, ModItems.DAISHO_SAYA)

@@ -83,7 +83,11 @@ public final class ModRecipeTooltips {
 
 		// Wool -> Obi. Authored as a 3x3 with empty top and bottom rows, which
 		// Minecraft trims, so a single row is the same recipe and reads better.
-		taggedRow(ItemTags.WOOL, Items.WHITE_WOOL, 3, ModItems.OBI, 1);
+		// White wool only - the obi is no longer craftable from any dyed wool, so the
+		// tooltip must not offer the recipe on the other fifteen colours.
+		shaped(new Item[]{
+				Items.WHITE_WOOL, Items.WHITE_WOOL, Items.WHITE_WOOL
+		}, 3, 1, ModItems.OBI, 1);
 
 		// Leather and sticks make both hilts
 		shaped(new Item[]{
