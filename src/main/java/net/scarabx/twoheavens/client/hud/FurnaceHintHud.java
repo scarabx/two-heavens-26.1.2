@@ -70,6 +70,10 @@ public final class FurnaceHintHud {
 	private static final int COOL_STAGE_MAX = 8;
 	/** redness_stage at full heat - what is left below it is pumps still owed. */
 	private static final int MAX_REDNESS_STAGE = 8;
+	/** Stage the passive half tops out at - half of MAX_REDNESS_STAGE. */
+	private static final int PASSIVE_REDNESS_STAGE = 4;
+	/** Highest value of the unfired furnace's colour_stage. */
+	private static final int MAX_STAGE = 8;
 	private static final int BAR_WIDTH = 80;
 	private static final int BAR_HEIGHT = 5;
 	// Hot orange draining away, on the same dark ground vanilla uses behind its bars.
@@ -116,20 +120,28 @@ public final class FurnaceHintHud {
 		BlockState unfired = blockInView(client, ModBlocks.TATARA_FURNACE);
 		if (unfired != null) {
 			if (unfired.getValue(TataraFurnaceBlock.LIT)) {
-				// Curing: a minute with nothing to do. Rather than stay silent, use the
-				// wait to say what the next stage needs - finding out you lack a flint
-				// and steel halfway through a process is the irritating way to learn it.
-				drawComingUp(graphics, client, List.of(
-						new ItemStack(Items.CHARCOAL, FIRED_CHARCOAL),
-						new ItemStack(ModBlocks.SATETSU_SAND, FIRED_SATETSU),
-						new ItemStack(Items.FLINT_AND_STEEL)));
+				// Curing: just the bar. A heads-up here had nothing new to say - the
+				// next stage wants charcoal, satetsu and a flint and steel, and you
+				// cannot be watching a curing furnace without already owning the flint
+				// and steel that lit it, while the join hints cover the rest.
+				//
+				// A heads-up earns its place only when the next step needs a TOOL the
+				// player probably lacks. Materials are gathered; tools must be crafted,
+				// which is what makes discovering you need one mid-process irritating.
+				drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
+						graphics.guiHeight() - BOTTOM_OFFSET,
+						unfired.getValue(TataraFurnaceBlock.COLOR_STAGE) / (float) MAX_STAGE);
 				return;
 			}
 			int missing = UNFIRED_CHARCOAL - unfired.getValue(TataraFurnaceBlock.CHARCOAL_LEVEL);
 			if (missing > 0) {
-				drawHint(graphics, client,
-						List.of(new Ingredient(new ItemStack(Items.CHARCOAL, missing))),
-						Component.translatable("hud.twoheavens.furnace_wait"));
+				// Both remaining steps at once - the charcoal it still wants, then the
+				// flint and steel. Showing a duration here was answering a question
+				// nobody had yet.
+				drawHint(graphics, client, List.of(
+						new Ingredient(new ItemStack(Items.CHARCOAL, missing)),
+						new Ingredient(new ItemStack(Items.FLINT_AND_STEEL))),
+						Component.empty());
 			} else {
 				drawLightHint(graphics, client);
 			}
@@ -166,8 +178,8 @@ public final class FurnaceHintHud {
 			if (missing.isEmpty()) {
 				drawLightHint(graphics, client);
 			} else {
-				drawHint(graphics, client, missing,
-						Component.translatable("hud.twoheavens.furnace_wait_short"));
+				missing.add(new Ingredient(new ItemStack(Items.FLINT_AND_STEEL)));
+				drawHint(graphics, client, missing, Component.empty());
 			}
 		} else if (fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) >= BELLOWS_PHASE_STAGE) {
 			// Past the passive half - heat now falls without bellows work.
@@ -184,7 +196,17 @@ public final class FurnaceHintHud {
 		// Lit but still in the passive half: nothing to do yet, so the wait is spent
 		// warning that a bellows is about to be needed.
 		else {
-			drawComingUp(graphics, client, List.of(new ItemStack(ModItems.BELLOWS)));
+			// Passive half: heat is climbing on its own, so show how far along it is
+			// alongside the bellows it is about to need.
+			// Both tools the rest of the chain needs, named in the one window with idle
+			// time to act on them: the bellows for the half about to start, and the
+			// hammer to break the kera out afterwards. The hammer had no warning at all
+			// before - it appeared as a current-step prompt at the moment it was
+			// already required.
+			drawComingUp(graphics, client,
+					List.of(new ItemStack(ModItems.BELLOWS), new ItemStack(ModItems.HAMMER)),
+					fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE)
+							/ (float) PASSIVE_REDNESS_STAGE);
 		}
 	}
 
@@ -345,6 +367,14 @@ public final class FurnaceHintHud {
 	 * something to click now.
 	 */
 	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
+									  List<ItemStack> upcoming, float progress) {
+		drawComingUp(graphics, client, upcoming);
+		// Under the row, in the slot the second row would occupy.
+		int y = graphics.guiHeight() - BOTTOM_OFFSET + MOUSE_H + ROW_GAP;
+		drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2, y, progress);
+	}
+
+	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
 									  List<ItemStack> upcoming) {
 		// Waiting is the best moment to make what you are about to need, so the same
 		// Shift gesture works here: it expands anything you do not have into how to
@@ -395,11 +425,17 @@ public final class FurnaceHintHud {
 
 		graphics.text(font, label, x + (width - labelWidth) / 2, y, 0xFFFFFFFF);
 
-		int barX = x + (width - BAR_WIDTH) / 2;
-		int barY = y + font.lineHeight + 3;
-		graphics.fill(barX - 1, barY - 1, barX + BAR_WIDTH + 1, barY + BAR_HEIGHT + 1, BAR_BACKGROUND);
-		graphics.fill(barX, barY, barX + Math.round(BAR_WIDTH * remaining), barY + BAR_HEIGHT, BAR_FILL);
+		drawBar(graphics, x + (width - BAR_WIDTH) / 2, y + font.lineHeight + 3, remaining);
 		return true;
+	}
+
+	/** A filled bar, 0 to 1. Durations are shown this way rather than as a number of
+	 * seconds: a bar answers "how much longer" at a glance and cannot go stale when
+	 * the timing is retuned, which is what happened to the old "60 sec" labels. */
+	private static void drawBar(GuiGraphicsExtractor graphics, int x, int y, float fraction) {
+		float clamped = Math.max(0.0F, Math.min(1.0F, fraction));
+		graphics.fill(x - 1, y - 1, x + BAR_WIDTH + 1, y + BAR_HEIGHT + 1, BAR_BACKGROUND);
+		graphics.fill(x, y, x + Math.round(BAR_WIDTH * clamped), y + BAR_HEIGHT, BAR_FILL);
 	}
 
 	/** Filled and ready - the only remaining step is striking it alight. */
@@ -491,8 +527,16 @@ public final class FurnaceHintHud {
 	private static int rowWidth(Font font, Row row) {
 		int plusWidth = font.width(Component.literal("+"));
 		int width = row.mouse() ? MOUSE_W : 0;
+		boolean first = true;
 		for (Ingredient ignored : row.ingredients()) {
-			width += GAP + plusWidth + GAP + ICON;
+			// A plus joins one thing to the next, so the first item only gets one when
+			// the mouse icon precedes it. A row without the mouse used to open with a
+			// stray leading plus.
+			if (!first || row.mouse()) {
+				width += GAP + plusWidth;
+			}
+			width += GAP + ICON;
+			first = false;
 		}
 		if (row.outcome() != null) {
 			width += GAP + font.width(Component.literal("\u2192")) + GAP + ICON;
@@ -540,13 +584,18 @@ public final class FurnaceHintHud {
 		}
 		int cursor = row.mouse() ? x + MOUSE_W : x;
 
+		boolean firstDrawn = true;
 		for (Ingredient ingredient : row.ingredients()) {
 			// A plus between every step, including after the mouse, so the whole
-			// prompt reads as one instruction rather than loose icons.
+			// prompt reads as one instruction rather than loose icons - but never
+			// before the first item of a row that has no mouse icon.
 			cursor += GAP;
-			graphics.text(font, plus, cursor, textY, 0xFFFFFFFF);
-			cursor += plusWidth + GAP;
+			if (!firstDrawn || row.mouse()) {
+				graphics.text(font, plus, cursor, textY, 0xFFFFFFFF);
+				cursor += plusWidth + GAP;
+			}
 			cursor = drawIngredient(graphics, font, ingredient, cursor, y);
+			firstDrawn = false;
 		}
 
 		if (row.outcome() != null) {

@@ -29,6 +29,8 @@ public final class JoinMessageHandler {
 	private static final int TATARA_CLAY_GOAL = 64;
 	/** One Sugar Cane + Charcoal + Clay Ball yields this many Tatara Clay. */
 	private static final int TATARA_CLAY_PER_CRAFT = 4;
+	/** How many of each ingredient the whole clay goal needs. */
+	private static final int INGREDIENTS_PER_GOAL = TATARA_CLAY_GOAL / TATARA_CLAY_PER_CRAFT;
 
 	// withoutShadow keeps chat's drop shadow off the item pictures - on a glyph it
 	// smears a dark copy under the sprite rather than reading as depth.
@@ -61,6 +63,41 @@ public final class JoinMessageHandler {
 			}
 		});
 
+	}
+
+
+	/**
+	 * Chat lines confirming a starter goal is done, sent the moment it is reached
+	 * rather than waiting for the next join.
+	 *
+	 * Without these the hints simply stop appearing on some future login, which reads
+	 * as them having been forgotten rather than completed - and a player who never
+	 * leaves the world would never see them go at all.
+	 *
+	 * Fired on the crossing only: compares what was stored against what was just
+	 * counted, so it cannot repeat however many times sample() runs.
+	 */
+	static void announceCompletions(ServerPlayer player,
+									 TutorialProgressAttachment.Progress before,
+									 TutorialProgressAttachment.Progress after) {
+		if (before.maxSatetsu() < SATETSU_GOAL && after.maxSatetsu() >= SATETSU_GOAL) {
+			player.sendSystemMessage(Component.literal(SATETSU_GOAL + " ")
+					.append(icon(SATETSU))
+					.append(Component.literal(" mined")));
+		}
+
+		int per = INGREDIENTS_PER_GOAL;
+		boolean had = before.maxSugarCane() >= per && before.maxCharcoal() >= per && before.maxClay() >= per;
+		boolean has = after.maxSugarCane() >= per && after.maxCharcoal() >= per && after.maxClay() >= per;
+		if (!had && has) {
+			player.sendSystemMessage(Component.literal(per + " ")
+					.append(icon(SUGAR_CANE))
+					.append(Component.literal(" + " + per + " "))
+					.append(icon(CHARCOAL))
+					.append(Component.literal(" + " + per + " "))
+					.append(icon(CLAY))
+					.append(Component.literal(" gathered")));
+		}
 	}
 
 	private static Component icon(String glyph) {

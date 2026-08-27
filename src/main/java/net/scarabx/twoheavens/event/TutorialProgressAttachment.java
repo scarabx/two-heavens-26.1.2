@@ -69,6 +69,9 @@ public class TutorialProgressAttachment {
 		Progress raised = stored.raisedTo(counts[0], counts[1], counts[2], counts[3], counts[4]);
 		if (!raised.equals(stored)) {
 			player.setAttached(TYPE, raised);
+			// Announce here rather than on join: a player who stays in one world would
+			// otherwise never see a goal acknowledged, only notice the hint stop.
+			JoinMessageHandler.announceCompletions(player, stored, raised);
 		}
 		return raised;
 	}

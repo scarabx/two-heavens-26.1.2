@@ -38,8 +38,6 @@
   "block.twoheavens.kera_block": "Molten Kera",
   "block.twoheavens.hot_kera_block": "Hot Kera",
   "tooltip.twoheavens.shift_for_recipe": "Hold [Shift] for recipes",
-  "hud.twoheavens.furnace_wait": "30 sec",
-  "hud.twoheavens.furnace_wait_short": "20 sec",
   "message.twoheavens.tend_furnace": "Tend to furnace",
   "hud.twoheavens.kera_cooling": "Too hot to break",
   "hud.twoheavens.coming_up": "needed next",
