@@ -41,6 +41,15 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 	public static final IntegerProperty REDNESS_STAGE = IntegerProperty.create("redness_stage", 0, 8);
 	public static final BooleanProperty KERA_FORMED = BooleanProperty.create("kera_formed");
 	public static final IntegerProperty CRACK_STAGE = IntegerProperty.create("crack_stage", 0, 4);
+	/**
+	 * How far through the bellows phase the furnace is, in quarters.
+	 *
+	 * Nothing else on the block advances with TIME once the passive half ends - both
+	 * smelt_stage and redness_stage derive from heat, and heat only moves when the
+	 * player pumps. Without this the HUD had no way to show how long was left, since
+	 * completion needs the timer as well as the four pumps.
+	 */
+	public static final IntegerProperty BELLOWS_PROGRESS = IntegerProperty.create("bellows_progress", 0, 4);
 
 	public TataraFurnaceFiredBlock(BlockBehaviour.Properties properties) {
 		super(properties);
@@ -50,13 +59,14 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 				.setValue(SATETSU_LEVEL, 0)
 				.setValue(SMELT_STAGE, 0)
 				.setValue(REDNESS_STAGE, 0)
+				.setValue(BELLOWS_PROGRESS, 0)
 				.setValue(KERA_FORMED, false)
 				.setValue(CRACK_STAGE, 0));
 	}
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(LIT, CHARCOAL_LEVEL, SATETSU_LEVEL, SMELT_STAGE, REDNESS_STAGE, KERA_FORMED, CRACK_STAGE);
+		builder.add(LIT, CHARCOAL_LEVEL, SATETSU_LEVEL, SMELT_STAGE, REDNESS_STAGE, KERA_FORMED, CRACK_STAGE, BELLOWS_PROGRESS);
 	}
 
 	@Override

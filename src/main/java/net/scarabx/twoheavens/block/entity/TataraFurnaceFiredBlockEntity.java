@@ -138,10 +138,22 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 
 		int currentStage = Math.max(0, Math.min(8, Math.round(this.heat / STEP_HEAT)));
 		this.peakStage = Math.max(this.peakStage, currentStage);
+
+		// The bellows phase's TIME, in quarters, published for the HUD. Heat only moves
+		// when the player pumps, so without this nothing on the block advanced with the
+		// clock once the passive half ended - and completion needs both.
+		int bellowsProgress = 0;
+		if (this.smeltTicks > PASSIVE_PHASE_TICKS) {
+			int intoPhase = this.smeltTicks - PASSIVE_PHASE_TICKS;
+			bellowsProgress = Math.min(4, (intoPhase * 4) / BELLOWS_PHASE_TICKS);
+		}
+
 		if (state.getValue(TataraFurnaceFiredBlock.SMELT_STAGE) != this.peakStage
-				|| state.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) != currentStage) {
+				|| state.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) != currentStage
+				|| state.getValue(TataraFurnaceFiredBlock.BELLOWS_PROGRESS) != bellowsProgress) {
 			level.setBlock(pos, state.setValue(TataraFurnaceFiredBlock.SMELT_STAGE, this.peakStage)
-					.setValue(TataraFurnaceFiredBlock.REDNESS_STAGE, currentStage), 3);
+					.setValue(TataraFurnaceFiredBlock.REDNESS_STAGE, currentStage)
+					.setValue(TataraFurnaceFiredBlock.BELLOWS_PROGRESS, bellowsProgress), 3);
 		}
 
 		// Once it first reaches the passive cap (30s / halfway), smoke shuts

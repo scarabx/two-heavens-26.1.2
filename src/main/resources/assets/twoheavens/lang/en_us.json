@@ -42,8 +42,6 @@
   "hud.twoheavens.kera_cooling": "Too hot to break",
   "hud.twoheavens.coming_up": "needed next",
   "hud.twoheavens.shift_for_recipe": "Hold [Shift] for recipe",
-  "hud.twoheavens.furnace_bellows": "%s pumps to finish",
-  "hud.twoheavens.furnace_bellows_one": "1 pump to finish",
   "hud.twoheavens.tongs_offhand": "Tongs in your offhand to pick it up",
   "hud.twoheavens.anvil_or_take": "again for a Katana, or Tongs to take this one",
   "tooltip.twoheavens.hammer_use": "Strikes a fired furnace open, then forges on a Smithing Anvil",

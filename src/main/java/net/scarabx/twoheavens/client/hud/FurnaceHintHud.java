@@ -74,10 +74,17 @@ public final class FurnaceHintHud {
 	private static final int PASSIVE_REDNESS_STAGE = 4;
 	/** Highest value of the unfired furnace's colour_stage. */
 	private static final int MAX_STAGE = 8;
+	// How long one stage of each process lasts, for interpolating between them.
+	// Curing 600 ticks / 8, passive half 400 / 4, kera cooling 200 / 8.
+	private static final long CURING_STAGE_MS = 3750L;
+	private static final long PASSIVE_STAGE_MS = 5000L;
+	private static final long COOL_STAGE_MS = 1250L;
+	// Bellows phase: 300 ticks in 4 steps.
+	private static final int BELLOWS_STEPS = 4;
+	private static final long BELLOWS_STAGE_MS = 3750L;
 	private static final int BAR_WIDTH = 80;
 	private static final int BAR_HEIGHT = 5;
-	// Hot orange draining away, on the same dark ground vanilla uses behind its bars.
-	private static final int BAR_FILL = 0xFFFF7A2E;
+	// The same dark ground vanilla uses behind its own bars.
 	private static final int BAR_BACKGROUND = 0xFF1A1A1A;
 	private static final int GAP = 6;
 	/** Vertical space between stacked rows of a multi-line prompt. */
@@ -130,7 +137,7 @@ public final class FurnaceHintHud {
 				// which is what makes discovering you need one mid-process irritating.
 				drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
 						graphics.guiHeight() - BOTTOM_OFFSET,
-						unfired.getValue(TataraFurnaceBlock.COLOR_STAGE) / (float) MAX_STAGE);
+						progress("curing", unfired.getValue(TataraFurnaceBlock.COLOR_STAGE), MAX_STAGE, CURING_STAGE_MS));
 				return;
 			}
 			int missing = UNFIRED_CHARCOAL - unfired.getValue(TataraFurnaceBlock.CHARCOAL_LEVEL);
@@ -187,11 +194,27 @@ public final class FurnaceHintHud {
 			// no need to sync the block entity to count down what is left.
 			int pumpsLeft = Math.max(0, MAX_REDNESS_STAGE
 					- fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE));
-			drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
-					Component.translatable(pumpsLeft == 1
-							? "hud.twoheavens.furnace_bellows_one"
-							: "hud.twoheavens.furnace_bellows", pumpsLeft),
-					0, true);
+			// The tally sits in the bellows' own corner, inventory-style, rather than
+			// spelling it out in words - the icon already says what to use, so the
+			// number only has to say how many are left.
+			//
+			// Once the pumps are done the bellows drops out entirely: showing it with
+			// no number read as "use this" when there was nothing left to do, and the
+			// only thing still outstanding is the clock, which the bar shows.
+			if (pumpsLeft > 0) {
+				Row main = new Row(
+						List.of(Ingredient.counted(new ItemStack(ModItems.BELLOWS), pumpsLeft)),
+						Component.empty(), 0, false, null);
+				drawRows(graphics, client, List.of(main));
+			}
+			// The clock, alongside the pump count in the text: finishing needs both, and
+			// only the pumps were visible before. Interpolated like the other timed
+			// bars, since this one really is driven by time.
+			drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
+					graphics.guiHeight() - BOTTOM_OFFSET + MOUSE_H + ROW_GAP,
+					progress("bellows", fired.getValue(TataraFurnaceFiredBlock.BELLOWS_PROGRESS),
+							BELLOWS_STEPS, BELLOWS_STAGE_MS));
+
 		}
 		// Lit but still in the passive half: nothing to do yet, so the wait is spent
 		// warning that a bellows is about to be needed.
@@ -205,8 +228,8 @@ public final class FurnaceHintHud {
 			// already required.
 			drawComingUp(graphics, client,
 					List.of(new ItemStack(ModItems.BELLOWS), new ItemStack(ModItems.HAMMER)),
-					fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE)
-							/ (float) PASSIVE_REDNESS_STAGE);
+					progress("passive", fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE),
+							PASSIVE_REDNESS_STAGE, PASSIVE_STAGE_MS));
 		}
 	}
 
@@ -344,19 +367,20 @@ public final class FurnaceHintHud {
 				&& !ModRecipeTooltips.ingredientsFor(wanted.getItem()).isEmpty();
 	}
 
-	private static void drawWithHint(GuiGraphicsExtractor graphics, Minecraft client,
+	private static int drawWithHint(GuiGraphicsExtractor graphics, Minecraft client,
 									  ItemStack wanted, Component tail, int clicks,
 									  boolean plusBeforeTail) {
 		Row main = new Row(needed(client, wanted), tail, clicks, plusBeforeTail, null);
 		if (!canOffer(client, wanted) || ShiftState.isDown()) {
 			drawRows(graphics, client, List.of(main));
-			return;
+			return 1;
 		}
 		// The hint gets its own line: replacing the tail with it threw away what the
 		// prompt was actually telling you.
 		drawRows(graphics, client, List.of(main,
 				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
 						firstIconX(client.font, main, graphics.guiWidth()))));
+		return 2;
 	}
 
 	/**
@@ -412,9 +436,9 @@ public final class FurnaceHintHud {
 			return false;
 		}
 
-		// cool_stage counts up as it cools, so the remaining time is what is left of it.
-		int stage = kera.getValue(KeraBlock.COOL_STAGE);
-		float remaining = 1.0F - (stage / (float) COOL_STAGE_MAX);
+		// cool_stage counts up as it cools, which is already progress toward being
+		// breakable - so the bar uses it directly and fills, like every other one.
+		float remaining = progress("kera", kera.getValue(KeraBlock.COOL_STAGE), COOL_STAGE_MAX, COOL_STAGE_MS);
 
 		Font font = client.font;
 		Component label = Component.translatable("hud.twoheavens.kera_cooling");
@@ -429,13 +453,70 @@ public final class FurnaceHintHud {
 		return true;
 	}
 
-	/** A filled bar, 0 to 1. Durations are shown this way rather than as a number of
+	// Where the bar had got to when the stage last changed, so it can be carried
+	// smoothly across to the next one instead of jumping.
+	private static String barKey = "";
+	private static int barStage = -1;
+	private static long barStageStartMs = 0L;
+
+	/**
+	 * Stage as a 0-1 fraction, interpolated ACROSS each stage rather than stepping.
+	 *
+	 * Stage properties only change 4 or 8 times over a whole process, and the final
+	 * one lands on the same tick as the state change - so a bar driven straight off
+	 * them was full for an instant at best, and looked like it vanished before
+	 * finishing. Rounding up to full early would fix the look by lying: the bar would
+	 * read done while the block was still busy.
+	 *
+	 * Filling continuously between stages fixes it without either problem. The bar
+	 * sweeps up to full exactly as the process ends, so the last moment is visible
+	 * because it is moving, not because it was reached sooner.
+	 */
+	private static float progress(String key, int stage, int max, long stageMillis) {
+		long now = System.currentTimeMillis();
+		if (!key.equals(barKey) || stage != barStage) {
+			barKey = key;
+			barStage = stage;
+			barStageStartMs = now;
+		}
+		float within = Math.min(1.0F, (now - barStageStartMs) / (float) stageMillis);
+		return Math.min(1.0F, (stage + within) / (float) max);
+	}
+
+	/**
+	 * A filled bar, 0 to 1. Durations are shown this way rather than as a number of
 	 * seconds: a bar answers "how much longer" at a glance and cannot go stale when
-	 * the timing is retuned, which is what happened to the old "60 sec" labels. */
+	 * the timing is retuned, which is what happened to the old "60 sec" labels.
+	 *
+	 * Every bar FILLS toward completion, whatever it is timing. A bar answers one
+	 * question - how close am I to being able to act - and that question is the same
+	 * whether a furnace is heating or a kera is cooling, so the answer should look the
+	 * same. A draining bar reads as something running out, which is the wrong story
+	 * for a wait that ends in something becoming available.
+	 *
+	 * The colour carries the same meaning as the length: red when nothing can be done
+	 * yet, through orange and yellow, to green when it is ready.
+	 */
 	private static void drawBar(GuiGraphicsExtractor graphics, int x, int y, float fraction) {
 		float clamped = Math.max(0.0F, Math.min(1.0F, fraction));
 		graphics.fill(x - 1, y - 1, x + BAR_WIDTH + 1, y + BAR_HEIGHT + 1, BAR_BACKGROUND);
-		graphics.fill(x, y, x + Math.round(BAR_WIDTH * clamped), y + BAR_HEIGHT, BAR_FILL);
+		graphics.fill(x, y, x + Math.round(BAR_WIDTH * clamped), y + BAR_HEIGHT, barColor(clamped));
+	}
+
+	/** Red, orange, yellow, green - stepped through as the bar fills. */
+	private static final int[] BAR_STOPS = {0xFFD03A2E, 0xFFE0762A, 0xFFE0C62A, 0xFF3CE04A};
+
+	private static int barColor(float fraction) {
+		float scaled = fraction * (BAR_STOPS.length - 1);
+		int index = Math.min(BAR_STOPS.length - 2, (int) scaled);
+		return blend(BAR_STOPS[index], BAR_STOPS[index + 1], scaled - index);
+	}
+
+	private static int blend(int from, int to, float t) {
+		int r = Math.round(((from >> 16) & 0xFF) + (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)) * t);
+		int g = Math.round(((from >> 8) & 0xFF) + (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)) * t);
+		int b = Math.round((from & 0xFF) + ((to & 0xFF) - (from & 0xFF)) * t);
+		return 0xFF000000 | (r << 16) | (g << 8) | b;
 	}
 
 	/** Filled and ready - the only remaining step is striking it alight. */
@@ -450,13 +531,22 @@ public final class FurnaceHintHud {
 	 * corner-style by itemDecorations) or a gui sprite, for things with no item form
 	 * such as water.
 	 */
-	private record Ingredient(ItemStack stack, Identifier sprite) {
+	private record Ingredient(ItemStack stack, Identifier sprite, int badge) {
 		Ingredient(ItemStack stack) {
-			this(stack, null);
+			this(stack, null, 0);
 		}
 
 		Ingredient(Identifier sprite) {
-			this(ItemStack.EMPTY, sprite);
+			this(ItemStack.EMPTY, sprite, 0);
+		}
+
+		/**
+		 * An item with a count drawn in its corner, inventory-style. Used for a
+		 * remaining tally - unlike a stack's own count, this shows even at 1, which
+		 * vanilla hides.
+		 */
+		static Ingredient counted(ItemStack stack, int badge) {
+			return new Ingredient(stack, null, badge);
 		}
 	}
 
@@ -624,6 +714,13 @@ public final class FurnaceHintHud {
 		} else {
 			graphics.item(ingredient.stack(), cursor, y);
 			graphics.itemDecorations(font, ingredient.stack(), cursor, y);
+		}
+		if (ingredient.badge() > 0) {
+			Component count = Component.literal(Integer.toString(ingredient.badge()));
+			graphics.text(font, count,
+					cursor + ICON - font.width(count),
+					y + ICON - font.lineHeight + 1,
+					0xFFFFFFFF);
 		}
 		return cursor + ICON;
 	}
