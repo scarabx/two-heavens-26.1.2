@@ -257,6 +257,27 @@ public final class ModRecipeTooltips {
 				defs.add(tagged.def());
 			}
 		}
+		return toData(defs);
+	}
+
+	/**
+	 * ONLY how to make this item - never what it goes on to make.
+	 *
+	 * For the HUD, where the question is fixed: the prompt has just named a tool the
+	 * player does not own, so the only useful answer is the grid that produces it.
+	 * `forIngredient` deliberately shows both directions because a hovered item could
+	 * be either question; here there is nothing to disambiguate.
+	 *
+	 * Null when the item has no recipe - the kera and the blades come out of a furnace
+	 * and an anvil, not a crafting grid.
+	 */
+	public static RecipeTooltipData madeFrom(Item result) {
+		List<RecipeDef> defs = MADE_FROM.get(result);
+		return defs == null || defs.isEmpty() ? null : toData(List.copyOf(defs));
+	}
+
+	/** Shared by both lookups so the two can never disagree about how a grid is laid out. */
+	private static RecipeTooltipData toData(List<RecipeDef> defs) {
 		if (defs.isEmpty()) {
 			return null;
 		}

@@ -25,7 +25,9 @@ import net.scarabx.twoheavens.block.custom.KeraBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
 import net.scarabx.twoheavens.item.ModItems;
+import net.scarabx.twoheavens.client.tooltip.ClientRecipeTooltip;
 import net.scarabx.twoheavens.item.ModRecipeTooltips;
+import net.scarabx.twoheavens.item.RecipeTooltipData;
 import net.scarabx.twoheavens.item.ShiftState;
 
 /**
@@ -87,6 +89,9 @@ public final class FurnaceHintHud {
 	// The same dark ground vanilla uses behind its own bars.
 	private static final int BAR_BACKGROUND = 0xFF1A1A1A;
 	private static final int GAP = 6;
+	/** How far the recipe grid sits from the left edge - clear of the furnace, clear of the bezel. */
+	private static final int GRID_MARGIN = 8;
+
 	/** Vertical space between stacked rows of a multi-line prompt. */
 	private static final int ROW_GAP = 4;
 	/**
@@ -332,34 +337,6 @@ public final class FurnaceHintHud {
 	}
 
 	/**
-	 * Turns a required item into prompt steps.
-	 *
-	 * Normally just the item. If the player has none of it, holding Shift swaps it for
-	 * its ingredients - the same "Hold [Shift] for recipe" gesture every tooltip in the
-	 * mod already teaches, so it transfers without being explained again.
-	 *
-	 * Shift-gated rather than always shown, because a prompt is meant to be a glance:
-	 * three ingredient icons in place of one tool turns it into something you have to
-	 * read. You cannot hover an item you do not own, so the recipe still has to be
-	 * reachable here - just not in the way.
-	 */
-	private static List<Ingredient> needed(Minecraft client, ItemStack wanted) {
-		if (!ShiftState.isDown()
-				|| client.player.getInventory().contains(stack -> stack.is(wanted.getItem()))) {
-			return List.of(new Ingredient(wanted));
-		}
-		List<ItemStack> parts = ModRecipeTooltips.ingredientsFor(wanted.getItem());
-		if (parts.isEmpty()) {
-			return List.of(new Ingredient(wanted));
-		}
-		List<Ingredient> steps = new ArrayList<>(parts.size());
-		for (ItemStack part : parts) {
-			steps.add(new Ingredient(part));
-		}
-		return steps;
-	}
-
-	/**
 	 * The tail for a prompt naming an item the player may not have.
 	 *
 	 * Says "[Shift] for recipe" only when there is one to offer - the player lacks the
@@ -375,19 +352,69 @@ public final class FurnaceHintHud {
 				&& !ModRecipeTooltips.ingredientsFor(wanted.getItem()).isEmpty();
 	}
 
+	/**
+	 * Draws the real crafting grid for anything the player still needs, using the very
+	 * same renderer the tooltips use - a loose row of ingredient icons with counts told
+	 * you WHAT went in but never the shape, and the shape is most of a recipe.
+	 *
+	 * Drawn to the LOWER LEFT, deliberately out of the centre.
+	 *
+	 * Two earlier placements both failed. Downward there are only BOTTOM_OFFSET pixels
+	 * of room, so the second of two grids (the passive half wants bellows AND hammer)
+	 * was drawn off the bottom edge entirely. Upward it fitted, but landed squarely over
+	 * the furnace - and the furnace mid-smelt, with its smoke and its glow, is the thing
+	 * the player is actually there to watch. A recipe is reference material; it does not
+	 * get the middle of the screen.
+	 *
+	 * Bottom-aligned to just above the prompt row rather than free-floating, so it still
+	 * reads as belonging to that line even from off-centre. The centred prompt text is
+	 * what ties the two together.
+	 *
+	 * The progress bar is unaffected either way: it sits below the row, and the grid
+	 * never enters that space.
+	 */
+	private static void drawRecipeGrids(GuiGraphicsExtractor graphics, Minecraft client,
+										List<ItemStack> wanted) {
+		List<RecipeTooltipData.Entry> entries = new ArrayList<>();
+		for (ItemStack stack : wanted) {
+			if (client.player.getInventory().contains(s -> s.is(stack.getItem()))) {
+				continue;
+			}
+			RecipeTooltipData data = ModRecipeTooltips.madeFrom(stack.getItem());
+			if (data != null) {
+				entries.addAll(data.entries());
+			}
+		}
+		if (entries.isEmpty()) {
+			return;
+		}
+
+		ClientRecipeTooltip grid = new ClientRecipeTooltip(new RecipeTooltipData(List.copyOf(entries)));
+		int width = grid.getWidth(client.font);
+		int height = grid.getHeight(client.font);
+		int y = graphics.guiHeight() - BOTTOM_OFFSET - height - ROW_GAP;
+		grid.extractImage(client.font, GRID_MARGIN, y, width, height, graphics);
+	}
+
 	private static int drawWithHint(GuiGraphicsExtractor graphics, Minecraft client,
 									  ItemStack wanted, Component tail, int clicks,
 									  boolean plusBeforeTail) {
-		Row main = new Row(needed(client, wanted), tail, clicks, plusBeforeTail, null);
-		if (!canOffer(client, wanted) || ShiftState.isDown()) {
+		Row main = new Row(List.of(new Ingredient(wanted)), tail, clicks, plusBeforeTail, null);
+		if (!canOffer(client, wanted)) {
 			drawRows(graphics, client, List.of(main));
+			return 1;
+		}
+		if (ShiftState.isDown()) {
+			// The prompt keeps its own line and the grid opens above it, so the row
+			// still says what you are being told to use and does not move.
+			drawRows(graphics, client, List.of(main));
+			drawRecipeGrids(graphics, client, List.of(wanted));
 			return 1;
 		}
 		// The hint gets its own line: replacing the tail with it threw away what the
 		// prompt was actually telling you.
-		drawRows(graphics, client, List.of(main,
-				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
-						firstIconX(client.font, main, graphics.guiWidth()))));
+		drawRows(graphics, client, List.of(main, Row.text(
+				Component.translatable("hud.twoheavens.shift_for_recipe"))));
 		return 2;
 	}
 
@@ -419,19 +446,23 @@ public final class FurnaceHintHud {
 		List<Ingredient> steps = new ArrayList<>();
 		boolean anyOffered = false;
 		for (ItemStack wanted : upcoming) {
-			steps.addAll(needed(client, wanted));
+			steps.add(new Ingredient(wanted));
 			anyOffered |= canOffer(client, wanted);
 		}
 
 		Row main = new Row(steps, Component.translatable("hud.twoheavens.coming_up"),
 				0, false, null, false, null);
-		if (!anyOffered || ShiftState.isDown()) {
+		if (!anyOffered) {
 			drawRows(graphics, client, List.of(main));
 			return 1;
 		}
-		drawRows(graphics, client, List.of(main,
-				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
-						firstIconX(client.font, main, graphics.guiWidth()))));
+		if (ShiftState.isDown()) {
+			drawRows(graphics, client, List.of(main));
+			drawRecipeGrids(graphics, client, upcoming);
+			return 1;
+		}
+		drawRows(graphics, client, List.of(main, Row.text(
+				Component.translatable("hud.twoheavens.shift_for_recipe"))));
 		return 2;
 	}
 
@@ -619,6 +650,16 @@ public final class FurnaceHintHud {
 		static Row text(Component text, int alignX) {
 			return new Row(List.of(), text, 0, false, null, false, alignX);
 		}
+
+		/**
+		 * Centred, like every other row. The Shift prompt used to be pinned to the first
+		 * icon's x so it sat directly under the item it referred to; centring it keeps
+		 * the whole prompt on one axis instead, which reads as one block once a recipe
+		 * grid can open underneath it.
+		 */
+		static Row text(Component text) {
+			return new Row(List.of(), text, 0, false, null, false, null);
+		}
 	}
 
 	/**
@@ -662,12 +703,6 @@ public final class FurnaceHintHud {
 			}
 		}
 		return width;
-	}
-
-	/** Where the first item icon lands in a centred row - what the hint aligns to. */
-	private static int firstIconX(Font font, Row row, int guiWidth) {
-		int x = (guiWidth - rowWidth(font, row)) / 2;
-		return x + (row.mouse() ? MOUSE_W : 0) + GAP + font.width(Component.literal("+")) + GAP;
 	}
 
 	private static void drawRow(GuiGraphicsExtractor graphics, Minecraft client, Row row, int y) {
