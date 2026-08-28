@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * Tongs had no class at all - a plain Item::new - so they showed nothing on hover
  * despite having a recipe registered. They also carry the one rule the mod never
- * stated anywhere: a hot blade burns you unless these are in your off hand.
+ * stated anywhere: a hot blade burns you unless these are in your offhand.
  */
 public class TongsItem extends Item {
 

@@ -167,9 +167,9 @@ public class SwordDrawServerHandler {
 
 	// Sheathe must always fully clear the fake katana/wakizashi no matter
 	// where in the inventory the player moved them to - relying on them
-	// still being in main/off hand left stragglers behind (never removed,
+	// still being in mainhand/offhand left stragglers behind (never removed,
 	// and the stored real items would overwrite whatever was actually in
-	// main/off hand at the time instead of restoring cleanly). Slot
+	// mainhand/offhand at the time instead of restoring cleanly). Slot
 	// switching while drawn is separately blocked (client + server mixins),
 	// so this is mostly a defensive sweep now, but still covers drag/drop
 	// within the inventory screen itself.
@@ -183,7 +183,7 @@ public class SwordDrawServerHandler {
 
 	// Deliberately does NOT run the stripFakeSwords sweep. This fires first, at the
 	// wakizashi's keyframe, and the sweep clears EVERY fake sword - so running it here
-	// also wiped the katana out of the main hand, leaving that hand empty for the rest
+	// also wiped the katana out of the mainhand, leaving that hand empty for the rest
 	// of the animation until restoreMainHand put the real item back. Setting the
 	// offhand alone replaces the fake wakizashi and leaves the katana on screen until
 	// its own keyframe, which is what the animation is showing.

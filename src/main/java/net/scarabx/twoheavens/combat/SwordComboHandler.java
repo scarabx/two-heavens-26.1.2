@@ -205,8 +205,8 @@ public class SwordComboHandler {
 	private static boolean isMoveAllowed(ServerPlayer player, int move) {
 		return switch (move) {
 			case MovePayload.STAB -> isWakizashiDrawn(player);
-			// Undrawn with the wakizashi in the main hand (left-click), or drawn with
-			// it in the off hand (middle-click).
+			// Undrawn with the wakizashi in the mainhand (left-click), or drawn with
+			// it in the offhand (middle-click).
 			case MovePayload.CUT -> isWakizashiDrawn(player)
 					|| player.getMainHandItem().getItem() == ModItems.WAKIZASHI;
 			default -> player.getMainHandItem().getItem() == ModItems.KATANA;

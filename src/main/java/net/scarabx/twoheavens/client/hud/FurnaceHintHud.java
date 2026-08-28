@@ -242,7 +242,7 @@ public final class FurnaceHintHud {
 	}
 
 	/**
-	 * Holding a hot blade with tongs in the off hand: the only remaining step is to
+	 * Holding a hot blade with tongs in the offhand: the only remaining step is to
 	 * quench it in water, which nothing in the game hints at. Shown as the blade the
 	 * player is actually carrying, so the prompt names their own item rather than a
 	 * generic one.

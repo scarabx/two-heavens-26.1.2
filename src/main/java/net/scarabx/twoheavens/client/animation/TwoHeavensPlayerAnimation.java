@@ -163,7 +163,7 @@ public class TwoHeavensPlayerAnimation {
 		return wakizashiCutReturnAnimations.get("animation.twoheavens.wakizashi_cut_return");
 	}
 
-	// Drawn, the wakizashi is in the OFF hand - the katana holds the main hand - so
+	// Drawn, the wakizashi is in the OFFHAND - the katana holds the mainhand - so
 	// the cut has to be a left-arm animation. Same move, mirrored limb.
 	public static Animation getWakizashiCutOffhandAnimation() {
 		if (wakizashiCutOffhandAnimations == null) {

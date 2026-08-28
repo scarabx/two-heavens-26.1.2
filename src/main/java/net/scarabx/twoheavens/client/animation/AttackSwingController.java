@@ -117,7 +117,7 @@ public class AttackSwingController {
 		lastPickDown = pickDown;
 
 		if (pickJustPressed && drawn) {
-			// Drawn, the wakizashi sits in the off hand, so this is the mirrored
+			// Drawn, the wakizashi sits in the offhand, so this is the mirrored
 			// left-arm animation. thenPlayAndHold, unlike the undrawn cut: drawn there
 			// IS a stance to settle back into.
 			PlayerHandAnimator.trigger(player, RawAnimation.begin()

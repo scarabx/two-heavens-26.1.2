@@ -11,7 +11,7 @@ import net.scarabx.twoheavens.item.ModItems;
  * otherwise indistinguishable from a real katana/wakizashi - a plain
  * `new ItemStack(ModItems.KATANA)` looks exactly like one the player actually
  * owns. This marker (a CustomData component) lets sheathe find and strip
- * every fake stack out of the WHOLE inventory, not just main/off hand, so a
+ * every fake stack out of the WHOLE inventory, not just mainhand/offhand, so a
  * fake sword doesn't get stranded (and duplicated/lost) if the player managed
  * to move it to another slot before sheathing.
  */
