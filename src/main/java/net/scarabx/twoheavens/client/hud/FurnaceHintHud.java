@@ -400,13 +400,17 @@ public final class FurnaceHintHud {
 	 */
 	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
 									  List<ItemStack> upcoming, float progress) {
-		drawComingUp(graphics, client, upcoming);
-		// Under the row, in the slot the second row would occupy.
-		int y = graphics.guiHeight() - BOTTOM_OFFSET + MOUSE_H + ROW_GAP;
+		// Under whatever was actually drawn, not under a fixed row count. This used to
+		// assume one row and put the bar in the second slot - which is exactly where the
+		// Shift prompt goes when it is showing, so the two drew on top of each other
+		// through the whole passive half of the smelt.
+		int rows = drawComingUp(graphics, client, upcoming);
+		int y = graphics.guiHeight() - BOTTOM_OFFSET + rows * (MOUSE_H + ROW_GAP);
 		drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2, y, progress);
 	}
 
-	private static void drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
+	/** @return how many rows were drawn, so a caller can place anything below them. */
+	private static int drawComingUp(GuiGraphicsExtractor graphics, Minecraft client,
 									  List<ItemStack> upcoming) {
 		// Waiting is the best moment to make what you are about to need, so the same
 		// Shift gesture works here: it expands anything you do not have into how to
@@ -423,11 +427,12 @@ public final class FurnaceHintHud {
 				0, false, null, false, null);
 		if (!anyOffered || ShiftState.isDown()) {
 			drawRows(graphics, client, List.of(main));
-			return;
+			return 1;
 		}
 		drawRows(graphics, client, List.of(main,
 				Row.text(Component.translatable("hud.twoheavens.shift_for_recipe"),
 						firstIconX(client.font, main, graphics.guiWidth()))));
+		return 2;
 	}
 
 	/**
