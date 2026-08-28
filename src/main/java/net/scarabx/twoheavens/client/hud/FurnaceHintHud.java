@@ -299,8 +299,13 @@ public final class FurnaceHintHud {
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
 			// Finished. Only the tongs remain, and picking it up bare-handed burns.
+			//
+			// The icon alone - naming the tongs in words beside a picture of them said
+			// the same thing twice, and a prompt is meant to be a glance. Getting it
+			// wrong is caught by the overlay message the anvil sends, which is where the
+			// offhand requirement is spelled out, at the moment it actually matters.
 			drawWithHint(graphics, client, new ItemStack(ModItems.TONGS),
-					Component.translatable("hud.twoheavens.tongs_offhand"), 0, false);
+					Component.empty(), 0, false);
 			return true;
 		}
 		if (item == ModItems.HOT_WAKIZASHI_BLADE) {

@@ -251,7 +251,8 @@ public class AnvilForgingHandler {
 			// last step of the whole chain to get stuck on.
 			if (hitsAtPickup >= 5) {
 				player.sendOverlayMessage(
-						Component.translatable("message.twoheavens.tongs_to_lift")
+						Component.translatable("message.twoheavens.tongs_to_lift",
+								JoinMessageHandler.icon(JoinMessageHandler.TONGS))
 								.withStyle(ChatFormatting.GOLD));
 				serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.DISPENSER_FAIL,
 						net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);
@@ -277,7 +278,8 @@ public class AnvilForgingHandler {
 			// progress - worse than silence, because it invites you to keep going.
 			if (hits >= 6) {
 				player.sendOverlayMessage(
-						Component.translatable("message.twoheavens.tongs_to_lift")
+						Component.translatable("message.twoheavens.tongs_to_lift",
+								JoinMessageHandler.icon(JoinMessageHandler.TONGS))
 								.withStyle(ChatFormatting.GOLD));
 				serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.DISPENSER_FAIL,
 						net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);

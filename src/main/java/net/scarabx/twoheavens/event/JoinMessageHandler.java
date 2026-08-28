@@ -1,6 +1,7 @@
 package net.scarabx.twoheavens.event;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
@@ -36,6 +37,7 @@ public final class JoinMessageHandler {
 	// smears a dark copy under the sprite rather than reading as depth.
 	private static final Style ICON_STYLE = Style.EMPTY
 			.withFont(new FontDescription.Resource(TwoHeavens.id("icons")))
+			.withColor(ChatFormatting.WHITE)
 			.withoutShadow();
 
 	// Written as unicode escapes on purpose - literal private-use characters get
@@ -46,6 +48,8 @@ public final class JoinMessageHandler {
 	private static final String CHARCOAL = "\uE002";
 	private static final String CLAY = "\uE003";
 	private static final String TATARA_CLAY = "\uE004";
+	/** Shared with AnvilForgingHandler, which names the Tongs in an overlay message. */
+	static final String TONGS = "\uE005";
 
 	private JoinMessageHandler() {
 	}
@@ -125,7 +129,7 @@ public final class JoinMessageHandler {
 		}
 	}
 
-	private static Component icon(String glyph) {
+	static Component icon(String glyph) {
 		return Component.literal(glyph).withStyle(ICON_STYLE);
 	}
 
