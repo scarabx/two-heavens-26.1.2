@@ -56,6 +56,39 @@ tasks.register('release', GradleBuild) {
 	startParameter.projectProperties = [:]
 }
 
+/**
+ * Deletes this mod's older jars from build/libs once a new one has been built.
+ *
+ * Under the old scheme every build was "0.1" and simply overwrote itself. Real
+ * version numbers mean each build leaves the previous one sitting beside it, so
+ * build/libs quietly accumulates near-identical files and the wrong one is easy
+ * to grab when uploading in a hurry.
+ *
+ * In doLast on purpose, so it only fires once a jar has actually been produced:
+ * a FAILED build leaves the last good jar exactly where it was, rather than
+ * clearing the folder and leaving nothing to fall back on.
+ *
+ * Only touches twoheavens-*.jar, and only versions other than the one just
+ * built - never another mod's artifacts, and never the current sources jar.
+ * build/ is disposable output rather than an archive: any older release is
+ * rebuildable from its commit, and the shipped ones live on CurseForge.
+ */
+tasks.named('build') {
+	doLast {
+		def libs = layout.buildDirectory.dir('libs').get().asFile
+		def current = "twoheavens-${project.version}"
+		if (!new File(libs, "${current}.jar").exists()) {
+			return
+		}
+		libs.listFiles({ File f ->
+			f.name.startsWith('twoheavens-') && f.name.endsWith('.jar') && !f.name.startsWith(current)
+		} as FileFilter)?.each {
+			logger.lifecycle("pruned stale jar: ${it.name}")
+			it.delete()
+		}
+	}
+}
+
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
