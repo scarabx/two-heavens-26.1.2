@@ -215,17 +215,21 @@ public final class FurnaceHintHud {
 			// no need to sync the block entity to count down what is left.
 			int pumpsLeft = Math.max(0, MAX_REDNESS_STAGE
 					- fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE));
-			// The tally sits in the bellows' own corner, inventory-style, rather than
-			// spelling it out in words - the icon already says what to use, so the
-			// number only has to say how many are left.
+			// The tally sits on the MOUSE, not on the bellows. One rule across the whole
+			// HUD: a number on the mouse is clicks, a number on an item is how many of
+			// that item you need. It used to sit in the bellows' own corner, which read
+			// correctly on its own but taught a second convention for the same idea -
+			// the kera's four hammer strikes are drawn the other way, and an
+			// inventory-style corner number means item quantity everywhere else in the
+			// game.
 			//
 			// Once the pumps are done the bellows drops out entirely: showing it with
 			// no number read as "use this" when there was nothing left to do, and the
 			// only thing still outstanding is the clock, which the bar shows.
 			if (pumpsLeft > 0) {
 				Row main = new Row(
-						List.of(Ingredient.counted(new ItemStack(ModItems.BELLOWS), pumpsLeft)),
-						Component.empty(), 0, false, null);
+						List.of(new Ingredient(new ItemStack(ModItems.BELLOWS))),
+						Component.empty(), pumpsLeft, false, null);
 				drawRows(graphics, client, List.of(main));
 			}
 			// The clock, alongside the pump count in the text: finishing needs both, and
@@ -615,22 +619,13 @@ public final class FurnaceHintHud {
 	 * corner-style by itemDecorations) or a gui sprite, for things with no item form
 	 * such as water.
 	 */
-	private record Ingredient(ItemStack stack, Identifier sprite, int badge, boolean afterArrow) {
+	private record Ingredient(ItemStack stack, Identifier sprite, boolean afterArrow) {
 		Ingredient(ItemStack stack) {
-			this(stack, null, 0, false);
+			this(stack, null, false);
 		}
 
 		Ingredient(Identifier sprite) {
-			this(ItemStack.EMPTY, sprite, 0, false);
-		}
-
-		/**
-		 * An item with a count drawn in its corner, inventory-style. Used for a
-		 * remaining tally - unlike a stack's own count, this shows even at 1, which
-		 * vanilla hides.
-		 */
-		static Ingredient counted(ItemStack stack, int badge) {
-			return new Ingredient(stack, null, badge, false);
+			this(ItemStack.EMPTY, sprite, false);
 		}
 
 		/**
@@ -640,7 +635,7 @@ public final class FurnaceHintHud {
 		 * for the tatara's fill, where satetsu is refused until the charcoal is full.
 		 */
 		static Ingredient then(ItemStack stack) {
-			return new Ingredient(stack, null, 0, true);
+			return new Ingredient(stack, null, true);
 		}
 	}
 
@@ -827,13 +822,6 @@ public final class FurnaceHintHud {
 		} else {
 			graphics.item(ingredient.stack(), cursor, y);
 			graphics.itemDecorations(font, ingredient.stack(), cursor, y);
-		}
-		if (ingredient.badge() > 0) {
-			Component count = Component.literal(Integer.toString(ingredient.badge()));
-			graphics.text(font, count,
-					cursor + ICON - font.width(count),
-					y + ICON - font.lineHeight + 1,
-					0xFFFFFFFF);
 		}
 		return cursor + ICON;
 	}
