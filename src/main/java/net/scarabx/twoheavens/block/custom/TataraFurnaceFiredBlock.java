@@ -1,6 +1,8 @@
 package net.scarabx.twoheavens.block.custom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -109,6 +111,21 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 				level.playSound(null, pos, SoundEvents.SAND_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
 			}
 			return InteractionResult.SUCCESS;
+		}
+
+		// Satetsu is only accepted once the charcoal is full, and until this branch
+		// existed an early click fell through to PASS - no sound, no message, no state
+		// change. Silent rejection is indistinguishable from a broken block, and the
+		// fill prompt lists both materials at once, so guessing this order wrong is the
+		// expected mistake rather than a careless one. Say which one it wants instead.
+		if (state.getValue(CHARCOAL_LEVEL) < 4 && stack.is(ModBlocks.SATETSU_SAND.asItem())) {
+			if (!level.isClientSide()) {
+				player.sendOverlayMessage(
+						Component.translatable("message.twoheavens.tatara_charcoal_first")
+								.withStyle(ChatFormatting.GOLD));
+				level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.6F, 1.0F);
+			}
+			return InteractionResult.CONSUME;
 		}
 
 		if (stack.getItem() instanceof FlintAndSteelItem) {

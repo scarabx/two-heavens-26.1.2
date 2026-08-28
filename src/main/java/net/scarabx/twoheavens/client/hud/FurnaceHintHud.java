@@ -142,12 +142,13 @@ public final class FurnaceHintHud {
 			}
 			int missing = UNFIRED_CHARCOAL - unfired.getValue(TataraFurnaceBlock.CHARCOAL_LEVEL);
 			if (missing > 0) {
-				// Both remaining steps at once - the charcoal it still wants, then the
-				// flint and steel. Showing a duration here was answering a question
-				// nobody had yet.
+				// The charcoal only. Listing the flint and steel beside it read as two
+				// things to bring rather than two steps in order, and this furnace takes
+				// exactly one material - so there is nothing here that a second icon
+				// clarifies. Once the charcoal is in, the prompt becomes the flint and
+				// steel by itself, which is the whole instruction at that point.
 				drawHint(graphics, client, List.of(
-						new Ingredient(new ItemStack(Items.CHARCOAL, missing)),
-						new Ingredient(new ItemStack(Items.FLINT_AND_STEEL))),
+						new Ingredient(new ItemStack(Items.CHARCOAL, missing))),
 						Component.empty());
 			} else {
 				drawLightHint(graphics, client);
@@ -179,13 +180,20 @@ public final class FurnaceHintHud {
 				missing.add(new Ingredient(new ItemStack(Items.CHARCOAL, charcoal)));
 			}
 			if (satetsu > 0) {
-				missing.add(new Ingredient(new ItemStack(ModBlocks.SATETSU_SAND, satetsu)));
+				// Arrowed only when charcoal is still listed ahead of it. Once the
+				// charcoal is full it drops off the row and the satetsu leads, where an
+				// arrow would point at nothing.
+				ItemStack sand = new ItemStack(ModBlocks.SATETSU_SAND, satetsu);
+				missing.add(charcoal > 0 ? Ingredient.then(sand) : new Ingredient(sand));
 			}
 
 			if (missing.isEmpty()) {
 				drawLightHint(graphics, client);
 			} else {
-				missing.add(new Ingredient(new ItemStack(Items.FLINT_AND_STEEL)));
+				// Every step of this row is enforced in order - satetsu is refused until
+				// the charcoal is full, and the furnace refuses to light until both are -
+				// so the whole row is arrows rather than a mix.
+				missing.add(Ingredient.then(new ItemStack(Items.FLINT_AND_STEEL)));
 				drawHint(graphics, client, missing, Component.empty());
 			}
 		} else if (fired.getValue(TataraFurnaceFiredBlock.REDNESS_STAGE) >= BELLOWS_PHASE_STAGE) {
@@ -531,13 +539,13 @@ public final class FurnaceHintHud {
 	 * corner-style by itemDecorations) or a gui sprite, for things with no item form
 	 * such as water.
 	 */
-	private record Ingredient(ItemStack stack, Identifier sprite, int badge) {
+	private record Ingredient(ItemStack stack, Identifier sprite, int badge, boolean afterArrow) {
 		Ingredient(ItemStack stack) {
-			this(stack, null, 0);
+			this(stack, null, 0, false);
 		}
 
 		Ingredient(Identifier sprite) {
-			this(ItemStack.EMPTY, sprite, 0);
+			this(ItemStack.EMPTY, sprite, 0, false);
 		}
 
 		/**
@@ -546,7 +554,17 @@ public final class FurnaceHintHud {
 		 * vanilla hides.
 		 */
 		static Ingredient counted(ItemStack stack, int badge) {
-			return new Ingredient(stack, null, badge);
+			return new Ingredient(stack, null, badge, false);
+		}
+
+		/**
+		 * Joined to the step before it with an arrow rather than a plus, for the rare
+		 * case where the game enforces an order. "+" is set grammar - it reads as a
+		 * list of things to bring, which is right for everything else here, and wrong
+		 * for the tatara's fill, where satetsu is refused until the charcoal is full.
+		 */
+		static Ingredient then(ItemStack stack) {
+			return new Ingredient(stack, null, 0, true);
 		}
 	}
 
@@ -616,14 +634,15 @@ public final class FurnaceHintHud {
 
 	private static int rowWidth(Font font, Row row) {
 		int plusWidth = font.width(Component.literal("+"));
+		int arrowWidth = font.width(Component.literal("\u2192"));
 		int width = row.mouse() ? MOUSE_W : 0;
 		boolean first = true;
-		for (Ingredient ignored : row.ingredients()) {
+		for (Ingredient ingredient : row.ingredients()) {
 			// A plus joins one thing to the next, so the first item only gets one when
 			// the mouse icon precedes it. A row without the mouse used to open with a
 			// stray leading plus.
 			if (!first || row.mouse()) {
-				width += GAP + plusWidth;
+				width += GAP + (ingredient.afterArrow() && !first ? arrowWidth : plusWidth);
 			}
 			width += GAP + ICON;
 			first = false;
@@ -681,8 +700,12 @@ public final class FurnaceHintHud {
 			// before the first item of a row that has no mouse icon.
 			cursor += GAP;
 			if (!firstDrawn || row.mouse()) {
-				graphics.text(font, plus, cursor, textY, 0xFFFFFFFF);
-				cursor += plusWidth + GAP;
+				// An arrow only when there is a previous step for it to point away
+				// from; as the leading separator after the mouse icon it would read as
+				// "click produces this".
+				boolean sequence = ingredient.afterArrow() && !firstDrawn;
+				graphics.text(font, sequence ? arrow : plus, cursor, textY, 0xFFFFFFFF);
+				cursor += (sequence ? arrowWidth : plusWidth) + GAP;
 			}
 			cursor = drawIngredient(graphics, font, ingredient, cursor, y);
 			firstDrawn = false;

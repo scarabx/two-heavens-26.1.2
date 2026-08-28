@@ -24,8 +24,15 @@ import java.util.function.Supplier;
  */
 public class TutorialProgressAttachment {
 
+	// copyOnDeath is what makes these HIGH-WATER marks rather than just saved ones.
+	// persistent() alone survives a server restart but NOT a respawn: dying handed the
+	// new player entity a fresh, empty attachment, so re-collecting your own dropped
+	// satetsu crossed the goal a second time and announced it again. Every counter
+	// here describes what the player has achieved, not what they are carrying, and
+	// dying does not undo an achievement.
 	public static final AttachmentType<Progress> TYPE = AttachmentRegistry.<Progress>builder()
 			.persistent(Progress.CODEC)
+			.copyOnDeath()
 			.buildAndRegister(TwoHeavens.id("tutorial_progress"));
 
 	// Forces this class to load (and TYPE to register) during mod init rather

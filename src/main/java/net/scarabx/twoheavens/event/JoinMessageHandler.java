@@ -84,6 +84,14 @@ public final class JoinMessageHandler {
 			player.sendSystemMessage(Component.literal(SATETSU_GOAL + " ")
 					.append(icon(SATETSU))
 					.append(Component.literal(" mined")));
+			// Sent as its own line rather than appended to the one above. The first is a
+			// confirmation - past tense, closes a loop; this is an instruction. Running
+			// them together reads as neither, and that line already carries a glyph.
+			//
+			// Satetsu is not crafted into anything, so it gets no recipe pointer: it is
+			// spent much later, filling the fired furnace, and aiming the player at the
+			// crafting grid here would send them looking for something that isn't there.
+			player.sendSystemMessage(Component.literal("Set it aside for the smelt"));
 		}
 
 		int per = INGREDIENTS_PER_GOAL;
@@ -97,6 +105,23 @@ public final class JoinMessageHandler {
 					.append(Component.literal(" + " + per + " "))
 					.append(icon(CLAY))
 					.append(Component.literal(" gathered")));
+
+			// The seam the guidance used to fall through. Join hints cover gathering and
+			// retire the moment it is done; the furnace HUD needs a furnace in view to
+			// fire at all - so finishing the clay silenced both layers at once, leaving
+			// the player holding everything they need and nothing telling them what it
+			// was for. This is the exact instant they ask "now what", so it is answered
+			// here rather than left to a permanent line that would have to be skimmed
+			// past on every future join.
+			player.sendSystemMessage(Component.literal("Craft Tatara Clay, then a Tatara Furnace"));
+
+			// No recipe pointer here on purpose. ItemTooltipMixin already prints "Hold
+			// [Shift] for recipes" on the vanilla ingredients themselves, so a chat line
+			// saying the same thing can only reach a player who is already hovering an
+			// item - and that player has been told. What was actually missing is a
+			// REASON to hover: the line above supplies it, since Tatara Clay cannot be
+			// guessed from vanilla knowledge and crafting it means opening the inventory,
+			// which is the only place a tooltip exists.
 		}
 	}
 

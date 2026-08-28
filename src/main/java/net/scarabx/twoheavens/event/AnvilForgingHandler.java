@@ -5,8 +5,10 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
@@ -243,9 +245,20 @@ public class AnvilForgingHandler {
 				return InteractionResult.SUCCESS;
 			}
 
-			// Blade phases (5-6) without tongs: nothing happens, bare hands can't safely
-			// pull a hot blade off the anvil. Every other phase (Kera, Ingot, Flat Ingot)
-			// gives back exactly whatever is currently displayed.
+			// Blade phases (5-6) without tongs: bare hands can't safely pull a hot blade
+			// off the anvil. Say so - this used to return SUCCESS having done nothing at
+			// all, which is indistinguishable from the anvil being broken, and it is the
+			// last step of the whole chain to get stuck on.
+			if (hitsAtPickup >= 5) {
+				player.sendOverlayMessage(
+						Component.translatable("message.twoheavens.tongs_to_lift")
+								.withStyle(ChatFormatting.GOLD));
+				serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.DISPENSER_FAIL,
+						net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);
+			}
+
+			// Every other phase (Kera, Ingot, Flat Ingot) gives back exactly whatever is
+			// currently displayed.
 			if (hitsAtPickup < 5) {
 				ItemStack pickedUp = display.getItemStack().copy();
 				if (!player.getInventory().add(pickedUp)) {
@@ -257,10 +270,23 @@ public class AnvilForgingHandler {
 		}
 
 		if (stack.getItem() instanceof HammerItem) {
+			int hits = currentHits(display);
+
+			// Past the katana there is nothing left to forge. The anvil sound used to
+			// play regardless, so striking a finished blade sounded exactly like
+			// progress - worse than silence, because it invites you to keep going.
+			if (hits >= 6) {
+				player.sendOverlayMessage(
+						Component.translatable("message.twoheavens.tongs_to_lift")
+								.withStyle(ChatFormatting.GOLD));
+				serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.DISPENSER_FAIL,
+						net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);
+				return InteractionResult.SUCCESS;
+			}
+
 			serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.ANVIL_USE,
 					net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
 
-			int hits = currentHits(display);
 			// The Kera is already flat coming out of the furnace, so it no longer shrinks
 			// across two hits first - the opening strike works it straight into an ingot.
 			if (hits == 0) {
