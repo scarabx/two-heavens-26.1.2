@@ -64,6 +64,20 @@ public final class FurnaceHintHud {
 	 * bucket was tried first and reads as "use a bucket", which is not the mechanic.
 	 */
 	private static final Identifier WATER_ICON = TwoHeavens.id("water");
+	/**
+	 * The tongs are drawn from a gui sprite rather than as an item, unlike every other
+	 * icon here. They are the thinnest thing in the set - 42 opaque pixels of 1px
+	 * diagonal line - so against a dark anvil they simply vanished, where the hammer
+	 * and bellows are equally dark but chunky enough to still read as a silhouette. The
+	 * sprite is the item texture with a 1px light outline traced round it, so it
+	 * carries its own contrast whatever is behind it.
+	 */
+	private static final Identifier TONGS_ICON = TwoHeavens.id("tongs");
+
+	/** An icon for display: the outlined sprite for tongs, the real item for everything else. */
+	private static Ingredient display(ItemStack stack) {
+		return stack.is(ModItems.TONGS) ? new Ingredient(TONGS_ICON) : new Ingredient(stack);
+	}
 
 	/** Hammer strikes needed to break a formed kera out of the furnace. */
 	private static final int KERA_HAMMER_STRIKES = 4;
@@ -326,7 +340,7 @@ public final class FurnaceHintHud {
 			ItemStack tongs = new ItemStack(ModItems.TONGS);
 			ItemStack hammer = new ItemStack(ModItems.HAMMER);
 			List<Row> rows = new ArrayList<>(3);
-			rows.add(new Row(List.of(new Ingredient(tongs)),
+			rows.add(new Row(List.of(display(tongs)),
 					Component.translatable("hud.twoheavens.fork_wakizashi"), 0, false,
 					new Ingredient(new ItemStack(ModItems.HOT_WAKIZASHI_BLADE))));
 			rows.add(new Row(List.of(new Ingredient(hammer)),
@@ -443,7 +457,7 @@ public final class FurnaceHintHud {
 	private static int drawWithHint(GuiGraphicsExtractor graphics, Minecraft client,
 									  ItemStack wanted, Component tail, int clicks,
 									  boolean plusBeforeTail) {
-		Row main = new Row(List.of(new Ingredient(wanted)), tail, clicks, plusBeforeTail, null);
+		Row main = new Row(List.of(display(wanted)), tail, clicks, plusBeforeTail, null);
 		if (!canOffer(client, wanted)) {
 			drawRows(graphics, client, List.of(main));
 			return 1;

@@ -270,14 +270,18 @@ public class AnvilForgingHandler {
 			return InteractionResult.SUCCESS;
 		}
 
-		// Tongs in the MAIN hand, on a finished blade. The worst trap in the chain, and
-		// it used to be silent: this falls past the pickup branch (the hand is not
-		// empty) and past the hammer branch, landing on the do-nothing return at the
-		// bottom. A player who wants the wakizashi, owns the tongs, and simply holds
-		// them in the wrong hand gets no response at all - and the obvious next thing
-		// to try is the hammer, which WORKS and turns their wakizashi into a katana
-		// with no way back. Nothing else in the mod punishes a wrong guess permanently.
-		if (stack.is(ModItems.TONGS) && currentHits(display) >= 5) {
+		// A finished blade, clicked while holding ANYTHING that is not a hammer. Only two
+		// actions are valid here - an empty hand with tongs in the offhand takes it, a
+		// hammer advances it - so everything else is a mistake and gets told so.
+		//
+		// This used to be silent, and holding the tongs in the MAIN hand was the trap:
+		// it falls past the pickup branch (the hand is not empty) and past the hammer
+		// branch, landing on the do-nothing return at the bottom. A player who wants the
+		// wakizashi, owns the tongs, and simply holds them in the wrong hand got no
+		// response at all - and the obvious next thing to try is the hammer, which WORKS
+		// and turns their wakizashi into a katana with no way back. Nothing else in the
+		// mod punishes a wrong guess permanently.
+		if (currentHits(display) >= 5 && !(stack.getItem() instanceof HammerItem)) {
 			player.sendOverlayMessage(
 					Component.translatable("message.twoheavens.tongs_to_lift",
 							JoinMessageHandler.icon(JoinMessageHandler.TONGS))
