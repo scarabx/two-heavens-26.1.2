@@ -40,7 +40,7 @@
   "tooltip.twoheavens.shift_for_recipe": "Hold [Shift] for recipes",
   "message.twoheavens.tend_furnace": "Tend to furnace",
   "message.twoheavens.tatara_charcoal_first": "Fill it with charcoal first",
-  "message.twoheavens.tongs_to_lift": "Too hot to pick up without %s Tongs in your offhand",
+  "message.twoheavens.tongs_to_lift": "Too hot - Pick up with %s Tongs in your offhand",
   "hud.twoheavens.kera_cooling": "Too hot to break",
   "hud.twoheavens.coming_up": "needed next",
   "hud.twoheavens.shift_for_recipe": "Hold [Shift] for recipe",
