@@ -89,6 +89,14 @@ public final class FurnaceHintHud {
 	// The same dark ground vanilla uses behind its own bars.
 	private static final int BAR_BACKGROUND = 0xFF1A1A1A;
 	private static final int GAP = 6;
+	/**
+	 * Extra air between the two rows of the anvil fork. They are alternatives, not a
+	 * sequence, and at the normal row gap they read as one four-icon instruction. The
+	 * TOP row lifts by this much and the bottom stays put, so the block grows away from
+	 * the hotbar rather than towards it.
+	 */
+	private static final int FORK_GAP = 10;
+
 	/** How far the recipe grid sits from the left edge - clear of the furnace, clear of the bezel. */
 	private static final int GRID_MARGIN = 8;
 
@@ -299,13 +307,40 @@ public final class FurnaceHintHud {
 			// A fork rather than a step. Two complete rows, each ending in what it
 			// produces, so the choice is visible - two icons on one line would not say
 			// which did what, and a sentence made the player read mid-fight.
-			drawRows(graphics, client, List.of(
-					new Row(List.of(new Ingredient(new ItemStack(ModItems.TONGS))),
-							Component.empty(), 0, false,
-							new Ingredient(new ItemStack(ModItems.HOT_WAKIZASHI_BLADE))),
-					new Row(List.of(new Ingredient(new ItemStack(ModItems.HAMMER))),
-							Component.empty(), 0, false,
-							new Ingredient(new ItemStack(ModItems.HOT_KATANA_BLADE)))));
+			//
+			// Each row is NAMED, because the two outcomes are both hot blades and the
+			// icons differ only in silhouette. The name is the weapon, not the item -
+			// "Wakizashi", not "Hot Wakizashi Blade". The question being asked here is
+			// which sword you are making; that it arrives hot and needs quenching is the
+			// next prompt's business, and spelling it out twice turns a glance into a
+			// read.
+			ItemStack tongs = new ItemStack(ModItems.TONGS);
+			ItemStack hammer = new ItemStack(ModItems.HAMMER);
+			List<Row> rows = new ArrayList<>(3);
+			rows.add(new Row(List.of(new Ingredient(tongs)),
+					Component.translatable("hud.twoheavens.fork_wakizashi"), 0, false,
+					new Ingredient(new ItemStack(ModItems.HOT_WAKIZASHI_BLADE))));
+			rows.add(new Row(List.of(new Ingredient(hammer)),
+					Component.translatable("hud.twoheavens.fork_katana"), 0, false,
+					new Ingredient(new ItemStack(ModItems.HOT_KATANA_BLADE))));
+
+			// Both branches need a tool, and at this point the tongs in particular are
+			// very likely still uncrafted - nothing before now has required them. So the
+			// fork offers the recipe the same way every other prompt does.
+			List<ItemStack> lacking = new ArrayList<>(2);
+			if (canOffer(client, tongs)) {
+				lacking.add(tongs);
+			}
+			if (canOffer(client, hammer)) {
+				lacking.add(hammer);
+			}
+			if (!lacking.isEmpty() && !ShiftState.isDown()) {
+				rows.add(Row.text(Component.translatable("hud.twoheavens.shift_for_recipe")));
+			}
+			drawRows(graphics, client, rows, FORK_GAP);
+			if (!lacking.isEmpty() && ShiftState.isDown()) {
+				drawRecipeGrids(graphics, client, lacking);
+			}
 			return true;
 		}
 		if (item == ModItems.MOLTEN_KERA || item == ModItems.TAMAHAGANE_INGOT
@@ -671,8 +706,18 @@ public final class FurnaceHintHud {
 	 * so walking up to a furnace without a bellows moved the prompt you were reading.
 	 */
 	private static void drawRows(GuiGraphicsExtractor graphics, Minecraft client, List<Row> rows) {
-		int rowHeight = MOUSE_H + ROW_GAP;
-		int top = graphics.guiHeight() - BOTTOM_OFFSET;
+		drawRows(graphics, client, rows, 0);
+	}
+
+	/**
+	 * @param extraGap additional space between rows. The whole block is lifted by it as
+	 *                 well, so the LAST row stays where it would have been and the rows
+	 *                 above move up - anything already anchored near the hotbar keeps
+	 *                 its place.
+	 */
+	private static void drawRows(GuiGraphicsExtractor graphics, Minecraft client, List<Row> rows, int extraGap) {
+		int rowHeight = MOUSE_H + ROW_GAP + extraGap;
+		int top = graphics.guiHeight() - BOTTOM_OFFSET - extraGap * (rows.size() - 1);
 		for (int i = 0; i < rows.size(); i++) {
 			drawRow(graphics, client, rows.get(i), top + i * rowHeight);
 		}
