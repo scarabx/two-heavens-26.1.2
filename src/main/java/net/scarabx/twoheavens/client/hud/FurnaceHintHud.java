@@ -119,21 +119,7 @@ public final class FurnaceHintHud {
 	 *
 	 * Same rule the recipe grid follows: reference material does not cover the content.
 	 */
-	private static final int ANVIL_LIFT = 44;
-
-	/**
-	 * Cancels the camera drop while sneaking, for EVERY block prompt.
-	 *
-	 * Sneaking lowers eye height, so the block rises in view while a screen-anchored
-	 * prompt stays put - and the clearance we just bought gets eaten from below. It
-	 * bites hardest at the anvil because holding Shift to open a recipe grid IS
-	 * sneaking, so the two always happen together.
-	 *
-	 * Compensating in screen space rather than anchoring the prompt to the block: that
-	 * was considered and rejected for the furnace (smoke and glow kill the contrast),
-	 * and it would add jitter as the player moves plus scaling trouble at distance.
-	 */
-	private static final int SNEAK_LIFT = 12;
+	private static final int ANVIL_LIFT = 24;
 
 	/**
 	 * Set per frame - ANVIL_LIFT while drawing anvil prompts, zero everywhere else.
@@ -155,6 +141,7 @@ public final class FurnaceHintHud {
 	}
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
+		lift = 0;
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null || client.level == null || client.options.hideGui) {
 			return;
@@ -172,7 +159,6 @@ public final class FurnaceHintHud {
 
 		// The anvil comes first: if the player is standing at one mid-forge, that is
 		// what they are asking about, not a furnace behind them.
-		lift = client.player.isCrouching() ? SNEAK_LIFT : 0;
 		if (drawAnvilHint(graphics, client)) {
 			return;
 		}
@@ -339,7 +325,7 @@ public final class FurnaceHintHud {
 		if (forging.isEmpty()) {
 			return false;
 		}
-		lift += ANVIL_LIFT;
+		lift = ANVIL_LIFT;
 
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
