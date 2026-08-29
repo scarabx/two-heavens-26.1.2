@@ -77,8 +77,11 @@ public class ServerGamePacketListenerImplMixin {
 	 * and swapping them puts the two swaps back out of step with the slots sheathe is
 	 * going to restore to.
 	 *
-	 * Only these three actions. Block breaking and item use go through the same packet
-	 * and must keep working - a drawn player can still mine and still fight.
+	 * Only these three actions. The rest of the packet is left alone: RELEASE_USE_ITEM
+	 * and the destroy actions must keep flowing, and a drawn player is already stopped
+	 * from mining by SwordBlockGuard, which refuses a left-click at a block whenever a
+	 * blade is in the main hand. Blocking them here as well would be a second rule
+	 * saying the same thing in a place nobody would look for it.
 	 */
 	@Inject(at = @At("HEAD"), method = "handlePlayerAction", cancellable = true)
 	private void twoheavens$blockDropWhileDrawn(ServerboundPlayerActionPacket packet, CallbackInfo info) {
