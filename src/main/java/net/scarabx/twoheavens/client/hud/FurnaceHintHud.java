@@ -121,6 +121,52 @@ public final class FurnaceHintHud {
 	 */
 	private static final int ANVIL_LIFT = 24;
 
+	/** How close to the top of the screen an anchored prompt may get before it pins. */
+	private static final int TOP_MARGIN = 20;
+
+	/** Pixels the anvil's prompt sits ABOVE its anchor - clear of the blade on top. */
+	private static final int ANVIL_ABOVE = 30;
+
+	/**
+	 * The world point this frame's prompt is pinned to, or null to fall back to the
+	 * fixed screen position.
+	 *
+	 * Block-anchored rather than screen-anchored because no constant screen offset can
+	 * work: the block's position on screen is a function of BOTH where you look and how
+	 * far away you stand, so any fixed lift clears it at one camera angle and is covered
+	 * at another. Looking down at an anvil defeated every value tried.
+	 */
+	private static Vec3 anchor = null;
+
+	/** Pixels above the projected anchor to place the first row. */
+	private static int anchorRise = 0;
+
+	/**
+	 * World point to GUI coordinates, or null when it is behind the camera or off
+	 * screen - in which case the caller keeps the old fixed placement rather than
+	 * drawing the prompt somewhere absurd.
+	 */
+	private static Integer projectY(Minecraft client, GuiGraphicsExtractor graphics, Vec3 world) {
+		Vec3 eye = client.player.getEyePosition();
+		Vec3 fwd = client.player.getLookAngle().normalize();
+		Vec3 right = fwd.cross(new Vec3(0, 1, 0));
+		if (right.lengthSqr() < 1.0E-6) {
+			return null;
+		}
+		right = right.normalize();
+		Vec3 up = right.cross(fwd).normalize();
+
+		Vec3 to = world.subtract(eye);
+		double depth = to.dot(fwd);
+		if (depth <= 0.05) {
+			return null;
+		}
+		double tanHalf = Math.tan(Math.toRadians(client.options.fov().get()) / 2.0);
+		double ndcY = (to.dot(up) / depth) / tanHalf;
+		int y = (int) Math.round((0.5 - ndcY * 0.5) * graphics.guiHeight());
+		return (y < -graphics.guiHeight() || y > graphics.guiHeight() * 2) ? null : y;
+	}
+
 	/**
 	 * Cancels the camera drop while sneaking, for EVERY block prompt.
 	 *
@@ -143,6 +189,19 @@ public final class FurnaceHintHud {
 
 	/** The y of the first prompt row, lifted when the anvil is what is being drawn. */
 	private static int top(GuiGraphicsExtractor graphics) {
+		if (anchor != null) {
+			Integer y = projectY(Minecraft.getInstance(), graphics, anchor);
+			if (y != null) {
+				// Clamped only at the very edges of the screen. A clamped value is a FIXED
+				// screen position, and anything fixed on screen looks like it is following
+				// your head while the world slides past - so the clamp must not engage
+				// while the block is still in the view cone. A half-screen limit did, at
+				// once: the anvil projects near centre whenever you look at it, and the
+				// rise pushed it straight past.
+				return Math.max(TOP_MARGIN,
+						Math.min(y - anchorRise, graphics.guiHeight() - BOTTOM_OFFSET / 2));
+			}
+		}
 		return graphics.guiHeight() - BOTTOM_OFFSET - lift;
 	}
 
@@ -162,6 +221,8 @@ public final class FurnaceHintHud {
 		// Reset before anything reads it, so no prompt can inherit the previous frame's
 		// value - the cooling and quench hints below run before the anvil branch sets it.
 		lift = client.player.isCrouching() ? SNEAK_LIFT : 0;
+		anchor = null;
+		anchorRise = 0;
 
 		if (drawCoolingHint(graphics, client)) {
 			return;
@@ -417,6 +478,10 @@ public final class FurnaceHintHud {
 			}
 			ItemStack stack = display.getItemStack();
 			if (!stack.isEmpty()) {
+				// Anchored to the blade itself and raised clear of it: the anvil sequence
+				// is four reveals and the silhouette is how you know which stage you are on.
+				anchor = display.position();
+				anchorRise = ANVIL_ABOVE;
 				return stack;
 			}
 		}
@@ -893,6 +958,10 @@ public final class FurnaceHintHud {
 				continue;
 			}
 			if (look.dot(toBlock.normalize()) >= VIEW_DOT) {
+				// Anchored to the block's MIDDLE, so the prompt lands over its body -
+				// the side, never the opening on top where the smelt is read from.
+				anchor = Vec3.atCenterOf(pos);
+				anchorRise = 0;
 				return state;
 			}
 		}
