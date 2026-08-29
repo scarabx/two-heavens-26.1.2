@@ -334,20 +334,27 @@ public final class FurnaceHintHud {
 			// Once the pumps are done the bellows drops out entirely: showing it with
 			// no number read as "use this" when there was nothing left to do, and the
 			// only thing still outstanding is the clock, which the bar shows.
+			int rows = 0;
 			if (pumpsLeft > 0) {
 				// Through drawWithHint so it offers the bellows' recipe to anyone who
 				// still has none. The passive half already named it in the heads-up,
 				// where there was idle time to go and craft one - but a player who
 				// missed that arrives here with no route to it, and this row is the
 				// last place the bellows is ever mentioned.
-				drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
+				rows = drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
 						Component.empty(), pumpsLeft, false);
 			}
 			// The clock, alongside the pump count in the text: finishing needs both, and
 			// only the pumps were visible before. Interpolated like the other timed
 			// bars, since this one really is driven by time.
+			//
+			// Placed below however many rows were ACTUALLY drawn, never a fixed slot.
+			// This was hardcoded to row one, which is exactly where the "Hold [Shift]
+			// for recipe" line goes when the player has no bellows - so the bar drew
+			// straight through it. Same bug as the heads-up had, reintroduced the moment
+			// this prompt gained a second row.
 			drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
-					top(graphics) + MOUSE_H + ROW_GAP,
+					top(graphics) + Math.max(rows, 1) * (MOUSE_H + ROW_GAP),
 					progress("bellows", fired.getValue(TataraFurnaceFiredBlock.BELLOWS_PROGRESS),
 							BELLOWS_STEPS, BELLOWS_STAGE_MS));
 
