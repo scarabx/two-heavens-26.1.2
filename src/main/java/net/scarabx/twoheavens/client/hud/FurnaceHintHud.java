@@ -124,6 +124,16 @@ public final class FurnaceHintHud {
 	/** How close to the top of the screen an anchored prompt may get before it pins. */
 	private static final int TOP_MARGIN = 20;
 
+	/**
+	 * Pixels the cooling kera's prompt sits BELOW its anchor - negative rise.
+	 *
+	 * The other way up from the anvil, and for the same reason: put the prompt where
+	 * the thing worth watching is not. A kera cracks open as it cools and the block
+	 * itself is the progress indicator, so the prompt goes under it rather than across
+	 * it. The anvil's blade sits on top of its block, so that one goes above.
+	 */
+	private static final int KERA_BELOW = 46;
+
 	/** Pixels the anvil's prompt sits ABOVE its anchor - clear of the blade on top. */
 	private static final int ANVIL_ABOVE = 30;
 
@@ -635,6 +645,8 @@ public final class FurnaceHintHud {
 		if (kera == null) {
 			return false;
 		}
+		// blockInView anchors at the block's middle with no rise; this one hangs below.
+		anchorRise = -KERA_BELOW;
 
 		// cool_stage counts up as it cools, which is already progress toward being
 		// breakable - so the bar uses it directly and fills, like every other one.
