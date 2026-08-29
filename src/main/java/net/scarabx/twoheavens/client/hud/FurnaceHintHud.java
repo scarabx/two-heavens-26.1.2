@@ -119,7 +119,7 @@ public final class FurnaceHintHud {
 	 *
 	 * Same rule the recipe grid follows: reference material does not cover the content.
 	 */
-	private static final int ANVIL_LIFT = 24;
+	private static final int ANVIL_LIFT = 44;
 
 	/**
 	 * Set per frame - ANVIL_LIFT while drawing anvil prompts, zero everywhere else.
