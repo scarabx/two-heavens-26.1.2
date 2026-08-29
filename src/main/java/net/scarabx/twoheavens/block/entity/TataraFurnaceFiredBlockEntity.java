@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.scarabx.twoheavens.event.JoinMessageHandler;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
 
@@ -126,6 +127,10 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 					.withStyle(ChatFormatting.GOLD);
 			for (ServerPlayer player : serverLevel.getPlayers(p -> p.blockPosition().closerThan(pos, TEND_ALERT_RANGE))) {
 				player.sendSystemMessage(tend);
+				// Pinged for the same reason the goal crossings are, and more so: this one
+				// fires unprompted while the player is looking at the furnace or off
+				// gathering, so a silent chat line is the easiest of all of them to miss.
+				JoinMessageHandler.ping(player);
 			}
 		}
 

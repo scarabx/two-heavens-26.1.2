@@ -7,6 +7,8 @@ import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Items;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.scarabx.twoheavens.item.ModItems;
@@ -103,6 +105,7 @@ public final class JoinMessageHandler {
 			// (the output of a process they have not met) and not "Fired Tatara Furnace"
 			// (a distinction that does not exist for them yet).
 			player.sendSystemMessage(Component.literal("Set it aside for the Tatara Furnace"));
+			ping(player);
 		}
 
 		// The last stretch, and the only one nothing announced. A finished katana is
@@ -119,6 +122,7 @@ public final class JoinMessageHandler {
 					after.maxKatana() > 0 ? "Katana crafted" : "Wakizashi crafted"));
 			player.sendSystemMessage(Component.literal(
 					"Craft both swords into a Daisho Saya, and then into an Obi to dual wield"));
+			ping(player);
 		}
 
 		int per = INGREDIENTS_PER_GOAL;
@@ -149,7 +153,37 @@ public final class JoinMessageHandler {
 			// REASON to hover: the line above supplies it, since Tatara Clay cannot be
 			// guessed from vanilla knowledge and crafting it means opening the inventory,
 			// which is the only place a tooltip exists.
+			ping(player);
 		}
+	}
+
+	/**
+	 * The chime that marks a pointer landing in chat.
+	 *
+	 * The rule: a mod chat message gets this if it appeared BECAUSE something just
+	 * happened. That is the goal crossings here and the furnace's tend alert, which
+	 * is the one that needs it most - it fires while the player is looking at the
+	 * world, not at the chat box.
+	 *
+	 * The join hints are the deliberate exception. They repeat every login and say
+	 * what is still outstanding rather than what changed, so pinging them would
+	 * teach the sound to mean "nothing new" within three logins and make it noise
+	 * everywhere else. The sound means read chat now; a join hint is the one case
+	 * where there is nothing new to read.
+	 *
+	 * Once per BURST, not per line - each of these announcements is a confirmation
+	 * and the instruction that follows it, and the two are one event.
+	 *
+	 * Played at the player's own position with a null exclusion, which is the same
+	 * shape every other sound in the mod uses. NOT player.playSound(...), which is
+	 * Player#playSound and excludes the player it is called on - the one listener
+	 * this sound exists for. Volume 0.6 and pitch 1.4 lift it off the orb pickup the
+	 * sample is otherwise heard as, which plays constantly and would let a pointer
+	 * pass for ordinary XP.
+	 */
+	public static void ping(ServerPlayer player) {
+		player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+				SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.6F, 1.4F);
 	}
 
 	static Component icon(String glyph) {
