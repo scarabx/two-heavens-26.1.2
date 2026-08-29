@@ -73,6 +73,25 @@ public class TataraFurnaceFiredBlock extends Block implements EntityBlock {
 
 	@Override
 	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+		// Satetsu that this furnace will not take, at ANY stage - already full, still
+		// smelting, or a kera already formed. Every one of those fell through to PASS,
+		// and vanilla's answer to right-clicking a block while holding one is to PLACE
+		// it, so a player topping up a full furnace stuck satetsu blocks on and around
+		// it. The accept branches below run first, so this only ever sees refusals.
+		if (stack.is(ModBlocks.SATETSU_SAND.asItem())
+				&& (state.getValue(KERA_FORMED) || state.getValue(LIT)
+						|| state.getValue(SATETSU_LEVEL) >= 4)) {
+			if (!level.isClientSide()) {
+				player.sendOverlayMessage(
+						Component.translatable(state.getValue(SATETSU_LEVEL) >= 4
+										? "message.twoheavens.satetsu_full"
+										: "message.twoheavens.satetsu_busy")
+								.withStyle(ChatFormatting.GOLD));
+				level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.6F, 1.0F);
+			}
+			return InteractionResult.CONSUME;
+		}
+
 		if (state.getValue(KERA_FORMED)) {
 			if (stack.getItem() instanceof HammerItem) {
 				if (!level.isClientSide()) {

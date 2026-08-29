@@ -51,6 +51,20 @@ public class TataraFurnaceBlock extends Block implements EntityBlock {
 
 	@Override
 	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+		// A curing furnace refuses everything, and until this branch existed that meant
+		// satetsu fell through to PASS and vanilla PLACED it against the block. Here
+		// "wait" really is the advice - there is a bar filling in front of the player -
+		// so this one points at the wait rather than at what to do instead.
+		if (state.getValue(LIT) && stack.is(ModBlocks.SATETSU_SAND.asItem())) {
+			if (!level.isClientSide()) {
+				player.sendOverlayMessage(
+						Component.translatable("message.twoheavens.furnace_still_firing")
+								.withStyle(ChatFormatting.GOLD));
+				level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.6F, 1.0F);
+			}
+			return InteractionResult.CONSUME;
+		}
+
 		if (state.getValue(LIT)) {
 			return InteractionResult.PASS;
 		}
@@ -74,7 +88,7 @@ public class TataraFurnaceBlock extends Block implements EntityBlock {
 		if (stack.is(ModBlocks.SATETSU_SAND.asItem())) {
 			if (!level.isClientSide()) {
 				player.sendOverlayMessage(
-						Component.translatable("message.twoheavens.satetsu_after_curing")
+						Component.translatable("message.twoheavens.charcoal_only")
 								.withStyle(ChatFormatting.GOLD));
 				level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.6F, 1.0F);
 			}
