@@ -46,7 +46,10 @@ public class TutorialProgressAttachment {
 			() -> Items.SUGAR_CANE,
 			() -> Items.CHARCOAL,
 			() -> Items.CLAY_BALL,
-			() -> ModItems.TATARA_CLAY
+			() -> ModItems.TATARA_CLAY,
+			// The finished katana, so the chain can hand off to the obi and saya - the
+			// last stretch, and the only one nothing announced.
+			() -> ModItems.KATANA
 	};
 
 	/**
@@ -73,7 +76,7 @@ public class TutorialProgressAttachment {
 			}
 		}
 
-		Progress raised = stored.raisedTo(counts[0], counts[1], counts[2], counts[3], counts[4]);
+		Progress raised = stored.raisedTo(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5]);
 		if (!raised.equals(stored)) {
 			player.setAttached(TYPE, raised);
 			// Announce here rather than on join: a player who stays in one world would
@@ -83,8 +86,9 @@ public class TutorialProgressAttachment {
 		return raised;
 	}
 
-	public record Progress(int maxSatetsu, int maxSugarCane, int maxCharcoal, int maxClay, int maxTataraClay) {
-		public static final Progress NONE = new Progress(0, 0, 0, 0, 0);
+	public record Progress(int maxSatetsu, int maxSugarCane, int maxCharcoal, int maxClay, int maxTataraClay,
+						   int maxKatana) {
+		public static final Progress NONE = new Progress(0, 0, 0, 0, 0, 0);
 
 		// Every field defaults to 0 so an older save, written before the ingredient
 		// counters existed, still loads instead of failing the whole attachment.
@@ -93,16 +97,18 @@ public class TutorialProgressAttachment {
 				Codec.INT.optionalFieldOf("max_sugar_cane", 0).forGetter(Progress::maxSugarCane),
 				Codec.INT.optionalFieldOf("max_charcoal", 0).forGetter(Progress::maxCharcoal),
 				Codec.INT.optionalFieldOf("max_clay", 0).forGetter(Progress::maxClay),
-				Codec.INT.optionalFieldOf("max_tatara_clay", 0).forGetter(Progress::maxTataraClay)
+				Codec.INT.optionalFieldOf("max_tatara_clay", 0).forGetter(Progress::maxTataraClay),
+				Codec.INT.optionalFieldOf("max_katana", 0).forGetter(Progress::maxKatana)
 		).apply(instance, Progress::new));
 
-		public Progress raisedTo(int satetsu, int sugarCane, int charcoal, int clay, int tataraClay) {
+		public Progress raisedTo(int satetsu, int sugarCane, int charcoal, int clay, int tataraClay, int katana) {
 			return new Progress(
 					Math.max(this.maxSatetsu, satetsu),
 					Math.max(this.maxSugarCane, sugarCane),
 					Math.max(this.maxCharcoal, charcoal),
 					Math.max(this.maxClay, clay),
-					Math.max(this.maxTataraClay, tataraClay));
+					Math.max(this.maxTataraClay, tataraClay),
+					Math.max(this.maxKatana, katana));
 		}
 	}
 }

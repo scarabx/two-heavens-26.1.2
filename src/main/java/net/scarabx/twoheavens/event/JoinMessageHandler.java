@@ -105,6 +105,16 @@ public final class JoinMessageHandler {
 			player.sendSystemMessage(Component.literal("Set it aside for the Tatara Furnace"));
 		}
 
+		// The last stretch, and the only one nothing announced. A finished katana is
+		// where the chain hands off from smithing to wearing it: the tooltip already
+		// names the Daisho Obi, but only once you are holding the sword, and nothing
+		// ever said the obi and saya exist or that they are what you carry blades on.
+		if (before.maxKatana() == 0 && after.maxKatana() > 0) {
+			player.sendSystemMessage(Component.literal("Katana forged"));
+			player.sendSystemMessage(Component.literal(
+					"Craft both swords into a Daisho Saya, and then into an Obi to dual wield"));
+		}
+
 		int per = INGREDIENTS_PER_GOAL;
 		boolean had = before.maxSugarCane() >= per && before.maxCharcoal() >= per && before.maxClay() >= per;
 		boolean has = after.maxSugarCane() >= per && after.maxCharcoal() >= per && after.maxClay() >= per;
