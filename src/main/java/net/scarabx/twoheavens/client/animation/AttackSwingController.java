@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.entity.player.Player;
+import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.MovePayload;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -82,6 +83,21 @@ public class AttackSwingController {
 		Player player = client.player;
 		if (player == null) {
 			return;
+		}
+
+
+		// Face where you are LOOKING, not where you are walking.
+		//
+		// Minecraft turns the body toward movement and the head toward the camera, and
+		// these animations are applied to body bones - so looking sideways left the whole
+		// stance pointing along WASD and the pose out of view. Vanilla does this same
+		// alignment while aiming a bow or crossbow.
+		//
+		// Set on both body rotations so the legs do not counter-rotate against the torso,
+		// and only while drawn: undrawn, ordinary movement rotation is correct.
+		if (player.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			player.yBodyRot = player.getYHeadRot();
+			player.yBodyRotO = player.yHeadRotO;
 		}
 
 		boolean drawn = SwordDrawController.isDrawn(player);

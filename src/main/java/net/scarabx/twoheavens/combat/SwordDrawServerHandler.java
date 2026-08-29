@@ -104,6 +104,19 @@ public class SwordDrawServerHandler {
 				CombatTutorialAttachment.advance(online,
 						CombatTutorialAttachment.NOT_STARTED, CombatTutorialAttachment.DRAW);
 			}
+
+			// A drawn player faces where they LOOK, not where they walk - the same
+			// alignment vanilla applies while aiming a bow. The animations are on body
+			// bones, so without this the whole stance points along WASD.
+			//
+			// Server-side as well as client-side, and both are needed: the client fixes
+			// what YOU see of yourself, this is what every OTHER player sees of you. With
+			// only the client half, a drawn player would look correct to themselves and
+			// face the wrong way to everyone else.
+			if (online.hasAttached(DrawnSwordsAttachment.TYPE)) {
+				online.yBodyRot = online.getYHeadRot();
+				online.yBodyRotO = online.yHeadRotO;
+			}
 		}
 
 		Iterator<Map.Entry<UUID, Deque<PendingSwap>>> iterator = pendingSwaps.entrySet().iterator();
@@ -163,8 +176,17 @@ public class SwordDrawServerHandler {
 					CombatTutorialAttachment.DRAW, CombatTutorialAttachment.STUN);
 
 			Deque<PendingSwap> queue = new ArrayDeque<>();
+			// Written to the RECORDED slot, never to "whatever is selected now".
+			//
+			// The swap is delayed, so the selection can move between pressing R and the
+			// swap firing. setItemInHand writes to the current slot, so the fake katana
+			// landed in whatever the player had switched to and destroyed what was there
+			// - cooked beef, in the case that turned this up. Sheathing then stripped the
+			// fake from that slot, leaving it empty, while the real katana went back to
+			// the slot it came from.
+			int drawSlot = player.getInventory().getSelectedSlot();
 			queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_KATANA_DELAY_TICKS,
-					p -> p.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana())));
+					p -> p.getInventory().setItem(drawSlot, FakeDrawnSword.katana())));
 			queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS,
 					p -> p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
 			pendingSwaps.put(player.getUUID(), queue);
