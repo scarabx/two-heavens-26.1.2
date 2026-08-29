@@ -131,11 +131,12 @@ public final class ModRecipeTooltips {
 				null, null, null
 		}, 3, 3, ModItems.BELLOWS, 1);
 
-		// Hammer: stone tool materials over a stick
+		// Hammer: six stone tool materials over a stick. AIR, not null, in the two cells
+		// beside the stick - null would fill them with stone and make it eight.
 		taggedGrid(ItemTags.STONE_TOOL_MATERIALS, Items.COBBLESTONE, new Item[]{
 				null, null, null,
 				null, null, null,
-				null, Items.STICK, null
+				Items.AIR, Items.STICK, Items.AIR
 		}, 3, 3, ModItems.HAMMER, 1);
 
 		// Sugar Cane + Charcoal + Clay Ball -> 4 Tatara Clay
@@ -165,9 +166,17 @@ public final class ModRecipeTooltips {
 	 */
 	private static void taggedGrid(TagKey<Item> tag, Item icon, Item[] cells,
 									int width, int height, Item result, int resultCount) {
+		// null means "the tagged item", which is what makes these grids terse - but that
+		// leaves no way to say EMPTY. Items.AIR is that marker: the hammer is six stone
+		// over a stick, and without it the two cells beside the stick filled with stone
+		// too and the tooltip showed eight.
 		Item[] filled = new Item[cells.length];
 		for (int i = 0; i < cells.length; i++) {
-			filled[i] = cells[i] == null ? icon : cells[i];
+			if (cells[i] == Items.AIR) {
+				filled[i] = null;
+			} else {
+				filled[i] = cells[i] == null ? icon : cells[i];
+			}
 		}
 		RecipeDef def = new RecipeDef(filled, width, height, result, resultCount, false);
 		USED_IN_TAG.add(new TagEntry(tag, def));
