@@ -292,8 +292,15 @@ public final class FurnaceHintHud {
 			// The kera is ready but sealed in. Four hammer strikes break it out, and
 			// nothing about the block says so - this is where the guidance used to
 			// stop entirely.
+			//
+			// The count is what is LEFT, not the total: crack_stage counts up as the
+			// block splits, so remaining strikes come straight off block state with no
+			// packet, exactly like the bellows pump count. A static "4" while you are
+			// three strikes in reads as no progress at all.
+			int strikesLeft = Math.max(1, KERA_HAMMER_STRIKES
+					- fired.getValue(TataraFurnaceFiredBlock.CRACK_STAGE));
 			drawWithHint(graphics, client, new ItemStack(ModItems.HAMMER),
-					Component.empty(), KERA_HAMMER_STRIKES, false);
+					Component.empty(), strikesLeft, false);
 			return;
 		}
 
@@ -669,7 +676,22 @@ public final class FurnaceHintHud {
 	private static boolean drawCoolingHint(GuiGraphicsExtractor graphics, Minecraft client) {
 		BlockState kera = blockInView(client, ModBlocks.KERA_BLOCK);
 		if (kera == null) {
-			return false;
+			// Cooled and black: a different block, and the wait is over. Nothing about a
+			// dark lump says "mine me", and it wants a stone pickaxe - the same tier and
+			// hardness as the anvil - so the prompt names the tool rather than leaving
+			// the player to try a hand or a shovel.
+			//
+			// LEFT-click sprite, because mining is left-click. Every other prompt here is
+			// a right-click, so this is the one place that mirrored icon earns its keep
+			// outside the tutorial.
+			if (blockInView(client, ModBlocks.KERA) == null) {
+				return false;
+			}
+			anchorRise = -KERA_BELOW;
+			drawRows(graphics, client, List.of(new Row(
+					List.of(new Ingredient(new ItemStack(Items.STONE_PICKAXE))),
+					Component.empty(), 0, false, null, true, null, MOUSE_LEFT_ICON)));
+			return true;
 		}
 		// blockInView anchors at the block's middle with no rise; this one hangs below.
 		anchorRise = -KERA_BELOW;

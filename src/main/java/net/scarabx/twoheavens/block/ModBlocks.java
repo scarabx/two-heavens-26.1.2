@@ -49,9 +49,13 @@ public class ModBlocks {
 	public static final Block KERA_BLOCK = registerBlockWithItem("kera_block", KeraBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).sound(SoundType.STONE).noOcclusion());
 
+	// Mined like the kera: stone pickaxe, same hardness, so the two blocks the player
+	// hammers on behave the same way. It carries requiresCorrectToolForDrops, and until
+	// it was added to mineable/pickaxe and needs_stone_tool that meant it could never
+	// drop AT ALL - that pair only works if the block is in a tool tag.
 	public static final Block SMITHING_ANVIL = registerBlockWithItem("smithing_anvil", SmithingAnvilBlock::new,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops()
-					.strength(5.0F, 1200.0F).sound(SoundType.ANVIL).pushReaction(PushReaction.BLOCK));
+					.strength(2.0F, 6.0F).sound(SoundType.ANVIL).pushReaction(PushReaction.BLOCK));
 
 	private static Block registerBlockWithItem(String name, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties blockProperties) {
 		ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(TwoHeavens.MOD_ID, name));

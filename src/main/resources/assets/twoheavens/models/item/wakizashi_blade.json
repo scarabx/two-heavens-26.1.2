@@ -182,11 +182,11 @@
 			"translation": [-15.75, 3.25, 2.5]
 		},
 		"ground": {
-			"rotation": [-86.38, 1.8, -177.01],
-			"translation": [0, -1.5, -6.5]
+			"rotation": [95.13, 3.17, -124.49],
+			"translation": [-5.75, -1.5, 3]
 		},
 		"gui": {
-			"rotation": [90, 0, 90],
+			"rotation": [122, 0, 90],
 			"translation": [6.25, 0.5, 0]
 		},
 		"fixed": {
