@@ -335,10 +335,13 @@ public final class FurnaceHintHud {
 			// no number read as "use this" when there was nothing left to do, and the
 			// only thing still outstanding is the clock, which the bar shows.
 			if (pumpsLeft > 0) {
-				Row main = new Row(
-						List.of(new Ingredient(new ItemStack(ModItems.BELLOWS))),
-						Component.empty(), pumpsLeft, false, null);
-				drawRows(graphics, client, List.of(main));
+				// Through drawWithHint so it offers the bellows' recipe to anyone who
+				// still has none. The passive half already named it in the heads-up,
+				// where there was idle time to go and craft one - but a player who
+				// missed that arrives here with no route to it, and this row is the
+				// last place the bellows is ever mentioned.
+				drawWithHint(graphics, client, new ItemStack(ModItems.BELLOWS),
+						Component.empty(), pumpsLeft, false);
 			}
 			// The clock, alongside the pump count in the text: finishing needs both, and
 			// only the pumps were visible before. Interpolated like the other timed
@@ -472,8 +475,13 @@ public final class FurnaceHintHud {
 		}
 		if (item == ModItems.MOLTEN_KERA || item == ModItems.TAMAHAGANE_INGOT
 				|| item == ModItems.FLAT_TAMAHAGANE_INGOT) {
-			drawHint(graphics, client, List.of(new Ingredient(new ItemStack(ModItems.HAMMER))),
-					Component.empty());
+			// Through drawWithHint, not drawHint, so it offers the hammer's recipe when
+			// the player has none. This branch built its row directly and bypassed
+			// canOffer - the same gap the fork had - and it is the worse place for it:
+			// this is the FIRST anvil step, so someone who set a kera down without a
+			// hammer was told to use one with no way to find out how to get it.
+			drawWithHint(graphics, client, new ItemStack(ModItems.HAMMER),
+					Component.empty(), 0, false);
 			return true;
 		}
 		return false;
