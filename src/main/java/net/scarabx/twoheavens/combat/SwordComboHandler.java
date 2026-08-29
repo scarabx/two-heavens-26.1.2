@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SpellParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -114,6 +115,13 @@ public class SwordComboHandler {
 	 * stun would trade the good half for the broken one.
 	 */
 	private static final int STUN_IMMUNITY_TICKS = 60;
+
+	/** The one-off swirl burst that marks a stun landing. Height is a fraction of the mob. */
+	private static final int STUN_PARTICLE_COUNT = 18;
+	// Pale steel, not potion purple. The colour is the other half of keeping this from
+	// reading as a thrown effect - it belongs to the blade that caused it.
+	private static final int STUN_PARTICLE_COLOUR = 0xC9D6E0;
+	private static final double STUN_PARTICLE_HEIGHT = 0.9;
 	// Covers the whole stun window so the finisher stays usable for as long
 	// as the target is actually stunned, not a shorter arbitrary cutoff.
 	private static final int COMBO_WINDOW_TICKS = STUN_DURATION_TICKS;
@@ -620,8 +628,13 @@ public class SwordComboHandler {
 	 * so it wants a cue, not words. The absence of this sound is what tells the player
 	 * the stun did not take, which costs nothing per swing.
 	 *
-	 * Played at the TARGET, not the player, because in a crowd the question is which
-	 * mob is held - a sound at the player's own position could not answer that.
+	 * Played and drawn at the TARGET, not the player, because in a crowd the question
+	 * is which mob is held - a cue at the player's own position could not answer that.
+	 *
+	 * The swirl is a ONE-OFF burst at the moment the stun lands, ringed around the
+	 * mob's head. Not a sustained emitter: a swirl that persists for the duration is
+	 * the potion look this design deliberately walked away from, and it would say
+	 * "effect applied" rather than "that hit landed". A burst is punctuation.
 	 *
 	 * IRON_TRAPDOOR_CLOSE is a short metallic latch: it reads as something shutting,
 	 * which is what a stun is. Deliberately not from the anvil's vocabulary (ANVIL_USE
@@ -632,6 +645,18 @@ public class SwordComboHandler {
 	private static void playStunLanded(Level level, LivingEntity target) {
 		level.playSound(null, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
 				SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.PLAYERS, 0.7F, 1.5F);
+		if (level instanceof ServerLevel serverLevel) {
+			// Spread across the head's width with almost no velocity, so the burst hangs
+			// where the mob is rather than flying off it. INSTANT_EFFECT over EFFECT: it is
+			// the short-lived one, which is what makes this read as a hit rather than as a
+			// lingering status.
+			serverLevel.sendParticles(
+					SpellParticleOption.create(ParticleTypes.INSTANT_EFFECT, STUN_PARTICLE_COLOUR, 1.0F),
+					target.getX(),
+					target.getY() + target.getBbHeight() * STUN_PARTICLE_HEIGHT,
+					target.getZ(),
+					STUN_PARTICLE_COUNT, 0.32, 0.16, 0.32, 0.01);
+		}
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
