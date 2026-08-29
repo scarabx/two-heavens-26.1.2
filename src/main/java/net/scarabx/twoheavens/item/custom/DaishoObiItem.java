@@ -19,6 +19,7 @@ import net.scarabx.twoheavens.item.ModItems;
 
 import java.util.function.Consumer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.scarabx.twoheavens.client.render.DaishoObiArmorRenderer;
 import net.scarabx.twoheavens.client.render.DaishoObiRenderer;
 
@@ -50,6 +51,16 @@ public class DaishoObiItem extends Item implements GeoItem {
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		return DisassembleHelper.splitInto(level, player, hand, ModItems.OBI, ModItems.DAISHO_SAYA);
+	}
+
+	/**
+	 * Aiming at a block takes this path instead of use(): sneaking with an item in hand
+	 * makes vanilla skip the block and call useOn. Same helper, so both aims behave
+	 * identically.
+	 */
+	@Override
+	public InteractionResult useOn(UseOnContext context) {
+		return DisassembleHelper.splitInto(context, ModItems.OBI, ModItems.DAISHO_SAYA);
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import net.scarabx.twoheavens.item.ItemRecipeTooltip;
 import java.util.Optional;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
@@ -50,6 +51,16 @@ public class DaishoSayaItem extends Item implements GeoItem {
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		return DisassembleHelper.splitInto(level, player, hand, ModItems.KATANA, ModItems.WAKIZASHI);
+	}
+
+	/**
+	 * Aiming at a block takes this path instead of use(): sneaking with an item in hand
+	 * makes vanilla skip the block and call useOn. Same helper, so both aims behave
+	 * identically.
+	 */
+	@Override
+	public InteractionResult useOn(UseOnContext context) {
+		return DisassembleHelper.splitInto(context, ModItems.KATANA, ModItems.WAKIZASHI);
 	}
 
 	@Override
