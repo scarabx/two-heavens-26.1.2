@@ -95,7 +95,14 @@ public final class JoinMessageHandler {
 			// Satetsu is not crafted into anything, so it gets no recipe pointer: it is
 			// spent much later, filling the fired furnace, and aiming the player at the
 			// crafting grid here would send them looking for something that isn't there.
-			player.sendSystemMessage(Component.literal("Set it aside for the smelt"));
+			//
+			// Names the Tatara Furnace rather than "the smelt", which read as vanilla
+			// smelting - a wrong steer at the moment the player is casting about for
+			// something to do. Deliberately the SAME phrase the clay message uses, so the
+			// two teach one name between them whichever goal completes first. Not "kera"
+			// (the output of a process they have not met) and not "Fired Tatara Furnace"
+			// (a distinction that does not exist for them yet).
+			player.sendSystemMessage(Component.literal("Set it aside for the Tatara Furnace"));
 		}
 
 		int per = INGREDIENTS_PER_GOAL;

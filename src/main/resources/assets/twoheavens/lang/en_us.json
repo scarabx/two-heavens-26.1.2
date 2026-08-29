@@ -39,6 +39,7 @@
   "block.twoheavens.hot_kera_block": "Hot Kera",
   "tooltip.twoheavens.shift_for_recipe": "Hold [Shift] for recipes",
   "message.twoheavens.tend_furnace": "Tend to furnace",
+  "message.twoheavens.satetsu_after_curing": "Satetsu goes in once this has cured",
   "message.twoheavens.tatara_charcoal_first": "Fill it with charcoal first",
   "message.twoheavens.tongs_to_lift": "Too hot - Pick up with %s Tongs in your offhand",
   "hud.twoheavens.quench": "Quench in water",

@@ -1,6 +1,8 @@
 package net.scarabx.twoheavens.block.custom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.scarabx.twoheavens.block.ModBlocks;
 import net.scarabx.twoheavens.block.ModBlockEntities;
 import net.scarabx.twoheavens.block.entity.TataraFurnaceBlockEntity;
 import org.jspecify.annotations.Nullable;
@@ -60,6 +63,22 @@ public class TataraFurnaceBlock extends Block implements EntityBlock {
 				level.playSound(null, pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
 			}
 			return InteractionResult.SUCCESS;
+		}
+
+		// Satetsu belongs in the FIRED furnace, after this one has cured - this one never
+		// takes it at any fill level. Without this the click fell through to PASS, and
+		// vanilla's answer to right-clicking a block while holding one is to PLACE it,
+		// so a player following the starter hint's "set it aside for the Tatara Furnace"
+		// stuck a satetsu block on the side of their furnace instead. Doing something
+		// surprising is worse than doing nothing.
+		if (stack.is(ModBlocks.SATETSU_SAND.asItem())) {
+			if (!level.isClientSide()) {
+				player.sendOverlayMessage(
+						Component.translatable("message.twoheavens.satetsu_after_curing")
+								.withStyle(ChatFormatting.GOLD));
+				level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.6F, 1.0F);
+			}
+			return InteractionResult.CONSUME;
 		}
 
 		if (stack.getItem() instanceof FlintAndSteelItem) {
