@@ -110,7 +110,7 @@ public final class JoinMessageHandler {
 		// names the Daisho Obi, but only once you are holding the sword, and nothing
 		// ever said the obi and saya exist or that they are what you carry blades on.
 		if (before.maxKatana() == 0 && after.maxKatana() > 0) {
-			player.sendSystemMessage(Component.literal("Katana forged"));
+			player.sendSystemMessage(Component.literal("Katana crafted"));
 			player.sendSystemMessage(Component.literal(
 					"Craft both swords into a Daisho Saya, and then into an Obi to dual wield"));
 		}
