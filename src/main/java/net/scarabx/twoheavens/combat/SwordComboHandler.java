@@ -200,6 +200,23 @@ public class SwordComboHandler {
 			case MovePayload.CUT -> CUT_REACH_DISTANCE;
 			default -> FINISHER_REACH_DISTANCE;
 		};
+		// The tutorial follows the INPUT, not the outcome - above the target check on
+		// purpose. These moves swing at air perfectly well; only the stun needs a mob,
+		// and the stun is the one part of this that is mob-specific. Requiring something
+		// in range would mean the tutorial refused to acknowledge a move the player just
+		// watched themselves perform, which is the worst thing a tutorial can say.
+		//
+		// Every step is like this: no gating anywhere, no grading of the outcome. It also
+		// means the stun cooldown can never stall the sequence, and it works identically
+		// whether the player is practising in an empty field or mid-firefight.
+		switch (move) {
+			case MovePayload.STAB -> CombatTutorialAttachment.advance(player,
+					CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
+			case MovePayload.CUT -> { }
+			default -> CombatTutorialAttachment.advance(player,
+					CombatTutorialAttachment.FINISH, CombatTutorialAttachment.DONE);
+		}
+
 		LivingEntity target = resolveTarget(player, targetId, reach);
 		if (target == null) {
 			return;
@@ -320,16 +337,6 @@ public class SwordComboHandler {
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 			playBloodEffect(level, player, target);
 
-			// Advanced on the STAB LANDING, with no reference to stun state at all. The
-			// tutorial teaches an input, and the stab connecting is proof the player
-			// performed it - whether the mob happened to be stunnable is a combat rule
-			// they have not been taught yet and should not be silently graded on.
-			//
-			// It sat inside the stunnable branch at first, which meant it could not
-			// progress against a mob still inside its immunity window - exactly the mob
-			// someone practising the combo has just been hitting.
-			CombatTutorialAttachment.advance(player,
-					CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
 		}
 
 		Iterator<Map.Entry<UUID, PendingCut>> cutIterator = pendingCuts.entrySet().iterator();
@@ -381,14 +388,6 @@ public class SwordComboHandler {
 			if (outOfReach(player, target, FINISHER_REACH_DISTANCE)) {
 				continue;
 			}
-
-			// Finished on the katana move LANDING, combo or not, and with no gating
-			// anywhere in the sequence. The moves are usable for their own sake, so the
-			// tutorial follows the inputs rather than grading the outcome - being told
-			// you have not really done it, while watching yourself do it, is the worst
-			// thing a tutorial can say.
-			CombatTutorialAttachment.advance(player,
-					CombatTutorialAttachment.FINISH, CombatTutorialAttachment.DONE);
 
 			if (pending.comboFinisher()) {
 				StunAttachment.clear(target);
