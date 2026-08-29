@@ -5,6 +5,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
+import net.scarabx.twoheavens.combat.SwordBlockGuard;
 import net.scarabx.twoheavens.combat.SweepEffect;
 import net.scarabx.twoheavens.item.ModItems;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,6 +44,12 @@ public class LivingEntitySwingMixin {
 		// so it must not announce itself with a sweep either - that read as the swing
 		// having done something when it had not.
 		if (item == ModItems.KATANA) {
+			return;
+		}
+		// A swing that landed on a block is not an attack. LivingEntity#swing does not
+		// know what was aimed at, so SwordBlockGuard records it from the attack-block
+		// callback and this consumes the flag.
+		if (SwordBlockGuard.consumeBlockSwing(player)) {
 			return;
 		}
 		SweepEffect.playFromSwing(player);

@@ -8,6 +8,7 @@ import net.scarabx.twoheavens.block.ModBlocks;
 import net.scarabx.twoheavens.block.ModDataComponents;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.StunAttachment;
+import net.scarabx.twoheavens.combat.SwordBlockGuard;
 import net.scarabx.twoheavens.combat.SwordComboHandler;
 import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import net.scarabx.twoheavens.event.AnvilForgingHandler;
@@ -41,6 +42,7 @@ public class TwoHeavens implements ModInitializer {
 		ModWorldGeneration.registerWorldGeneration();
 		AnvilForgingHandler.register();
 		SwordComboHandler.register();
+		SwordBlockGuard.register();
 		// Forces DrawnSwordsAttachment's class to load (and its
 		// AttachmentType to actually register) right now during mod init,
 		// rather than lazily whenever something first references it mid-game
