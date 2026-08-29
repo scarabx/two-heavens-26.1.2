@@ -304,6 +304,38 @@ public final class ModRecipeTooltips {
 	 * rather than part of this step.
 	 */
 	public static RecipeTooltipData relatedTo(Item item) {
+		return toData(relatedDefs(item));
+	}
+
+	/**
+	 * The same forward step as {@link #relatedTo}, with this item's OWN recipe in
+	 * front of it.
+	 *
+	 * For an item in the middle of the chain that you are actually holding. A blade
+	 * has no recipe of its own, so relatedTo is the whole answer there; the Daisho
+	 * Saya has one, and dropping it would lose the grid that tooltip shows today.
+	 *
+	 * Only the forward direction is expanded into its parts. Expanding the item's own
+	 * recipe as well would walk BACKWARDS - the saya is katana plus wakizashi, so it
+	 * would add both sword recipes, which are two steps the player has by definition
+	 * already completed to be holding this. The forward expansion is the one that can
+	 * name something they have never seen.
+	 */
+	public static RecipeTooltipData wholeStep(Item item) {
+		List<RecipeDef> defs = new ArrayList<>();
+		List<RecipeDef> own = MADE_FROM.get(item);
+		if (own != null) {
+			defs.addAll(own);
+		}
+		for (RecipeDef def : relatedDefs(item)) {
+			if (!defs.contains(def)) {
+				defs.add(def);
+			}
+		}
+		return toData(defs);
+	}
+
+	private static List<RecipeDef> relatedDefs(Item item) {
 		List<RecipeDef> defs = new ArrayList<>();
 		List<RecipeDef> usedIn = USED_IN.get(item);
 		if (usedIn != null) {
@@ -325,7 +357,7 @@ public final class ModRecipeTooltips {
 				}
 			}
 		}
-		return toData(defs);
+		return defs;
 	}
 
 	/** Shared by both lookups so the two can never disagree about how a grid is laid out. */

@@ -11,6 +11,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.scarabx.twoheavens.item.ItemRecipeTooltip;
+import net.scarabx.twoheavens.item.ModRecipeTooltips;
+import net.scarabx.twoheavens.item.ShiftState;
 import java.util.Optional;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -43,9 +45,26 @@ public class DaishoSayaItem extends Item implements GeoItem {
 		ItemRecipeTooltip.appendPrompt(stack, consumer);
 	}
 
+	/**
+	 * The whole belt step: this saya's own recipe, the Daisho Obi it combines into,
+	 * and how to make the Obi that grid names.
+	 *
+	 * The Obi is the reason. The Daisho Obi grid demands one at the exact moment the
+	 * player has just finished both swords, and **you cannot hover an item you do not
+	 * own** - so the tooltip named the last thing standing between them and dual
+	 * wielding, and gave them no way to find out it is three wool. Same gap the blades
+	 * had with the tsuba and tsuka, same fix.
+	 *
+	 * Three grids, which ClientRecipeTooltip lays out in two columns on its own past
+	 * STACK_LIMIT - the crowding is handled where every other crowded tooltip handles
+	 * it, so nothing is decided here.
+	 */
 	@Override
 	public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
-		return ItemRecipeTooltip.image(stack);
+		if (!ShiftState.isDown()) {
+			return Optional.empty();
+		}
+		return Optional.ofNullable(ModRecipeTooltips.wholeStep(stack.getItem()));
 	}
 
 	@Override
