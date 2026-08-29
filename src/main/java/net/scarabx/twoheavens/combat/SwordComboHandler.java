@@ -94,11 +94,41 @@ public class SwordComboHandler {
 	// Golem/Ravager tankiness included, still dies in one hit.
 	private static final float BOSS_FINISHER_DAMAGE = 50.0F;
 	private static final int STUN_DURATION_TICKS = 50;
+
+	/**
+	 * How long a mob shrugs off further stuns after one ends. PER MOB, not per player,
+	 * so a second attacker can still be stunned while the first is recovering - a crowd
+	 * stays handleable.
+	 *
+	 * Without this, stun was worthless BECAUSE it was unlimited: attacks have no rate
+	 * limit, so you re-stunned before the previous stun did anything, and the finisher
+	 * stopped being a payoff for setting something up and became your normal attack
+	 * with extra steps. Rationing the window is what gives it weight back.
+	 *
+	 * Deliberately NOT a cooldown on attacking. The blades apply damage manually and
+	 * carry no Tool component precisely so hits never scale with swing timing, and that
+	 * fast loose feel is what makes the combat survivable. Slowing the sword to fix the
+	 * stun would trade the good half for the broken one.
+	 */
+	private static final int STUN_IMMUNITY_TICKS = 60;
 	// Covers the whole stun window so the finisher stays usable for as long
 	// as the target is actually stunned, not a shorter arbitrary cutoff.
 	private static final int COMBO_WINDOW_TICKS = STUN_DURATION_TICKS;
 
 	private static final Map<UUID, ComboState> activeCombos = new HashMap<>();
+
+	/**
+	 * Per-mob: the tick each target can be stunned again, measured against the MOB's own
+	 * tickCount - two players have unrelated counters, so a shared per-mob map cannot be
+	 * keyed off whoever happened to land the hit.
+	 *
+	 * Swept periodically rather than on mob death: nothing tells us when an arbitrary
+	 * entity is removed, and a stale entry is only a few bytes until it is cleared.
+	 */
+	private static final Map<UUID, Integer> stunReadyAt = new HashMap<>();
+
+	/** Server tick each entry was written, so the map can be aged out without an entity scan. */
+	private static final Map<UUID, Integer> stunWrittenAt = new HashMap<>();
 	private static final Map<UUID, PendingStab> pendingStabs = new HashMap<>();
 	private static final Map<UUID, PendingFinisher> pendingFinishers = new HashMap<>();
 	private static final Map<UUID, PendingCut> pendingCuts = new HashMap<>();
@@ -225,7 +255,28 @@ public class SwordComboHandler {
 		return target;
 	}
 
+	/** How often the stun-immunity map is swept for entries no live mob can still use. */
+	private static final int STUN_SWEEP_INTERVAL_TICKS = 600;
+
 	private static void onServerTick(net.minecraft.server.MinecraftServer server) {
+		// Keyed by mob UUID, so entries outlive the mobs that made them. Swept by AGE
+		// rather than by checking which mobs are still alive: liveness would mean walking
+		// every entity in every level, which is a real cost on a busy world to reclaim a
+		// few bytes. An entry is useless once its immunity could not still be running, so
+		// age alone is enough - and a mob whose entry was dropped early is simply
+		// stunnable again, which is the correct outcome anyway.
+		if (server.getTickCount() % STUN_SWEEP_INTERVAL_TICKS == 0) {
+			stunReadyAt.values().removeIf(deadline -> deadline <= 0);
+			int cutoff = STUN_DURATION_TICKS + STUN_IMMUNITY_TICKS + STUN_SWEEP_INTERVAL_TICKS;
+			stunWrittenAt.entrySet().removeIf(entry -> {
+				if (server.getTickCount() - entry.getValue() < cutoff) {
+					return false;
+				}
+				stunReadyAt.remove(entry.getKey());
+				return true;
+			});
+		}
+
 		Iterator<Map.Entry<UUID, PendingStab>> stabIterator = pendingStabs.entrySet().iterator();
 		while (stabIterator.hasNext()) {
 			Map.Entry<UUID, PendingStab> entry = stabIterator.next();
@@ -248,17 +299,26 @@ public class SwordComboHandler {
 				continue;
 			}
 
+			// Non-stackable: a mob already stunned, or still shrugging one off, takes the
+			// hit and its damage but cannot be locked down by chaining stabs.
+			boolean stunnable = !StunAttachment.isStunned(target)
+					&& target.tickCount >= stunReadyAt.getOrDefault(target.getUUID(), 0);
+
 			target.hurt(level.damageSources().playerAttack(player), STAB_DAMAGE);
 			// Not a mob effect: a sword landing should not read as a thrown potion, and
 			// Weakness only zeroed the damage while the mob kept swinging. StunAttachment
 			// holds the target still and blocks its attacks outright, with no particles,
 			// no HUD icon, and nothing milk can wash off. Same duration as before.
-			StunAttachment.stun(target, STUN_DURATION_TICKS);
+			if (stunnable) {
+				StunAttachment.stun(target, STUN_DURATION_TICKS);
+				stunReadyAt.put(target.getUUID(),
+						target.tickCount + STUN_DURATION_TICKS + STUN_IMMUNITY_TICKS);
+				stunWrittenAt.put(target.getUUID(), server.getTickCount());
+				activeCombos.put(player.getUUID(),
+						new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
+			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 			playBloodEffect(level, player, target);
-
-			activeCombos.put(player.getUUID(),
-					new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
 		}
 
 		Iterator<Map.Entry<UUID, PendingCut>> cutIterator = pendingCuts.entrySet().iterator();
