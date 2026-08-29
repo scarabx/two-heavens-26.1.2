@@ -214,7 +214,34 @@ public class SwordDrawServerHandler {
 		stripFakeSwords(player.getInventory());
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
-		inventory.setItem(stored.mainHandSlot(), stored.mainHand());
+		putBack(player, stored.mainHandSlot(), stored.mainHand());
+	}
+
+	/**
+	 * Writes a stored item back to its slot WITHOUT destroying anything that moved in
+	 * while the player was drawn.
+	 *
+	 * setItem here was an unconditional overwrite. Fakes are stripped just above, so
+	 * anything still in that slot arrived during the draw - and the obvious way for
+	 * that to happen is disassembling a Daisho Saya, whose two swords land in the first
+	 * free slots. Sheathing then wrote the stored item over one of them and it was gone,
+	 * which is why the loss only ever showed up while wearing an obi: without one you
+	 * cannot draw, so the restore never runs.
+	 */
+	private static void putBack(ServerPlayer player, int slot, ItemStack stored) {
+		Inventory inventory = player.getInventory();
+		ItemStack occupant = inventory.getItem(slot);
+		if (occupant.isEmpty()) {
+			inventory.setItem(slot, stored);
+			return;
+		}
+		if (stored.isEmpty()) {
+			return;
+		}
+		// Somewhere else, or on the floor - never on top of the newcomer.
+		if (!inventory.add(stored)) {
+			player.drop(stored, false);
+		}
 	}
 
 	// Used only by the instant/forced paths (death) - no animation to wait
@@ -223,8 +250,12 @@ public class SwordDrawServerHandler {
 		stripFakeSwords(player.getInventory());
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
-		inventory.setItem(stored.mainHandSlot(), stored.mainHand());
-		player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+		putBack(player, stored.mainHandSlot(), stored.mainHand());
+		if (player.getOffhandItem().isEmpty()) {
+			player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+		} else if (!stored.offHand().isEmpty() && !inventory.add(stored.offHand())) {
+			player.drop(stored.offHand(), false);
+		}
 	}
 
 	private record PendingSwap(int applyTick, Consumer<ServerPlayer> action) {
