@@ -23,11 +23,15 @@ public class ModItemGroups {
 				TWO_HEAVENS,
 				FabricCreativeModeTab.builder()
 						.title(Component.translatable("itemGroup.twoheavens.two_heavens"))
+						// The Daisho is the tab's emblem only - a katana and wakizashi paired
+						// says what the mod is better than either sword alone. It is NOT listed
+						// below: it has no recipe and no function since combos replaced it, so
+						// offering it in the grid would hand players a dead item. Registered
+						// purely so this ItemStack can exist.
 						.icon(() -> new ItemStack(ModItems.DAISHO))
 						.displayItems((parameters, entries) -> {
 							entries.accept(ModItems.KATANA);
 							entries.accept(ModItems.WAKIZASHI);
-							entries.accept(ModItems.DAISHO);
 							entries.accept(ModItems.KATANA_TSUKA);
 							entries.accept(ModItems.KATANA_BLADE);
 							entries.accept(ModItems.WAKIZASHI_TSUKA);
