@@ -11,7 +11,8 @@
         "smelt_stage",
         "redness_stage",
         "kera_formed",
-        "crack_stage"
+        "crack_stage",
+        "bellows_progress"
       ]
     },
     {

@@ -50,7 +50,12 @@ public class ModLootTableProvider extends FabricBlockLootSubProvider {
 						.copy(TataraFurnaceFiredBlock.SMELT_STAGE)
 						.copy(TataraFurnaceFiredBlock.REDNESS_STAGE)
 						.copy(TataraFurnaceFiredBlock.KERA_FORMED)
-						.copy(TataraFurnaceFiredBlock.CRACK_STAGE))
+						.copy(TataraFurnaceFiredBlock.CRACK_STAGE)
+						// Every declared property must be copied or breaking the block
+						// silently resets that one. This was the odd one out: seven of
+						// eight survived, so a furnace broken mid-bellows-phase came back
+						// with its pump count at zero while everything else was intact.
+						.copy(TataraFurnaceFiredBlock.BELLOWS_PROGRESS))
 				.apply(CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
 						.include(ModDataComponents.FURNACE_PROGRESS)));
 		this.dropSelf(ModBlocks.KERA);
