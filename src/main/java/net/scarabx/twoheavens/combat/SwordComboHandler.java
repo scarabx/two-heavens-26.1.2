@@ -320,14 +320,16 @@ public class SwordComboHandler {
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 			playBloodEffect(level, player, target);
 
-			// Advanced on the target being stunned AT ALL, not on this stab being the one
-			// that stunned it. Inside the stunnable branch the tutorial could not progress
-			// against a mob still inside its immunity window - which is exactly the mob a
-			// player practising the combo has just been hitting.
-			if (StunAttachment.isStunned(target)) {
-				CombatTutorialAttachment.advance(player,
-						CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
-			}
+			// Advanced on the STAB LANDING, with no reference to stun state at all. The
+			// tutorial teaches an input, and the stab connecting is proof the player
+			// performed it - whether the mob happened to be stunnable is a combat rule
+			// they have not been taught yet and should not be silently graded on.
+			//
+			// It sat inside the stunnable branch at first, which meant it could not
+			// progress against a mob still inside its immunity window - exactly the mob
+			// someone practising the combo has just been hitting.
+			CombatTutorialAttachment.advance(player,
+					CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
 		}
 
 		Iterator<Map.Entry<UUID, PendingCut>> cutIterator = pendingCuts.entrySet().iterator();
