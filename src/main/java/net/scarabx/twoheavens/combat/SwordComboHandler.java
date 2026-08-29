@@ -374,6 +374,7 @@ public class SwordComboHandler {
 			// no HUD icon, and nothing milk can wash off. Same duration as before.
 			if (stunnable) {
 				StunAttachment.stun(target, STUN_DURATION_TICKS);
+				playStunLanded(level, target);
 				stunReadyAt.put(target.getUUID(),
 						target.tickCount + STUN_DURATION_TICKS + STUN_IMMUNITY_TICKS);
 				stunWrittenAt.put(target.getUUID(), server.getTickCount());
@@ -602,6 +603,35 @@ public class SwordComboHandler {
 				target.getY() + target.getBbHeight() * 0.6,
 				target.getZ() + facing.z * reach,
 				34, 0.22, 0.28, 0.22, 0.13);
+	}
+
+	/**
+	 * The only thing that says a stun LANDED.
+	 *
+	 * A stun has no swirl and no HUD icon on purpose - a sword strike should not read
+	 * as a thrown potion - which left the state completely invisible: a stunned mob and
+	 * an unstunned one looked identical, so the player could not tell when the katana
+	 * finisher was available, and could not tell a re-stab inside the immunity window
+	 * from a stun that took.
+	 *
+	 * A sound rather than a message. This can fire several times a second in a fight,
+	 * which is where a chat line becomes spam and shoves the one-time pointers off
+	 * screen; and "that hit did damage but did not stun" is not a mistake to correct,
+	 * so it wants a cue, not words. The absence of this sound is what tells the player
+	 * the stun did not take, which costs nothing per swing.
+	 *
+	 * Played at the TARGET, not the player, because in a crowd the question is which
+	 * mob is held - a sound at the player's own position could not answer that.
+	 *
+	 * IRON_TRAPDOOR_CLOSE is a short metallic latch: it reads as something shutting,
+	 * which is what a stun is. Deliberately not from the anvil's vocabulary (ANVIL_USE
+	 * and friends belong to smithing) and not CHAIN_PLACE, which the swords already use
+	 * for drawing and sheathing. Pitched up and quiet so it sits under the sweep rather
+	 * than competing with it.
+	 */
+	private static void playStunLanded(Level level, LivingEntity target) {
+		level.playSound(null, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+				SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.PLAYERS, 0.7F, 1.5F);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
