@@ -46,6 +46,8 @@ public final class FurnaceHintHud {
 	private static final Identifier MOUSE_ICON = TwoHeavens.id("mouse_right_click");
 	private static final int MOUSE_W = 12;
 	private static final int MOUSE_H = 16;
+	/** How far the click count sits past the mouse icon's bottom-right corner. */
+	private static final int COUNT_NUDGE = 4;
 
 	/** How far away the furnace can be and still prompt. */
 	private static final double RANGE = 8.0;
@@ -897,9 +899,16 @@ public final class FurnaceHintHud {
 		}
 		if (row.mouse() && row.clicks() > 0) {
 			Component count = Component.literal(Integer.toString(row.clicks()));
+			// Pushed out past the icon's bottom-right corner rather than sitting on it -
+			// at +2 the digit overlapped the mouse body and was hard to read against it.
+			//
+			// It cannot go much further. Right runs into the GAP before the first item,
+			// and down runs into the next row: rows are MOUSE_H + ROW_GAP apart, so at
+			// +4 the digit's baseline lands exactly on that pitch. If it still reads
+			// badly the answer is a shadow behind it, not more offset.
 			graphics.text(font, count,
-					x + MOUSE_W - font.width(count) + 2,
-					y + MOUSE_H - font.lineHeight + 2,
+					x + MOUSE_W - font.width(count) + COUNT_NUDGE,
+					y + MOUSE_H - font.lineHeight + COUNT_NUDGE,
 					0xFFFFFFFF);
 		}
 		int cursor = row.mouse() ? x + MOUSE_W : x;
