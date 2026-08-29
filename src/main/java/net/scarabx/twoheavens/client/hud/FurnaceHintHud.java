@@ -21,6 +21,7 @@ import java.util.List;
 import net.scarabx.twoheavens.TwoHeavens;
 import net.minecraft.world.level.block.state.BlockState;
 import net.scarabx.twoheavens.block.ModBlocks;
+import net.scarabx.twoheavens.combat.CombatTutorialAttachment;
 import net.scarabx.twoheavens.block.custom.KeraBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceBlock;
 import net.scarabx.twoheavens.block.custom.TataraFurnaceFiredBlock;
@@ -44,6 +45,8 @@ public final class FurnaceHintHud {
 	// A GUI atlas sprite id, not a file path: blitSprite resolves this to
 	// assets/twoheavens/textures/gui/sprites/mouse_right_click.png
 	private static final Identifier MOUSE_ICON = TwoHeavens.id("mouse_right_click");
+	/** The same sprite mirrored, so the highlighted button sits on the left. */
+	private static final Identifier MOUSE_LEFT_ICON = TwoHeavens.id("mouse_left_click");
 	private static final int MOUSE_W = 12;
 	private static final int MOUSE_H = 16;
 	/** How far the click count sits past the mouse icon's bottom-right corner. */
@@ -228,6 +231,10 @@ public final class FurnaceHintHud {
 		lift = client.player.isCrouching() ? SNEAK_LIFT : 0;
 		anchor = null;
 		anchorRise = 0;
+
+		if (drawCombatTutorial(graphics, client)) {
+			return;
+		}
 
 		if (drawCoolingHint(graphics, client)) {
 			return;
@@ -750,6 +757,46 @@ public final class FurnaceHintHud {
 		return 0xFF000000 | (r << 16) | (g << 8) | b;
 	}
 
+	/**
+	 * The combat tutorial: draw, stab to stun, finish with the other blade.
+	 *
+	 * None of it is guessable. Without R the swords behave like ordinary items, and
+	 * nothing suggests one blade sets up the other. The tooltips do say it, but only
+	 * if you go looking, and the moment you want to know is the moment you are holding
+	 * both swords in a fight.
+	 *
+	 * Each step clears by DOING it, never on a timer - a prompt that vanishes while you
+	 * are still working out what it meant is worse than one that waits. The whole thing
+	 * shows once and never returns, because it is a pointer; the tooltips remain as the
+	 * permanent reference for anyone who forgets.
+	 *
+	 * @return true if a prompt was drawn, so the block hints are skipped.
+	 */
+	private static boolean drawCombatTutorial(GuiGraphicsExtractor graphics, Minecraft client) {
+		int step = client.player.getAttachedOrElse(CombatTutorialAttachment.TYPE,
+				CombatTutorialAttachment.NOT_STARTED);
+		if (step == CombatTutorialAttachment.NOT_STARTED || step == CombatTutorialAttachment.DONE) {
+			return false;
+		}
+
+		Row row = switch (step) {
+			// "[R]" in words rather than a key-cap sprite: the same bracket convention
+			// the recipe hint already teaches, so it needs no new vocabulary or art.
+			case CombatTutorialAttachment.DRAW -> Row.text(
+					Component.translatable("hud.twoheavens.tutorial_draw"));
+			case CombatTutorialAttachment.STUN -> new Row(
+					List.of(new Ingredient(new ItemStack(ModItems.WAKIZASHI))),
+					Component.translatable("hud.twoheavens.tutorial_stun"), 0, false, null,
+					true, null, MOUSE_LEFT_ICON);
+			default -> new Row(
+					List.of(new Ingredient(new ItemStack(ModItems.KATANA))),
+					Component.translatable("hud.twoheavens.tutorial_finish"), 0, false, null,
+					true, null, MOUSE_ICON);
+		};
+		drawRows(graphics, client, List.of(row));
+		return true;
+	}
+
 	/** Filled and ready - the only remaining step is striking it alight. */
 	private static void drawLightHint(GuiGraphicsExtractor graphics, Minecraft client) {
 		drawHint(graphics, client,
@@ -813,11 +860,17 @@ public final class FurnaceHintHud {
 	 *                       a sentence.
 	 */
 	private record Row(List<Ingredient> ingredients, Component tail, int clicks,
-					   boolean plusBeforeTail, Ingredient outcome, boolean mouse, Integer alignX) {
+					   boolean plusBeforeTail, Ingredient outcome, boolean mouse, Integer alignX,
+					   Identifier mouseSprite) {
 
 		Row(List<Ingredient> ingredients, Component tail, int clicks,
 				boolean plusBeforeTail, Ingredient outcome) {
-			this(ingredients, tail, clicks, plusBeforeTail, outcome, true, null);
+			this(ingredients, tail, clicks, plusBeforeTail, outcome, true, null, MOUSE_ICON);
+		}
+
+		Row(List<Ingredient> ingredients, Component tail, int clicks,
+				boolean plusBeforeTail, Ingredient outcome, boolean mouse, Integer alignX) {
+			this(ingredients, tail, clicks, plusBeforeTail, outcome, mouse, alignX, MOUSE_ICON);
 		}
 
 		/**
@@ -826,7 +879,7 @@ public final class FurnaceHintHud {
 		 * wandering with its own width.
 		 */
 		static Row text(Component text, int alignX) {
-			return new Row(List.of(), text, 0, false, null, false, alignX);
+			return new Row(List.of(), text, 0, false, null, false, alignX, MOUSE_ICON);
 		}
 
 		/**
@@ -910,7 +963,7 @@ public final class FurnaceHintHud {
 		int textY = y + (MOUSE_H - font.lineHeight) / 2;
 
 		if (row.mouse()) {
-			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, MOUSE_ICON, x, y, MOUSE_W, MOUSE_H);
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, row.mouseSprite(), x, y, MOUSE_W, MOUSE_H);
 		}
 		if (row.mouse() && row.clicks() > 0) {
 			Component count = Component.literal(Integer.toString(row.clicks()));

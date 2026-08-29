@@ -316,6 +316,8 @@ public class SwordComboHandler {
 				stunWrittenAt.put(target.getUUID(), server.getTickCount());
 				activeCombos.put(player.getUUID(),
 						new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
+				CombatTutorialAttachment.advance(player,
+						CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
 			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 			playBloodEffect(level, player, target);
@@ -372,6 +374,10 @@ public class SwordComboHandler {
 			}
 
 			if (pending.comboFinisher()) {
+				// The combo actually landed, so the tutorial has been performed rather
+				// than merely read - this is the only place that can know that.
+				CombatTutorialAttachment.advance(player,
+						CombatTutorialAttachment.FINISH, CombatTutorialAttachment.DONE);
 				StunAttachment.clear(target);
 				// Paired with a landed wakizashi stab - instakill regardless
 				// of remaining health/armor/resistance, except the Wither

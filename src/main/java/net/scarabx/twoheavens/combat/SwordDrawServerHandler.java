@@ -93,6 +93,17 @@ public class SwordDrawServerHandler {
 	}
 
 	private static void onServerTick(MinecraftServer server) {
+		// Starting the tutorial needs no event: Trinkets has no equip callback here, and
+		// a cheap per-player check on the tick we already run is simpler than mixing into
+		// its slot handling. Only ever fires once, since advance() moves off NOT_STARTED.
+		for (ServerPlayer online : server.getPlayerList().getPlayers()) {
+			if (CombatTutorialAttachment.step(online) == CombatTutorialAttachment.NOT_STARTED
+					&& TrinketsApi.getAttachment(online).isEquipped(ModItems.DAISHO_OBI)) {
+				CombatTutorialAttachment.advance(online,
+						CombatTutorialAttachment.NOT_STARTED, CombatTutorialAttachment.DRAW);
+			}
+		}
+
 		Iterator<Map.Entry<UUID, Deque<PendingSwap>>> iterator = pendingSwaps.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Map.Entry<UUID, Deque<PendingSwap>> entry = iterator.next();
@@ -146,6 +157,8 @@ public class SwordDrawServerHandler {
 			player.setAttached(DrawnSwordsAttachment.TYPE, new DrawnSwordsAttachment.StoredItems(
 					player.getInventory().getSelectedSlot(),
 					player.getMainHandItem().copy(), player.getOffhandItem().copy()));
+			CombatTutorialAttachment.advance(player,
+					CombatTutorialAttachment.DRAW, CombatTutorialAttachment.STUN);
 
 			Deque<PendingSwap> queue = new ArrayDeque<>();
 			queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_KATANA_DELAY_TICKS,
