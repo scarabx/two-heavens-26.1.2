@@ -58,6 +58,7 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 	private static final int ARROW_WIDTH = 10;
 	private static final int GAP = 2;
 	private static final int ROW_GAP = 4;
+	private static final int COLUMN_GAP = 8;
 
 	// Vanilla's slot colours: a grey interior with a dark top-left edge and a white
 	// bottom-right one, which is what gives Minecraft slots their sunken look.
@@ -92,31 +93,73 @@ public class ClientRecipeTooltip implements ClientTooltipComponent {
 		return entry.smelting() ? SLOT : entry.width() * SLOT;
 	}
 
+	/**
+	 * Entries beyond this many are laid out in two columns instead of one.
+	 *
+	 * Three stacked grids is roughly 180px of tooltip - a column taller than most of
+	 * the screen, for something read at a glance. Two columns halves it. Two entries or
+	 * fewer stay stacked, because side by side is only worth the width when the height
+	 * is actually a problem.
+	 */
+	private static final int STACK_LIMIT = 2;
+
+	private boolean twoColumns() {
+		return this.data.entries().size() > STACK_LIMIT;
+	}
+
+	/** The taller of the two columns, in entries. */
+	private int rowsPerColumn() {
+		int n = this.data.entries().size();
+		return this.twoColumns() ? (n + 1) / 2 : n;
+	}
+
+	private int columnWidth(Font font) {
+		int widest = 0;
+		for (RecipeTooltipData.Entry entry : this.data.entries()) {
+			widest = Math.max(widest, gridWidth(entry) + GAP + ARROW_WIDTH + GAP + SLOT
+					+ GAP + font.width(entry.result().getHoverName()));
+		}
+		return widest;
+	}
+
 	@Override
 	public int getHeight(Font font) {
-		int total = 0;
+		int tallest = 0;
+		int column = 0;
+		int used = 0;
+		int perColumn = this.rowsPerColumn();
 		for (RecipeTooltipData.Entry entry : this.data.entries()) {
-			total += entryHeight(entry) + ROW_GAP;
+			used += entryHeight(entry) + ROW_GAP;
+			if (++column % perColumn == 0) {
+				tallest = Math.max(tallest, used);
+				used = 0;
+			}
 		}
-		return total;
+		return Math.max(tallest, used);
 	}
 
 	@Override
 	public int getWidth(Font font) {
-		int widest = 0;
-		for (RecipeTooltipData.Entry entry : this.data.entries()) {
-			int w = gridWidth(entry) + GAP + ARROW_WIDTH + GAP + SLOT
-					+ GAP + font.width(entry.result().getHoverName());
-			widest = Math.max(widest, w);
-		}
-		return widest;
+		int column = this.columnWidth(font);
+		return this.twoColumns() ? column * 2 + COLUMN_GAP : column;
 	}
 
 	@Override
 	public void extractImage(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics) {
 		int rowY = y;
 		int slotIndex = 0;
+		int drawn = 0;
+		int perColumn = this.rowsPerColumn();
+		int columnW = this.columnWidth(font) + COLUMN_GAP;
+		int startX = x;
 		for (RecipeTooltipData.Entry entry : this.data.entries()) {
+			// Wrap into a second column once the first has taken its share.
+			if (drawn > 0 && drawn % perColumn == 0) {
+				startX += columnW;
+				rowY = y;
+			}
+			x = startX;
+			drawn++;
 			int height = entryHeight(entry);
 
 			if (entry.smelting()) {

@@ -276,6 +276,49 @@ public final class ModRecipeTooltips {
 		return defs == null || defs.isEmpty() ? null : toData(List.copyOf(defs));
 	}
 
+	/**
+	 * Everything to do with making this item into what it becomes: the recipe it is an
+	 * ingredient in, followed by how to make each of the OTHER mod ingredients in that
+	 * recipe.
+	 *
+	 * For a cooled blade that is the katana recipe plus the tsuba's and the tsuka's -
+	 * because the katana grid names two parts the player has never seen, and **you
+	 * cannot hover an item you do not own**, so those are exactly the two things that
+	 * were unreachable at the moment they became relevant.
+	 *
+	 * Deliberately NOT filtered to parts the player lacks. A recipe list that changes
+	 * shape depending on your inventory is one you cannot learn or rely on; showing the
+	 * whole step every time means it reads the same way each time you check it.
+	 *
+	 * One level only. Vanilla ingredients stop it (iron has no recipe of ours), and it
+	 * does not follow what the RESULT goes on to make - that is further down the chain
+	 * rather than part of this step.
+	 */
+	public static RecipeTooltipData relatedTo(Item item) {
+		List<RecipeDef> defs = new ArrayList<>();
+		List<RecipeDef> usedIn = USED_IN.get(item);
+		if (usedIn != null) {
+			defs.addAll(usedIn);
+		}
+		for (RecipeDef def : List.copyOf(defs)) {
+			for (Item cell : def.cells()) {
+				if (cell == null || cell == item) {
+					continue;
+				}
+				List<RecipeDef> how = MADE_FROM.get(cell);
+				if (how == null) {
+					continue;
+				}
+				for (RecipeDef part : how) {
+					if (!defs.contains(part)) {
+						defs.add(part);
+					}
+				}
+			}
+		}
+		return toData(defs);
+	}
+
 	/** Shared by both lookups so the two can never disagree about how a grid is laid out. */
 	private static RecipeTooltipData toData(List<RecipeDef> defs) {
 		if (defs.isEmpty()) {
