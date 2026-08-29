@@ -109,8 +109,14 @@ public final class JoinMessageHandler {
 		// where the chain hands off from smithing to wearing it: the tooltip already
 		// names the Daisho Obi, but only once you are holding the sword, and nothing
 		// ever said the obi and saya exist or that they are what you carry blades on.
-		if (before.maxKatana() == 0 && after.maxKatana() > 0) {
-			player.sendSystemMessage(Component.literal("Katana crafted"));
+		// Fires on whichever sword is finished FIRST, and never again for the second -
+		// the handoff is about the pair, so saying it twice would be telling someone
+		// something they already acted on.
+		boolean hadBlade = before.maxKatana() > 0 || before.maxWakizashi() > 0;
+		boolean hasBlade = after.maxKatana() > 0 || after.maxWakizashi() > 0;
+		if (!hadBlade && hasBlade) {
+			player.sendSystemMessage(Component.literal(
+					after.maxKatana() > 0 ? "Katana crafted" : "Wakizashi crafted"));
 			player.sendSystemMessage(Component.literal(
 					"Craft both swords into a Daisho Saya, and then into an Obi to dual wield"));
 		}
