@@ -316,11 +316,18 @@ public class SwordComboHandler {
 				stunWrittenAt.put(target.getUUID(), server.getTickCount());
 				activeCombos.put(player.getUUID(),
 						new ComboState(target.getUUID(), player.tickCount + COMBO_WINDOW_TICKS));
-				CombatTutorialAttachment.advance(player,
-						CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
 			}
 			playSweepEffect(level, target.getX(), target.getY(), target.getZ());
 			playBloodEffect(level, player, target);
+
+			// Advanced on the target being stunned AT ALL, not on this stab being the one
+			// that stunned it. Inside the stunnable branch the tutorial could not progress
+			// against a mob still inside its immunity window - which is exactly the mob a
+			// player practising the combo has just been hitting.
+			if (StunAttachment.isStunned(target)) {
+				CombatTutorialAttachment.advance(player,
+						CombatTutorialAttachment.STUN, CombatTutorialAttachment.FINISH);
+			}
 		}
 
 		Iterator<Map.Entry<UUID, PendingCut>> cutIterator = pendingCuts.entrySet().iterator();
