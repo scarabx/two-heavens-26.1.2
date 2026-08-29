@@ -48,8 +48,8 @@
 		{
 			"type": "bitmap",
 			"file": "twoheavens:item/tongs.png",
-			"ascent": 7,
-			"height": 8,
+			"ascent": 9,
+			"height": 12,
 			"chars": [
 				""
 			]
