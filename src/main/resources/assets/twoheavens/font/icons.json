@@ -47,7 +47,7 @@
 		},
 		{
 			"type": "bitmap",
-			"file": "twoheavens:item/tongs_glyph.png",
+			"file": "twoheavens:item/tongs.png",
 			"ascent": 7,
 			"height": 8,
 			"chars": [
