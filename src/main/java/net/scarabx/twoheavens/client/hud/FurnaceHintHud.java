@@ -57,13 +57,6 @@ public final class FurnaceHintHud {
 	private static final int FIRED_SATETSU = 4;
 	/** redness_stage once heat reaches the passive cap - i.e. the bellows half has begun. */
 	private static final int BELLOWS_PHASE_STAGE = 4;
-	/**
-	 * Water in the quench prompt. Unlike satetsu there is no water ITEM to draw, so
-	 * this is a gui sprite rather than an ItemStack. Hand-made rather than taken from
-	 * vanilla - redistributing Mojang textures in a mod jar is not ours to do. A
-	 * bucket was tried first and reads as "use a bucket", which is not the mechanic.
-	 */
-	private static final Identifier WATER_ICON = TwoHeavens.id("water");
 	/** Hammer strikes needed to break a formed kera out of the furnace. */
 	private static final int KERA_HAMMER_STRIKES = 4;
 	private static final int ICON = 16;
@@ -390,10 +383,19 @@ public final class FurnaceHintHud {
 			return false;
 		}
 
+		// No water icon at all. There is no water ITEM to draw, and every substitute
+		// misleads: a bucket says fetch one and use it, when you quench in a block in
+		// the world. Correcting a wrong icon with a word is a workaround that shows its
+		// working - and the word only helps if you read it, at which point the icon was
+		// carrying nothing.
+		//
+		// So the icon carries what an icon is good at - the thing in your hand, drawn as
+		// the player's own blade - and the words carry the verb and the target, which
+		// icons cannot express. Shorter than the bucket version, and made only of this
+		// mod's own art.
 		drawHint(graphics, client,
-				List.of(new Ingredient(new ItemStack(held.getItem())),
-						new Ingredient(WATER_ICON)),
-				Component.empty());
+				List.of(new Ingredient(new ItemStack(held.getItem()))),
+				Component.translatable("hud.twoheavens.quench"), 0, false);
 		return true;
 	}
 
