@@ -122,6 +122,19 @@ public final class FurnaceHintHud {
 	private static final int ANVIL_LIFT = 24;
 
 	/**
+	 * Cancels the camera drop while sneaking, for EVERY block prompt.
+	 *
+	 * Sneaking lowers eye height, so the block rises in view while a screen-anchored
+	 * prompt stays put, eating the clearance ANVIL_LIFT bought. It bites hardest at the
+	 * anvil, because holding Shift to open a recipe grid IS sneaking.
+	 *
+	 * Small on purpose. A first attempt used 12 on top of a 44 anvil lift; 44 was
+	 * already touching the crosshair on its own, so the total put the prompt over the
+	 * aiming point. At 8 on top of 24 the sneaking total is 32, well clear.
+	 */
+	private static final int SNEAK_LIFT = 8;
+
+	/**
 	 * Set per frame - ANVIL_LIFT while drawing anvil prompts, zero everywhere else.
 	 * Every vertical anchor goes through {@link #top}, so the whole block (rows, bar and
 	 * recipe grids alike) moves together rather than drifting apart.
@@ -141,11 +154,14 @@ public final class FurnaceHintHud {
 	}
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
-		lift = 0;
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null || client.level == null || client.options.hideGui) {
 			return;
 		}
+
+		// Reset before anything reads it, so no prompt can inherit the previous frame's
+		// value - the cooling and quench hints below run before the anvil branch sets it.
+		lift = client.player.isCrouching() ? SNEAK_LIFT : 0;
 
 		if (drawCoolingHint(graphics, client)) {
 			return;
@@ -325,7 +341,7 @@ public final class FurnaceHintHud {
 		if (forging.isEmpty()) {
 			return false;
 		}
-		lift = ANVIL_LIFT;
+		lift += ANVIL_LIFT;
 
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
