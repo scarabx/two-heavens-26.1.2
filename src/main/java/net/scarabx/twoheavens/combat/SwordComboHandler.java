@@ -477,7 +477,7 @@ public class SwordComboHandler {
 				target.getX() + facing.x * reach,
 				target.getY() + target.getBbHeight() * 0.6,
 				target.getZ() + facing.z * reach,
-				14, 0.15, 0.2, 0.15, 0.08);
+				34, 0.22, 0.28, 0.22, 0.13);
 	}
 
 	private static void playSweepEffect(Level level, double x, double y, double z) {
