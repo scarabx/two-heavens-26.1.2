@@ -22,6 +22,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -191,6 +194,20 @@ public class SwordComboHandler {
 		if (!isMoveAllowed(player, move)) {
 			return;
 		}
+		// A click aimed at a block is not a swing at the world. No sweep, no sound, no
+		// move - the client suppresses the animation to match.
+		//
+		// The check has to be HERE. The moves are triggered off the key press by
+		// AttackSwingController and never go through vanilla's attack path, so
+		// AttackBlockCallback and the swing mixin never see them - an earlier attempt to
+		// guard it there did nothing at all.
+		//
+		// Air still sweeps, deliberately: the moves are usable for their own sake, and
+		// only a block suppresses them.
+		if (aimingAtBlock(player, FINISHER_REACH_DISTANCE)) {
+			return;
+		}
+
 		// Before any target resolution: the move was made, so it sounds and looks like
 		// one even if it hits nothing.
 		playSweepAt(player);
@@ -247,6 +264,35 @@ public class SwordComboHandler {
 						player.tickCount + FINISHER_REACH_DELAY_TICKS, comboFinisher));
 			}
 		}
+	}
+
+	/**
+	 * True when the crosshair is on a block that ANSWERS A CLICK - approximated by having
+	 * a block entity, since Minecraft has no interactable query. Matches the client check
+	 * in AttackSwingController: the two must agree, or the animation plays with no sweep
+	 * behind it, or the reverse.
+	 *
+	 * An entity in front of the block wins: standing a mob against a chest must not make
+	 * it unattackable.
+	 */
+	private static boolean aimingAtBlock(ServerPlayer player, double reach) {
+		Vec3 eye = player.getEyePosition();
+		Vec3 end = eye.add(player.getLookAngle().scale(reach));
+		BlockHitResult hit = player.level().clip(new ClipContext(eye, end,
+				ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+		if (hit.getType() != HitResult.Type.BLOCK
+				|| player.level().getBlockEntity(hit.getBlockPos()) == null) {
+			return false;
+		}
+		double blockDistance = hit.getLocation().distanceTo(eye);
+		for (LivingEntity nearby : player.level().getEntitiesOfClass(LivingEntity.class,
+				player.getBoundingBox().inflate(reach), e -> e != player && e.isAlive())) {
+			if (nearby.position().distanceTo(eye) < blockDistance
+					&& player.getLookAngle().dot(nearby.position().subtract(eye).normalize()) > 0.9) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean isMoveAllowed(ServerPlayer player, int move) {

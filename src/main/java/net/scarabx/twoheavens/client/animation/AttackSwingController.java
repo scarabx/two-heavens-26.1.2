@@ -56,6 +56,23 @@ public class AttackSwingController {
 	}
 
 	/** Whatever is under the crosshair, or -1 - the server acquires its own if none. */
+	/**
+	 * True when the crosshair is on a block that answers a click.
+	 *
+	 * Approximated by "has a BLOCK ENTITY" - Minecraft has no query for interactable,
+	 * since each block decides inside its own use method after the click. That covers
+	 * chests, furnaces, the tatara furnaces and the anvil, and leaves plain terrain
+	 * alone so facing a wall still lets you swing. Known gap: a crafting table has no
+	 * block entity, nor do levers, doors and buttons.
+	 */
+	private static boolean interactingWithBlock(Minecraft client) {
+		if (client.level == null
+				|| !(client.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit)) {
+			return false;
+		}
+		return client.level.getBlockEntity(hit.getBlockPos()) != null;
+	}
+
 	private static int aimedEntityId(Minecraft client) {
 		return client.hitResult instanceof EntityHitResult hit ? hit.getEntity().getId() : -1;
 	}
@@ -78,7 +95,7 @@ public class AttackSwingController {
 		boolean attackJustPressed = attackDown && !lastAttackDown;
 		lastAttackDown = attackDown;
 
-		if (attackJustPressed && !drawn && holdingWakizashi) {
+		if (attackJustPressed && !drawn && holdingWakizashi && !interactingWithBlock(client)) {
 			// The wakizashi's no-obi move. Triggered off the key rather than
 			// player.swinging, because vanilla's swing is now suppressed for an
 			// undrawn wakizashi (UndrawnSwordAttackBlockMixin) - it was intermittently
@@ -94,7 +111,7 @@ public class AttackSwingController {
 			ClientPlayNetworking.send(new MovePayload(MovePayload.CUT, aimedEntityId(client)));
 		}
 
-		if (newSwing && drawn) {
+		if (newSwing && drawn && !interactingWithBlock(client)) {
 			// Plays the stab, then eases back to combat_idle via its own
 			// dedicated return animation instead of snapping straight into
 			// combat_idle's near-instant single frame.
@@ -116,7 +133,7 @@ public class AttackSwingController {
 		boolean pickJustPressed = pickDown && !lastPickDown;
 		lastPickDown = pickDown;
 
-		if (pickJustPressed && drawn) {
+		if (pickJustPressed && drawn && !interactingWithBlock(client)) {
 			// Drawn, the wakizashi sits in the offhand, so this is the mirrored
 			// left-arm animation. thenPlayAndHold, unlike the undrawn cut: drawn there
 			// IS a stance to settle back into.
@@ -130,6 +147,16 @@ public class AttackSwingController {
 		boolean useDown = client.options.keyUse.isDown();
 		boolean useJustPressed = useDown && !lastUseDown;
 		lastUseDown = useDown;
+
+		// Right-clicking a FUNCTIONAL block is an interaction with that block, not a
+		// slice - the katana's move IS right-click, so opening a chest or a furnace
+		// fired the animation and the move alongside the GUI.
+		//
+		// Only blocks that answer a click - see interactingWithBlock. Facing a wall
+		// still swings; opening a chest does not.
+		if (interactingWithBlock(client)) {
+			useJustPressed = false;
+		}
 
 		// Same slice, same animation whether it's landing as the paired
 		// finisher after a wakizashi stab or on its own with no stab in

@@ -4,6 +4,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.SwordBlockGuard;
 import net.scarabx.twoheavens.combat.SweepEffect;
@@ -46,12 +50,29 @@ public class LivingEntitySwingMixin {
 		if (item == ModItems.KATANA) {
 			return;
 		}
-		// A swing that landed on a block is not an attack. LivingEntity#swing does not
-		// know what was aimed at, so SwordBlockGuard records it from the attack-block
-		// callback and this consumes the flag.
-		if (SwordBlockGuard.consumeBlockSwing(player)) {
+		// A swing that landed on a block is not an attack.
+		//
+		// The important case is not left-click at all: vanilla swings the arm on a
+		// SUCCESSFUL BLOCK USE - useItemOn calls player.swing(hand) - so opening a chest
+		// or a furnace arrived here and played the wakizashi's sweep. The katana was
+		// unaffected only because it returns early above, which is why one sword went
+		// quiet and the other did not.
+		//
+		// Raycast rather than a recorded flag: the flag came from AttackBlockCallback,
+		// which is vanilla's LEFT-click path and never fires for a right-click use.
+		if (SwordBlockGuard.consumeBlockSwing(player) || aimingAtBlock(player)) {
 			return;
 		}
 		SweepEffect.playFromSwing(player);
+	}
+
+	/** Only blocks that answer a click - a block entity is the closest available signal. */
+	private static boolean aimingAtBlock(ServerPlayer player) {
+		Vec3 eye = player.getEyePosition();
+		Vec3 end = eye.add(player.getLookAngle().scale(5.0));
+		BlockHitResult hit = player.level().clip(new ClipContext(eye, end,
+				ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+		return hit.getType() == HitResult.Type.BLOCK
+				&& player.level().getBlockEntity(hit.getBlockPos()) != null;
 	}
 }
