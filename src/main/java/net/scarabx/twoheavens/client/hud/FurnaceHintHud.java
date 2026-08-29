@@ -122,6 +122,20 @@ public final class FurnaceHintHud {
 	private static final int ANVIL_LIFT = 44;
 
 	/**
+	 * Cancels the camera drop while sneaking, for EVERY block prompt.
+	 *
+	 * Sneaking lowers eye height, so the block rises in view while a screen-anchored
+	 * prompt stays put - and the clearance we just bought gets eaten from below. It
+	 * bites hardest at the anvil because holding Shift to open a recipe grid IS
+	 * sneaking, so the two always happen together.
+	 *
+	 * Compensating in screen space rather than anchoring the prompt to the block: that
+	 * was considered and rejected for the furnace (smoke and glow kill the contrast),
+	 * and it would add jitter as the player moves plus scaling trouble at distance.
+	 */
+	private static final int SNEAK_LIFT = 12;
+
+	/**
 	 * Set per frame - ANVIL_LIFT while drawing anvil prompts, zero everywhere else.
 	 * Every vertical anchor goes through {@link #top}, so the whole block (rows, bar and
 	 * recipe grids alike) moves together rather than drifting apart.
@@ -158,7 +172,7 @@ public final class FurnaceHintHud {
 
 		// The anvil comes first: if the player is standing at one mid-forge, that is
 		// what they are asking about, not a furnace behind them.
-		lift = 0;
+		lift = client.player.isCrouching() ? SNEAK_LIFT : 0;
 		if (drawAnvilHint(graphics, client)) {
 			return;
 		}
@@ -325,7 +339,7 @@ public final class FurnaceHintHud {
 		if (forging.isEmpty()) {
 			return false;
 		}
-		lift = ANVIL_LIFT;
+		lift += ANVIL_LIFT;
 
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
@@ -463,7 +477,11 @@ public final class FurnaceHintHud {
 		ClientRecipeTooltip grid = new ClientRecipeTooltip(new RecipeTooltipData(List.copyOf(entries)));
 		int width = grid.getWidth(client.font);
 		int height = grid.getHeight(client.font);
-		int y = top(graphics) - height - ROW_GAP;
+		// Deliberately NOT lifted with the prompt rows. ANVIL_LIFT exists to keep the
+		// prompt off the blade; the grid is already out of the way in the lower left
+		// corner, where nothing is competing with it, so raising it too would move it
+		// for no reason and open a gap under the prompt it belongs to.
+		int y = graphics.guiHeight() - BOTTOM_OFFSET - height - ROW_GAP;
 		grid.extractImage(client.font, GRID_MARGIN, y, width, height, graphics);
 	}
 
