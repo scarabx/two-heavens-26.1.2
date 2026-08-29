@@ -107,6 +107,32 @@ public final class FurnaceHintHud {
 	 */
 	private static final int BOTTOM_OFFSET = 96;
 
+	/**
+	 * Extra height for the anvil's prompts only.
+	 *
+	 * At the furnace the prompt covers the SIDE of the block, which shows nothing - the
+	 * smelt reads through the top opening, the smoke and the glow, all of which stay
+	 * clear. At the anvil it covers the BLADE, and the blade is the whole point: the
+	 * anvil sequence is four reveals in a row, and the silhouette is how you know which
+	 * stage you are on. You also look down at an anvil, which pushes it into the lower
+	 * half of the screen exactly where the HUD lives.
+	 *
+	 * Same rule the recipe grid follows: reference material does not cover the content.
+	 */
+	private static final int ANVIL_LIFT = 24;
+
+	/**
+	 * Set per frame - ANVIL_LIFT while drawing anvil prompts, zero everywhere else.
+	 * Every vertical anchor goes through {@link #top}, so the whole block (rows, bar and
+	 * recipe grids alike) moves together rather than drifting apart.
+	 */
+	private static int lift = 0;
+
+	/** The y of the first prompt row, lifted when the anvil is what is being drawn. */
+	private static int top(GuiGraphicsExtractor graphics) {
+		return graphics.guiHeight() - BOTTOM_OFFSET - lift;
+	}
+
 	private FurnaceHintHud() {
 	}
 
@@ -132,6 +158,7 @@ public final class FurnaceHintHud {
 
 		// The anvil comes first: if the player is standing at one mid-forge, that is
 		// what they are asking about, not a furnace behind them.
+		lift = 0;
 		if (drawAnvilHint(graphics, client)) {
 			return;
 		}
@@ -148,7 +175,7 @@ public final class FurnaceHintHud {
 				// player probably lacks. Materials are gathered; tools must be crafted,
 				// which is what makes discovering you need one mid-process irritating.
 				drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
-						graphics.guiHeight() - BOTTOM_OFFSET,
+						top(graphics),
 						progress("curing", unfired.getValue(TataraFurnaceBlock.COLOR_STAGE), MAX_STAGE, CURING_STAGE_MS));
 				return;
 			}
@@ -235,7 +262,7 @@ public final class FurnaceHintHud {
 			// only the pumps were visible before. Interpolated like the other timed
 			// bars, since this one really is driven by time.
 			drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2,
-					graphics.guiHeight() - BOTTOM_OFFSET + MOUSE_H + ROW_GAP,
+					top(graphics) + MOUSE_H + ROW_GAP,
 					progress("bellows", fired.getValue(TataraFurnaceFiredBlock.BELLOWS_PROGRESS),
 							BELLOWS_STEPS, BELLOWS_STAGE_MS));
 
@@ -298,6 +325,7 @@ public final class FurnaceHintHud {
 		if (forging.isEmpty()) {
 			return false;
 		}
+		lift = ANVIL_LIFT;
 
 		Item item = forging.getItem();
 		if (item == ModItems.HOT_KATANA_BLADE) {
@@ -435,7 +463,7 @@ public final class FurnaceHintHud {
 		ClientRecipeTooltip grid = new ClientRecipeTooltip(new RecipeTooltipData(List.copyOf(entries)));
 		int width = grid.getWidth(client.font);
 		int height = grid.getHeight(client.font);
-		int y = graphics.guiHeight() - BOTTOM_OFFSET - height - ROW_GAP;
+		int y = top(graphics) - height - ROW_GAP;
 		grid.extractImage(client.font, GRID_MARGIN, y, width, height, graphics);
 	}
 
@@ -475,7 +503,7 @@ public final class FurnaceHintHud {
 		// Shift prompt goes when it is showing, so the two drew on top of each other
 		// through the whole passive half of the smelt.
 		int rows = drawComingUp(graphics, client, upcoming);
-		int y = graphics.guiHeight() - BOTTOM_OFFSET + rows * (MOUSE_H + ROW_GAP);
+		int y = top(graphics) + rows * (MOUSE_H + ROW_GAP);
 		drawBar(graphics, (graphics.guiWidth() - BAR_WIDTH) / 2, y, progress);
 	}
 
@@ -532,7 +560,7 @@ public final class FurnaceHintHud {
 		int labelWidth = font.width(label);
 		int width = Math.max(labelWidth, BAR_WIDTH);
 		int x = (graphics.guiWidth() - width) / 2;
-		int y = graphics.guiHeight() - BOTTOM_OFFSET;
+		int y = top(graphics);
 
 		graphics.text(font, label, x + (width - labelWidth) / 2, y, 0xFFFFFFFF);
 
@@ -716,7 +744,7 @@ public final class FurnaceHintHud {
 	 */
 	private static void drawRows(GuiGraphicsExtractor graphics, Minecraft client, List<Row> rows, int extraGap) {
 		int rowHeight = MOUSE_H + ROW_GAP + extraGap;
-		int top = graphics.guiHeight() - BOTTOM_OFFSET - extraGap * (rows.size() - 1);
+		int top = top(graphics) - extraGap * (rows.size() - 1);
 		for (int i = 0; i < rows.size(); i++) {
 			drawRow(graphics, client, rows.get(i), top + i * rowHeight);
 		}
