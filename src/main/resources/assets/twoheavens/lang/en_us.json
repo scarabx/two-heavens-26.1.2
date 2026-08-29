@@ -62,6 +62,8 @@
   "tooltip.twoheavens.obi_use": "Holds a Daisho Saya on your belt",
   "tooltip.twoheavens.obi_equip": "Hover over the leggings slot to reveal the belt slot",
   "tooltip.twoheavens.obi_draw": "Press R to draw and sheathe your swords",
-  "tooltip.twoheavens.wakizashi_combat": "Draw from a Daisho Obi to stab and stun",
-  "tooltip.twoheavens.katana_combat": "Draw from a Daisho Obi to slice, or finish a stunned target"
+  "tooltip.twoheavens.wakizashi_combat": "Left-click to slice",
+  "tooltip.twoheavens.wakizashi_drawn": "Drawn from a Daisho Obi: left-click stabs to stun, middle-click slices",
+  "tooltip.twoheavens.katana_combat": "Right-click to slice",
+  "tooltip.twoheavens.katana_drawn": "Drawn from a Daisho Obi, it finishes a stunned target"
 }

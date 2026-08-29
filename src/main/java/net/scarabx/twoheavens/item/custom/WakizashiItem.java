@@ -52,6 +52,9 @@ public class WakizashiItem extends Item {
 		// place a player meets "draw", and pressing R without an obi does nothing.
 		// The obi's own tooltip teaches the key, so neither repeats the other.
 		consumer.accept(Component.translatable("tooltip.twoheavens.wakizashi_combat"));
+		// Second line, split by STATE rather than by ability: line one carries no
+		// condition so it reads as always true, and the obi appears only here.
+		consumer.accept(Component.translatable("tooltip.twoheavens.wakizashi_drawn"));
 		ItemRecipeTooltip.appendPrompt(stack, consumer);
 	}
 

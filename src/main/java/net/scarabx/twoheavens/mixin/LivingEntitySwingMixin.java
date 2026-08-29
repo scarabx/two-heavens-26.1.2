@@ -3,12 +3,14 @@ package net.scarabx.twoheavens.mixin;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
+import net.scarabx.twoheavens.combat.InteractableBlocks;
 import net.scarabx.twoheavens.combat.SwordBlockGuard;
 import net.scarabx.twoheavens.combat.SweepEffect;
 import net.scarabx.twoheavens.item.ModItems;
@@ -30,6 +32,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(LivingEntity.class)
 public class LivingEntitySwingMixin {
+
+	/**
+	 * Cancels the swing OUTRIGHT when a blade is used on a block that answers a click.
+	 *
+	 * Vanilla calls player.swing(hand) on any successful block use, so opening a chest
+	 * with a katana played the generic arm swing on top of everything else we had
+	 * already suppressed. Blocking it here rather than at the tail means the arm does
+	 * not move at all: the click belongs to the block, and the sword should look
+	 * uninvolved.
+	 *
+	 * HEAD and cancellable, unlike the sweep hook below - by TAIL the swing has already
+	 * been started and broadcast. Runs on both sides because swing() does: the client
+	 * for the animation, the server for other players seeing it.
+	 */
+	@Inject(at = @At("HEAD"), method = "swing(Lnet/minecraft/world/InteractionHand;Z)V", cancellable = true)
+	private void twoheavens$blockUseSwing(InteractionHand hand, boolean sendToSwingingEntity, CallbackInfo info) {
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (!(self instanceof Player player)) {
+			return;
+		}
+		Item held = player.getItemInHand(InteractionHand.MAIN_HAND).getItem();
+		if (held != ModItems.KATANA && held != ModItems.WAKIZASHI) {
+			return;
+		}
+		Vec3 eye = player.getEyePosition();
+		Vec3 end = eye.add(player.getLookAngle().scale(5.0));
+		BlockHitResult hit = player.level().clip(new ClipContext(eye, end,
+				ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+		if (hit.getType() == HitResult.Type.BLOCK
+				&& InteractableBlocks.answersClick(player.level(), hit.getBlockPos())) {
+			info.cancel();
+		}
+	}
 
 	@Inject(at = @At("TAIL"), method = "swing(Lnet/minecraft/world/InteractionHand;Z)V")
 	private void twoheavens$swingSweep(InteractionHand hand, boolean sendToSwingingEntity, CallbackInfo info) {
@@ -73,6 +108,6 @@ public class LivingEntitySwingMixin {
 		BlockHitResult hit = player.level().clip(new ClipContext(eye, end,
 				ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
 		return hit.getType() == HitResult.Type.BLOCK
-				&& player.level().getBlockEntity(hit.getBlockPos()) != null;
+				&& InteractableBlocks.answersClick(player.level(), hit.getBlockPos());
 	}
 }

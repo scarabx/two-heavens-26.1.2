@@ -90,6 +90,22 @@ public class AnvilForgingHandler {
 			return InteractionResult.PASS;
 		}
 
+		// A hammer swung at the kera rather than at the anvil. The display floats at
+		// y + 1.5, so a ray aimed at the glowing lump passes OVER the block entirely and
+		// hits nothing - the click was only ever registered by striking the anvil's own
+		// small top face, which is a far finer target than the thing you are looking at.
+		//
+		// Any anvil with a display on it, within reach and roughly under the crosshair,
+		// now counts. Forwarded to the same handler so every stage, sound and hit count
+		// behaves identically however the click arrived.
+		if (player.getItemInHand(hand).getItem() instanceof HammerItem) {
+			BlockPos forge = forgeUnderCrosshair(player, level);
+			if (forge != null) {
+				return onUseBlock(player, level, hand,
+						new BlockHitResult(Vec3.atCenterOf(forge), Direction.UP, forge, false));
+			}
+		}
+
 		ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
 		if (!isBareHotBlade(main) || !player.getOffhandItem().is(ModItems.TONGS)) {
 			return InteractionResult.PASS;
@@ -375,6 +391,35 @@ public class AnvilForgingHandler {
 
 	private static boolean isRelevant(ItemStack stack) {
 		return hitsForItem(stack) >= 0 || stack.isEmpty() || stack.getItem() instanceof HammerItem;
+	}
+
+	/**
+	 * The anvil the player is aiming at, counting the piece sitting on top of it as part
+	 * of the target rather than as something in the way.
+	 *
+	 * Walks the look vector and takes the first smithing anvil found either at that
+	 * point or one block below it - the display hovers above the anvil, so a ray through
+	 * the kera lands in the air a block up. Only anvils that actually have a piece on
+	 * them count, so this can never divert an ordinary click at empty air.
+	 */
+	private static BlockPos forgeUnderCrosshair(Player player, Level level) {
+		Vec3 eye = player.getEyePosition(1.0F);
+		Vec3 look = player.getViewVector(1.0F);
+		for (double step = 0.25; step <= 5.0; step += 0.25) {
+			BlockPos at = BlockPos.containing(eye.add(look.scale(step)));
+			for (BlockPos candidate : new BlockPos[]{at, at.below(), at.below(2)}) {
+				if (!isForgeAnvil(level.getBlockState(candidate).getBlock())) {
+					continue;
+				}
+				boolean occupied = level instanceof ServerLevel serverLevel
+						? !findKeraDisplays(serverLevel, candidate).isEmpty()
+						: !findKeraDisplaysClient(level, candidate).isEmpty();
+				if (occupied) {
+					return candidate;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static List<Display.ItemDisplay> findKeraDisplays(ServerLevel level, BlockPos pos) {

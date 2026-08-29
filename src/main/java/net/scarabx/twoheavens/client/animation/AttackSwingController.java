@@ -70,7 +70,8 @@ public class AttackSwingController {
 				|| !(client.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit)) {
 			return false;
 		}
-		return client.level.getBlockEntity(hit.getBlockPos()) != null;
+		return net.scarabx.twoheavens.combat.InteractableBlocks
+				.answersClick(client.level, hit.getBlockPos());
 	}
 
 	private static int aimedEntityId(Minecraft client) {

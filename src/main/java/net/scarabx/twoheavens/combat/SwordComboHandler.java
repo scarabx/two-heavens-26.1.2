@@ -281,7 +281,7 @@ public class SwordComboHandler {
 		BlockHitResult hit = player.level().clip(new ClipContext(eye, end,
 				ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
 		if (hit.getType() != HitResult.Type.BLOCK
-				|| player.level().getBlockEntity(hit.getBlockPos()) == null) {
+				|| !InteractableBlocks.answersClick(player.level(), hit.getBlockPos())) {
 			return false;
 		}
 		double blockDistance = hit.getLocation().distanceTo(eye);
