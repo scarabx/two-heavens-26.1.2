@@ -51,8 +51,32 @@ public class SwordDrawController {
 
 	private static final Deque<PendingSwap> pending = new ArrayDeque<>();
 
+	/** Writes to the slot the draw began from, never to whatever is selected now. */
+	private static void putInDrawSlot(Player player, ItemStack stack) {
+		if (storedMainHandSlot < 0) {
+			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+			return;
+		}
+		player.getInventory().setItem(storedMainHandSlot, stack);
+	}
+
 	private static ItemStack storedMainHand = ItemStack.EMPTY;
 	private static ItemStack storedOffHand = ItemStack.EMPTY;
+
+	/**
+	 * The hotbar slot the draw began from.
+	 *
+	 * Every swap here is DELAYED, and setItemInHand targets whatever slot is selected
+	 * when it finally fires - not the one the draw started from. Switching is blocked
+	 * while drawn, but that block is gated on an attachment synced from the server, so
+	 * there is a sub-second gap where a scroll gets through (wider with ping). The
+	 * sheathe swap is the worse of the two at 17 ticks: it wrote the stored sword into
+	 * whatever slot the player had moved to, destroying what was there.
+	 *
+	 * The server records this too - both sides must, or they disagree about where the
+	 * sword went.
+	 */
+	private static int storedMainHandSlot = -1;
 
 	public static void toggle(Player player) {
 		if (!pending.isEmpty()) {
@@ -66,13 +90,14 @@ public class SwordDrawController {
 
 		if (!predictedDrawn) {
 			storedMainHand = player.getItemInHand(InteractionHand.MAIN_HAND).copy();
+			storedMainHandSlot = player.getInventory().getSelectedSlot();
 			storedOffHand = player.getItemInHand(InteractionHand.OFF_HAND).copy();
 
 			PlayerHandAnimator.trigger(player,
 					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getDrawSwordsAnimation()));
 
 			pending.add(new PendingSwap(DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana())));
+					putInDrawSlot(p, FakeDrawnSword.katana())));
 			pending.add(new PendingSwap(DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS - DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
 			AttackSwingController.resetAttackPose();
@@ -84,7 +109,7 @@ public class SwordDrawController {
 			pending.add(new PendingSwap(DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
 					p.setItemInHand(InteractionHand.OFF_HAND, storedOffHand)));
 			pending.add(new PendingSwap(DrawTiming.SHEATHE_KATANA_DELAY_TICKS - DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.MAIN_HAND, storedMainHand)));
+					putInDrawSlot(p, storedMainHand)));
 			predictedDrawn = false;
 		}
 		awaitingServerConfirmation = true;
@@ -146,6 +171,7 @@ public class SwordDrawController {
 		if (pending.isEmpty() && !predictedDrawn) {
 			storedMainHand = ItemStack.EMPTY;
 			storedOffHand = ItemStack.EMPTY;
+			storedMainHandSlot = -1;
 		}
 	}
 
