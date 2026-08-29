@@ -382,11 +382,15 @@ public class SwordComboHandler {
 				continue;
 			}
 
+			// Finished on the katana move LANDING, combo or not, and with no gating
+			// anywhere in the sequence. The moves are usable for their own sake, so the
+			// tutorial follows the inputs rather than grading the outcome - being told
+			// you have not really done it, while watching yourself do it, is the worst
+			// thing a tutorial can say.
+			CombatTutorialAttachment.advance(player,
+					CombatTutorialAttachment.FINISH, CombatTutorialAttachment.DONE);
+
 			if (pending.comboFinisher()) {
-				// The combo actually landed, so the tutorial has been performed rather
-				// than merely read - this is the only place that can know that.
-				CombatTutorialAttachment.advance(player,
-						CombatTutorialAttachment.FINISH, CombatTutorialAttachment.DONE);
 				StunAttachment.clear(target);
 				// Paired with a landed wakizashi stab - instakill regardless
 				// of remaining health/armor/resistance, except the Wither
