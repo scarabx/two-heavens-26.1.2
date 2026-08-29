@@ -67,7 +67,11 @@ public final class DisassembleHelper {
 			give(player, new ItemStack(second));
 			held.shrink(1);
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
-					SoundEvents.ARMOR_EQUIP_CHAIN, SoundSource.PLAYERS, 0.8F, 1.2F);
+					// The same sample the draw and sheathe use, at the sheathe's pitch.
+					// ARMOR_EQUIP_CHAIN was leather and buckles - the wrong material - and
+					// one metallic sample across all three keeps the swords sounding like
+					// one set of objects rather than three unrelated interactions.
+					SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 0.7F, 1.1F);
 		}
 
 		return InteractionResult.SUCCESS;

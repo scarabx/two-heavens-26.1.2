@@ -131,8 +131,17 @@ public class SwordDrawController {
 		pending.poll();
 
 		next.action.accept(player);
+		// ARMOR_EQUIP_CHAIN is leather and buckles - it read as unpacking a backpack,
+		// which is the wrong material for a blade leaving a saya. CHAIN_PLACE is metal,
+		// and pitch does the rest: high and bright drawing, lower and softer sheathing,
+		// so one sample reads as one action and its reverse.
+		//
+		// Played here rather than server-side on purpose - this is predictive, so it
+		// lands the instant the swap does instead of a round trip later. Adding a second
+		// server-side sound just doubled it.
 		player.level().playSound(player, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.ARMOR_EQUIP_CHAIN, SoundSource.PLAYERS, 0.7F, 1.6F);
+				SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS,
+				predictedDrawn ? 0.7F : 0.55F, predictedDrawn ? 1.7F : 1.1F);
 
 		if (pending.isEmpty() && !predictedDrawn) {
 			storedMainHand = ItemStack.EMPTY;
