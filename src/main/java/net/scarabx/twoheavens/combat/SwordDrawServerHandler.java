@@ -225,7 +225,20 @@ public class SwordDrawServerHandler {
 	// offhand alone replaces the fake wakizashi and leaves the katana on screen until
 	// its own keyframe, which is what the animation is showing.
 	private static void restoreOffHand(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
-		player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+		if (stored.offHand().isEmpty()) {
+			// Nothing was being held, so there is nothing to give back - but the fake
+			// wakizashi still has to go, and an unconditional write of EMPTY here would
+			// also wipe anything real that had arrived in the meantime.
+			if (FakeDrawnSword.isFake(player.getItemInHand(InteractionHand.OFF_HAND))) {
+				player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+			}
+			return;
+		}
+		if (isReplaceable(player.getItemInHand(InteractionHand.OFF_HAND))) {
+			player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+			return;
+		}
+		giveBackElsewhere(player, stored.offHand());
 	}
 
 	// The stored real main-hand item is written back to the EXACT hotbar
@@ -238,7 +251,47 @@ public class SwordDrawServerHandler {
 		stripFakeSwords(player.getInventory());
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
-		inventory.setItem(stored.mainHandSlot(), stored.mainHand());
+		restoreInto(player, stored.mainHandSlot(), stored.mainHand());
+	}
+
+	/**
+	 * Puts a stored item back WITHOUT destroying whatever is in its place.
+	 *
+	 * The restore used to be an unconditional setItem, which assumed the slot it came
+	 * from would still be free when it went back. It is not always: the fakes are
+	 * stripped immediately before this runs, so anything left in that slot arrived
+	 * DURING the draw, and writing over it destroyed a real item. Since the swords are
+	 * usually drawn for a whole fight, that window is long.
+	 *
+	 * Free slot first so the item lands back exactly where it came from in the normal
+	 * case - which is the whole point of recording the slot at draw time - then the
+	 * rest of the inventory, then the floor. Dropping is the last resort but it is
+	 * still a restore: the item exists and the player can see it, which nothing about
+	 * overwriting could say.
+	 */
+	private static void restoreInto(ServerPlayer player, int slot, ItemStack stored) {
+		if (stored.isEmpty()) {
+			return;
+		}
+		Inventory inventory = player.getInventory();
+		if (isReplaceable(inventory.getItem(slot))) {
+			inventory.setItem(slot, stored);
+			return;
+		}
+		giveBackElsewhere(player, stored);
+	}
+
+	// A fake sword counts as free space: it is ours, it is about to be removed anyway,
+	// and treating it as occupied would send every ordinary sheathe down the fallback
+	// path. Only a REAL item blocks the slot.
+	private static boolean isReplaceable(ItemStack stack) {
+		return stack.isEmpty() || FakeDrawnSword.isFake(stack);
+	}
+
+	private static void giveBackElsewhere(ServerPlayer player, ItemStack stored) {
+		if (!player.getInventory().add(stored)) {
+			player.drop(stored, false);
+		}
 	}
 
 	// Used only by the instant/forced paths (death) - no animation to wait
@@ -247,8 +300,8 @@ public class SwordDrawServerHandler {
 		stripFakeSwords(player.getInventory());
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
-		inventory.setItem(stored.mainHandSlot(), stored.mainHand());
-		player.setItemInHand(InteractionHand.OFF_HAND, stored.offHand());
+		restoreInto(player, stored.mainHandSlot(), stored.mainHand());
+		restoreOffHand(player, stored);
 	}
 
 	private record PendingSwap(int applyTick, Consumer<ServerPlayer> action) {
