@@ -52,6 +52,33 @@ public final class InteractableBlocks {
 	private InteractableBlocks() {
 	}
 
+	/** Screen-openers with no block entity - the workbench half of the list above. */
+	private static final Set<Block> SCREEN_NO_BLOCK_ENTITY = Set.of(
+			Blocks.CRAFTING_TABLE,
+			Blocks.STONECUTTER,
+			Blocks.CARTOGRAPHY_TABLE,
+			Blocks.SMITHING_TABLE,
+			Blocks.LOOM,
+			Blocks.GRINDSTONE);
+
+	/**
+	 * Blocks that open a STORAGE or CRAFTING screen, which is a much narrower question
+	 * than answersClick and must stay that way.
+	 *
+	 * Used to decide what a drawn player cannot reach. answersClick would be the lazy
+	 * reuse and it is wrong here: it deliberately includes doors, trapdoors, fence
+	 * gates and buttons, and a swordsman who cannot open a door mid-fight is the
+	 * opposite of the intended feel. You can still flee through a door, throw a lever
+	 * and press a button with your swords out; you cannot stand in a fighting stance
+	 * and rummage through a chest.
+	 */
+	public static boolean opensAScreen(BlockGetter level, BlockPos pos) {
+		if (level.getBlockEntity(pos) != null) {
+			return true;
+		}
+		return SCREEN_NO_BLOCK_ENTITY.contains(level.getBlockState(pos).getBlock());
+	}
+
 	public static boolean answersClick(BlockGetter level, BlockPos pos) {
 		if (level.getBlockEntity(pos) != null) {
 			return true;
