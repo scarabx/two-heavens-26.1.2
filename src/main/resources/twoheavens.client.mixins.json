@@ -3,6 +3,7 @@
 	"package": "net.scarabx.twoheavens.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"DrawnDropMixin",
 		"ExampleClientMixin",
 		"InventoryClientMixin",
 		"ItemTooltipMixin",
