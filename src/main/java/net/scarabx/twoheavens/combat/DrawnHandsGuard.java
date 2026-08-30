@@ -11,9 +11,6 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.scarabx.twoheavens.event.JoinMessageHandler;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * A drawn player has both hands on their swords, so they cannot open storage.
@@ -41,11 +38,6 @@ import java.util.UUID;
  *     unrealistic mid-fight, and with the swords real there is nothing to protect.
  */
 public final class DrawnHandsGuard {
-
-	/** What each player was last refused, so a different target always speaks again. */
-	private static final Map<UUID, Object> lastTarget = new HashMap<>();
-	private static final Map<UUID, Integer> lastTick = new HashMap<>();
-	private static final int REPEAT_TICKS = 20;
 
 	private DrawnHandsGuard() {
 	}
@@ -81,27 +73,12 @@ public final class DrawnHandsGuard {
 		return player.hasAttached(DrawnSwordsAttachment.TYPE);
 	}
 
-	/**
-	 * Chat with the ping, keyed on WHAT was refused rather than on a timer.
-	 *
-	 * A chest and then a furnace are two attempts and both get an answer. Only the same
-	 * target repeating - a held right-click, which retries several times a second since
-	 * nothing opens to stop it - is suppressed, and only briefly.
-	 */
+	/** Chat with the ping, every time. One attempt, one answer. */
 	public static void tell(Player player, Object target) {
-		if (!(player instanceof ServerPlayer serverPlayer)) {
-			return;
+		if (player instanceof ServerPlayer serverPlayer) {
+			serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.hands_full")
+					.withStyle(ChatFormatting.GOLD));
+			JoinMessageHandler.ping(serverPlayer);
 		}
-		UUID id = serverPlayer.getUUID();
-		Integer tick = lastTick.get(id);
-		if (target.equals(lastTarget.get(id)) && tick != null
-				&& serverPlayer.tickCount - tick < REPEAT_TICKS) {
-			return;
-		}
-		lastTarget.put(id, target);
-		lastTick.put(id, serverPlayer.tickCount);
-		serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.hands_full")
-				.withStyle(ChatFormatting.GOLD));
-		JoinMessageHandler.ping(serverPlayer);
 	}
 }
