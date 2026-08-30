@@ -77,7 +77,10 @@ fi
 
 echo "==> $RELEASE_DIR"
 mkdir -p "$RELEASE_DIR"
-cp "$MOD_JAR" "$SOURCES_JAR" "$RELEASE_DIR/"
+# -p, so the copies keep the mtime of the jar they came from. Without it `cp`
+# stamps them with the moment the script ran, and a jar dated 14:19 sat inside a
+# folder named 14:08 - Finder shows the copy's time, not the build's.
+cp -p "$MOD_JAR" "$SOURCES_JAR" "$RELEASE_DIR/"
 cp "$CHANGELOG" "$RELEASE_DIR/changelog.md"
 
 echo "==> Zipping $PROJECT_NAME"
@@ -96,7 +99,7 @@ cp "$CHANGELOG" "$BACKUP_DIR/changelog.md"
 # somewhere it will not be mistaken for part of the release.
 echo "==> $DOCS_DIR"
 mkdir -p "$DOCS_DIR"
-cp "$PROJECT_DIR/CLAUDE.md" "$PROJECT_DIR/notes.md" "$DOCS_DIR/"
+cp -p "$PROJECT_DIR/CLAUDE.md" "$PROJECT_DIR/notes.md" "$DOCS_DIR/"
 rm -f "$CHANGELOG"
 
 echo
