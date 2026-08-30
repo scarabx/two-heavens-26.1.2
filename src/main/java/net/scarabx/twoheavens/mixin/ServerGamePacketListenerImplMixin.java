@@ -1,6 +1,7 @@
 package net.scarabx.twoheavens.mixin;
 
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -75,6 +76,35 @@ public class ServerGamePacketListenerImplMixin {
 		this.player.containerMenu.sendAllDataToRemote();
 		DrawnHandsGuard.tell(this.player, "inventory");
 		info.cancel();
+	}
+
+	/**
+	 * Q and F, the two ways out of the hands that never touch a container menu.
+	 *
+	 * Same rule as the rest: no free hand. Dropping an issued sword is not dangerous -
+	 * the obi stays short until it comes back, so nothing duplicates - it just leaves a
+	 * player able to strand half their belt by accident, and it is the one hole left in
+	 * a lockdown that is otherwise complete.
+	 *
+	 * The offhand swap goes with it because the draw is staggered by several ticks, so
+	 * for that window one hand holds a real item and the other a sword, and swapping
+	 * puts them out of step with the slots sheathe will restore to.
+	 *
+	 * Only these three actions - block breaking and item use share this packet and must
+	 * keep working.
+	 */
+	@Inject(at = @At("HEAD"), method = "handlePlayerAction", cancellable = true)
+	private void twoheavens$blockDropWhileDrawn(ServerboundPlayerActionPacket packet, CallbackInfo info) {
+		if (!this.player.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			return;
+		}
+		ServerboundPlayerActionPacket.Action action = packet.getAction();
+		if (action == ServerboundPlayerActionPacket.Action.DROP_ITEM
+				|| action == ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
+				|| action == ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND) {
+			DrawnHandsGuard.tell(this.player, "drop");
+			info.cancel();
+		}
 	}
 
 	@Inject(at = @At("HEAD"), method = "handleSetCarriedItem", cancellable = true)
