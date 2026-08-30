@@ -5,6 +5,8 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
@@ -98,6 +100,13 @@ public class ServerGamePacketListenerImplMixin {
 		}
 		if (touchesFake) {
 			menu.sendAllDataToRemote();
+			// Never a silent refusal - the rule this mod holds everywhere else. A click
+			// that does nothing and says nothing reads as broken; one that says why is a
+			// rule. Action bar rather than chat: it fires per click, and chat is reserved
+			// for the one-time pointers that just earned a ping.
+			this.player.sendOverlayMessage(
+					Component.translatable("message.twoheavens.sheathe_to_store")
+							.withStyle(ChatFormatting.GOLD));
 			info.cancel();
 		}
 	}

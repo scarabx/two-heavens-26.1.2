@@ -1,6 +1,8 @@
 package net.scarabx.twoheavens.combat;
 
 import eu.pb4.trinkets.api.TrinketsApi;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.world.InteractionResult;
@@ -62,10 +64,19 @@ public class SwordDrawServerHandler {
 		// Scoped to the fake STACK, like the slot guard: the other hand can hold
 		// anything and there is no reason that should not go in a frame. FAIL rather
 		// than PASS, since PASS falls through to the vanilla behaviour being stopped.
-		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) ->
-				FakeDrawnSword.isFake(player.getItemInHand(hand))
-						? InteractionResult.FAIL
-						: InteractionResult.PASS);
+		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
+			if (!FakeDrawnSword.isFake(player.getItemInHand(hand))) {
+				return InteractionResult.PASS;
+			}
+			// Same line the slot guard uses, for the same reason: a frame that takes
+			// nothing and says nothing reads as broken. It also answers the question
+			// behind the attempt - someone framing a sword wants to DISPLAY it, and the
+			// Daisho Saya is the better display piece anyway, being the pair as one item.
+			player.sendOverlayMessage(
+					Component.translatable("message.twoheavens.sheathe_to_store")
+							.withStyle(ChatFormatting.GOLD));
+			return InteractionResult.FAIL;
+		});
 
 		ServerTickEvents.END_SERVER_TICK.register(SwordDrawServerHandler::onServerTick);
 
