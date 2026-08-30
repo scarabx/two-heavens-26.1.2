@@ -2,8 +2,6 @@ package net.scarabx.twoheavens.combat;
 
 import eu.pb4.trinkets.api.TrinketsApi;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.world.InteractionResult;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -53,22 +51,6 @@ public class SwordDrawServerHandler {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> toggle(player));
 		});
-
-		// The last route a fake sword had out of the player's hands. Item frames and
-		// armour stands TAKE the held stack on a right-click, so a fake katana could be
-		// handed to one and left there - and sheathe only sweeps the inventory, so the
-		// real sword came back and the frame kept a free copy. Same dupe as the crafting
-		// and drop routes blocked in ServerGamePacketListenerImplMixin, through an entity
-		// rather than a slot.
-		//
-		// Scoped to the fake stack itself, not to being drawn: the drawn player's other
-		// hand can hold anything, and there is no reason they should not be able to hand
-		// THAT to a frame. FAIL rather than PASS - PASS falls through to vanilla, which
-		// is the behaviour being stopped.
-		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) ->
-				FakeDrawnSword.isFake(player.getItemInHand(hand))
-						? InteractionResult.FAIL
-						: InteractionResult.PASS);
 
 		ServerTickEvents.END_SERVER_TICK.register(SwordDrawServerHandler::onServerTick);
 

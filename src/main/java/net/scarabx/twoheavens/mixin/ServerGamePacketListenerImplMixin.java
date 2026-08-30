@@ -1,6 +1,5 @@
 package net.scarabx.twoheavens.mixin;
 
-import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,26 +12,34 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * While swords are drawn (DrawnSwordsAttachment present) the fake katana and
- * wakizashi must not be able to LEAVE the player's hands - not to another slot,
- * not into a container, not onto the ground, and above all not into a crafting
- * grid.
+ * While swords are drawn the player cannot switch hotbar slots, drop, or swap
+ * hands. All three keep the fake katana and wakizashi in the hands they were put
+ * in, which is what sheathe assumes when it restores the real items.
  *
- * The fakes are ordinary ModItems.KATANA and ModItems.WAKIZASHI stacks carrying
- * only a CustomData marker, so every recipe accepts them. That made an item dupe:
- * draw, craft the two fakes into a Daisho Saya, sheathe. Sheathe strips fakes from
- * the inventory and finds none (they were consumed), then restores the real stored
- * swords - so each cycle produced a free saya, and a saya disassembles into a real
- * katana and wakizashi. Dropping a fake with Q was the same bug by another route:
- * the sweep only covers the inventory, so the item entity outlived the sheathe.
+ * NOT a dupe guard. Crafting the two fakes into a Daisho Saya and sheathing does
+ * duplicate them, and that is deliberately LEFT ALONE: you need both finished
+ * swords to do it, so the reward is a second pair for a player who has two arms
+ * and has already completed the entire smithing chain. The fix cost more than the
+ * bug - blocking container clicks while drawn made a chest open and then silently
+ * refuse every click, which reads as a broken mod rather than as a rule. See
+ * notes.md.
  *
- * All three handlers are refused WHOLESALE while drawn rather than inspecting each
- * click for a fake stack. A container click has many modes - quick-move, hotbar
- * swap, throw, drag - each reaching different slots, so a per-mode check is a list
- * that has to stay exhaustive against a vanilla class that is free to grow. Given
- * what the gap costs, the rule that cannot have a hole in it is worth more than the
- * convenience: sheathe first, then rearrange. That is the same rule the hotbar
- * switch below already applies, extended to the places a slot can be reached from.
+ * What these guards prevent is ITEM LOSS, which is a different problem:
+ *
+ *   hotbar switch  scrolling away left fake stacks stranded in arbitrary slots,
+ *                  which is how sheathe lost track of them
+ *   Q / drop-all   a dropped fake is a real-looking katana on the ground, and the
+ *                  next sheathe SILENTLY DELETES it - stripFakeSwords sweeps the
+ *                  whole inventory - so a player who picks their own drop back up
+ *                  loses a sword they had no reason to think was phantom
+ *   F offhand swap the draw is staggered by several ticks, so for that window one
+ *                  hand is real and the other fake, and swapping puts them out of
+ *                  step with the slots restoreMainHand will write to
+ *
+ * All three cost the player nothing real: while drawn both hands hold fakes, so
+ * there is nothing legitimate to drop or swap, and the hotbar is locked anyway.
+ * That is the line - these are invisible in normal play, which the container block
+ * was not.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImplMixin {
@@ -48,34 +55,7 @@ public class ServerGamePacketListenerImplMixin {
 	}
 
 	/**
-	 * The dupe itself. Cancelling at HEAD means the menu never runs the click, so no
-	 * recipe ever sees a fake sword as an ingredient.
-	 *
-	 * sendAllDataToRemote is not optional. The client has already predicted the click
-	 * locally, so without a resync it would show the stack where it moved it to and
-	 * the server would disagree - a desync that looks exactly like a second dupe.
-	 * Vanilla does the same thing in its own spectator branch of this method.
-	 *
-	 * The screen still OPENS while drawn, and everything in it is still readable. Only
-	 * moving items is refused.
-	 */
-	@Inject(at = @At("HEAD"), method = "handleContainerClick", cancellable = true)
-	private void twoheavens$blockContainerClickWhileDrawn(ServerboundContainerClickPacket packet, CallbackInfo info) {
-		if (this.player.hasAttached(DrawnSwordsAttachment.TYPE)) {
-			this.player.containerMenu.sendAllDataToRemote();
-			info.cancel();
-		}
-	}
-
-	/**
 	 * Q and F, the two routes out of the hands that never touch a container menu.
-	 *
-	 * Dropping is the one that duped: a fake sword thrown on the ground is a real
-	 * katana item entity, and sheathe only sweeps the INVENTORY, so it survived to be
-	 * picked back up. The offhand swap is guarded because the draw is staggered by
-	 * several ticks - for that window one hand holds a real item and the other a fake,
-	 * and swapping them puts the two swaps back out of step with the slots sheathe is
-	 * going to restore to.
 	 *
 	 * Only these three actions. The rest of the packet is left alone: RELEASE_USE_ITEM
 	 * and the destroy actions must keep flowing, and a drawn player is already stopped
