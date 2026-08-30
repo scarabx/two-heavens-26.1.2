@@ -9,7 +9,8 @@
 		"CraftingResultMixin",
 		"InventoryAddMixin",
 		"StunnedMovementMixin",
-		"StunnedAttackMixin"
+		"StunnedAttackMixin",
+		"TrinketsLegsAttachmentMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
