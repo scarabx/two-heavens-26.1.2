@@ -90,9 +90,25 @@ public class SwordDrawServerHandler {
 		// doesn't normally happen - kept as a defensive no-op in that case).
 		// Instant, same as death - there's no draw animation playing here.
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-			if (newPlayer.hasAttached(DrawnSwordsAttachment.TYPE)
-					&& TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_OBI)) {
+			if (!newPlayer.hasAttached(DrawnSwordsAttachment.TYPE)
+					|| !TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_OBI)) {
+				return;
+			}
+			// Goes through the same rule as a normal draw, and it MUST. This used to hand
+			// over a pair unconditionally, which was harmless while the swords were copies
+			// - a copy costs nothing and sheathe deleted it again. They are real now, so
+			// an unconditional pair here is minted from nothing while the obi still reads
+			// as full: a free set of swords for anyone who can reach this path. It also
+			// has to respect a short obi, for the same reason drawing does.
+			//
+			// The exact case the old comment calls defensive, and the reason blunt code
+			// next to real items is worth re-reading rather than trusting.
+			if (ObiSwords.holds(newPlayer, ModItems.KATANA)) {
+				ObiSwords.setOut(newPlayer, ModItems.KATANA, true);
 				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, ObiSwords.issuedKatana());
+			}
+			if (ObiSwords.holds(newPlayer, ModItems.WAKIZASHI)) {
+				ObiSwords.setOut(newPlayer, ModItems.WAKIZASHI, true);
 				newPlayer.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi());
 			}
 		});
