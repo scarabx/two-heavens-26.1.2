@@ -75,11 +75,15 @@ public final class DrawnHandsGuard {
 	 * happened, and on a cooldown because - unlike the one-time pointers - this one can
 	 * fire on every click and would otherwise bury them.
 	 *
-	 * "Both hands are on your blades" states the reason instead of threatening a
-	 * consequence, and the reason is the whole rule - the stance is the thing stopping
-	 * you, not a penalty. Drafts that warned about damaging your belongings were
-	 * dropped: nothing is at risk now that the swords are real items, and a message
-	 * hinting at a mechanic that does not exist costs more than it earns.
+	 * "No free hand while your blades are drawn" names the CONSTRAINT, not the pose.
+	 * "Both hands are on your swords" was accurate and still failed - it described what
+	 * the player was doing rather than what they could not do, so it read as flavour and
+	 * left them looking for the real reason. A hand being unavailable is the mechanic,
+	 * so the message says that outright, then names the action that frees one.
+	 *
+	 * Drafts that warned about damaging your belongings were dropped: nothing is at risk
+	 * now that the swords are real items, and a message hinting at a mechanic that does
+	 * not exist costs more than it earns.
 	 */
 	private static void tell(Player player) {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
