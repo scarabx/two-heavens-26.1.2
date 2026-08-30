@@ -7,8 +7,8 @@
 # project, ready to be moved into OneDrive by hand:
 #
 #   Release <ver>-<mc>_<DD_MM_YY>_<HH_MM>/     mod jar, sources jar, changelog.md
-#   <DD_MM_YY>_<HH_MM>/                      project zip
-#   Notes/<DD_MM_YY>_<HH_MM>/                CLAUDE.md, notes.md
+#   <DD_MM_YY>_<HH_MM>/                      project zip, changelog.md
+#   <DD_MM_YY>_<HH_MM>_notes/                CLAUDE.md, notes.md
 #
 # Everything is derived - version from gradle.properties, timestamp from the jar
 # that was actually built, changelog from notes.md - so nothing has to be typed
@@ -49,10 +49,10 @@ STAMP_TIME="$(date -r "$MOD_JAR" +%H_%M)"
 
 RELEASE_DIR="$PARENT_DIR/Release ${VERSION}-${MC_VERSION}_${STAMP_DATE}_${STAMP_TIME}"
 BACKUP_DIR="$PARENT_DIR/${STAMP_DATE}_${STAMP_TIME}"
-# Same name as the zip folder, so it needs its own parent - two folders cannot
-# share a name in one directory. The folder that gets dragged is named purely by
-# date and time either way.
-DOCS_DIR="$PARENT_DIR/Notes/${STAMP_DATE}_${STAMP_TIME}"
+# Date first so it sorts beside the other two. The suffix exists only because the
+# zip folder already owns the bare name and two folders cannot share one in a
+# directory - it is meant to be renamed once the folder reaches OneDrive.
+DOCS_DIR="$PARENT_DIR/${STAMP_DATE}_${STAMP_TIME}_notes"
 
 echo "==> Changelog for ${VERSION} from notes.md"
 CHANGELOG="$(mktemp)"
@@ -88,7 +88,7 @@ rm -f "$ZIP_PATH"
 echo "==> $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
 mv "$ZIP_PATH" "$BACKUP_DIR/"
-rm -f "$CHANGELOG"
+cp "$CHANGELOG" "$BACKUP_DIR/changelog.md"
 
 # A folder of its own for the two untracked files. notes.md is excluded from git
 # (.git/info/exclude), so no commit carries it and this machine holds the only
@@ -97,6 +97,7 @@ rm -f "$CHANGELOG"
 echo "==> $DOCS_DIR"
 mkdir -p "$DOCS_DIR"
 cp "$PROJECT_DIR/CLAUDE.md" "$PROJECT_DIR/notes.md" "$DOCS_DIR/"
+rm -f "$CHANGELOG"
 
 echo
 echo "Done."
