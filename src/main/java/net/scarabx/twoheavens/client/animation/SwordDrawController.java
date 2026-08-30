@@ -130,10 +130,21 @@ public class SwordDrawController {
 			PlayerHandAnimator.trigger(player,
 					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getDrawSwordsAnimation()));
 
-			pending.add(new PendingSwap(DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
-					putInDrawSlot(p, ObiSwords.issuedKatana())));
-			pending.add(new PendingSwap(DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS - DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi())));
+			// Only what the obi still holds, exactly as the server decides it. Predicting
+			// both unconditionally was a desync: an obi short a sword had the client
+			// showing one the server never issued, and it survived until the next
+			// container sync - so opening a chest made the sword vanish from hand and
+			// inventory at once, which looked inexplicable because nothing about a chest
+			// caused it. A prediction that does not match the rule the server applies is
+			// not a prediction, it is a guess.
+			if (ObiSwords.holds(player, ModItems.KATANA)) {
+				pending.add(new PendingSwap(DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
+						putInDrawSlot(p, ObiSwords.issuedKatana())));
+			}
+			if (ObiSwords.holds(player, ModItems.WAKIZASHI)) {
+				pending.add(new PendingSwap(DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS - DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
+						p.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi())));
+			}
 			AttackSwingController.resetAttackPose();
 			predictedDrawn = true;
 		} else {

@@ -292,6 +292,16 @@ public class SwordDrawServerHandler {
 	// offhand alone replaces the fake wakizashi and leaves the katana on screen until
 	// its own keyframe, which is what the animation is showing.
 	private static void restoreOffHand(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
+		// The issued wakizashi is sitting in this hand RIGHT NOW, and this method is about
+		// to write over it - it fires at the wakizashi's keyframe, before reclaimSwords
+		// runs at the katana's. Under the old phantom scheme overwriting a copy cost
+		// nothing; the sword is real now, so it has to be handed back to the obi here or
+		// it is destroyed and the obi stays short one forever.
+		ItemStack inHand = player.getItemInHand(InteractionHand.OFF_HAND);
+		if (ObiSwords.isFromObi(inHand)) {
+			ObiSwords.setOut(player, inHand.getItem(), false);
+			player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+		}
 		if (stored.offHand().isEmpty()) {
 			// Nothing was being held, so there is nothing to give back - but the fake
 			// wakizashi still has to go, and an unconditional write of EMPTY here would
