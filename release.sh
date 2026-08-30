@@ -7,8 +7,8 @@
 # project, ready to be moved into OneDrive by hand:
 #
 #   Release <ver>-<mc>_<DD_MM_YY>_<HH_MM>/     mod jar, sources jar, changelog.md
-#   <DD_MM_YY>_<HH_MM>/                      <same>.zip, changelog.md,
-#                                            CLAUDE.md, notes.md
+#   <DD_MM_YY>_<HH_MM>/                      project zip
+#   Notes/<DD_MM_YY>_<HH_MM>/                CLAUDE.md, notes.md
 #
 # Everything is derived - version from gradle.properties, timestamp from the jar
 # that was actually built, changelog from notes.md - so nothing has to be typed
@@ -49,6 +49,10 @@ STAMP_TIME="$(date -r "$MOD_JAR" +%H_%M)"
 
 RELEASE_DIR="$PARENT_DIR/Release ${VERSION}-${MC_VERSION}_${STAMP_DATE}_${STAMP_TIME}"
 BACKUP_DIR="$PARENT_DIR/${STAMP_DATE}_${STAMP_TIME}"
+# Same name as the zip folder, so it needs its own parent - two folders cannot
+# share a name in one directory. The folder that gets dragged is named purely by
+# date and time either way.
+DOCS_DIR="$PARENT_DIR/Notes/${STAMP_DATE}_${STAMP_TIME}"
 
 echo "==> Changelog for ${VERSION} from notes.md"
 CHANGELOG="$(mktemp)"
@@ -77,29 +81,30 @@ cp "$MOD_JAR" "$SOURCES_JAR" "$RELEASE_DIR/"
 cp "$CHANGELOG" "$RELEASE_DIR/changelog.md"
 
 echo "==> Zipping $PROJECT_NAME"
-ZIP_NAME="${STAMP_DATE}_${STAMP_TIME}"
-ZIP_PATH="$PARENT_DIR/${ZIP_NAME}.zip"
+ZIP_PATH="$PARENT_DIR/${PROJECT_NAME}.zip"
 rm -f "$ZIP_PATH"
 ( cd "$PARENT_DIR" && zip -rq "$ZIP_PATH" "$PROJECT_NAME" -x "${ZIP_EXCLUDES[@]/#/$PROJECT_NAME/}" )
 
 echo "==> $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
 mv "$ZIP_PATH" "$BACKUP_DIR/"
-cp "$CHANGELOG" "$BACKUP_DIR/changelog.md"
 rm -f "$CHANGELOG"
 
-# CLAUDE.md and notes.md are copied out LOOSE as well as being inside the zip.
-# notes.md is untracked (.git/info/exclude), so no commit carries it and this
-# machine holds the only copy - having it readable in the backup folder means it
-# can be checked without unpacking 100M, and it is the file most worth not losing.
-cp "$PROJECT_DIR/CLAUDE.md" "$BACKUP_DIR/CLAUDE.md"
-cp "$PROJECT_DIR/notes.md" "$BACKUP_DIR/notes.md"
+# A folder of its own for the two untracked files. notes.md is excluded from git
+# (.git/info/exclude), so no commit carries it and this machine holds the only
+# copy - it goes somewhere it can be read without unpacking 100M of zip, and
+# somewhere it will not be mistaken for part of the release.
+echo "==> $DOCS_DIR"
+mkdir -p "$DOCS_DIR"
+cp "$PROJECT_DIR/CLAUDE.md" "$PROJECT_DIR/notes.md" "$DOCS_DIR/"
 
 echo
 echo "Done."
 echo "  Release : $RELEASE_DIR"
 ls -1sh "$RELEASE_DIR" | sed 's/^/            /'
-echo "  Backup  : $BACKUP_DIR"
+echo "  Zip     : $BACKUP_DIR"
 ls -1sh "$BACKUP_DIR" | sed 's/^/            /'
+echo "  Notes   : $DOCS_DIR"
+ls -1sh "$DOCS_DIR" | sed 's/^/            /'
 echo
-echo "Move both into OneDrive. CLAUDE.md and notes.md are already in the backup folder."
+echo "Move all three into OneDrive."
