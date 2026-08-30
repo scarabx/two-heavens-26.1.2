@@ -42,8 +42,10 @@ import java.util.UUID;
  */
 public final class DrawnHandsGuard {
 
-	private static final Map<UUID, Integer> lastTold = new HashMap<>();
-	private static final int MESSAGE_COOLDOWN_TICKS = 60;
+	/** What each player was last refused, so a different target always speaks again. */
+	private static final Map<UUID, Object> lastTarget = new HashMap<>();
+	private static final Map<UUID, Integer> lastTick = new HashMap<>();
+	private static final int REPEAT_TICKS = 20;
 
 	private DrawnHandsGuard() {
 	}
@@ -61,7 +63,7 @@ public final class DrawnHandsGuard {
 					|| !InteractableBlocks.opensAScreen(level, hit.getBlockPos())) {
 				return InteractionResult.PASS;
 			}
-			tell(player);
+			tell(player, hit.getBlockPos());
 			return InteractionResult.FAIL;
 		});
 
@@ -70,7 +72,7 @@ public final class DrawnHandsGuard {
 					|| !(entity instanceof ItemFrame || entity instanceof ArmorStand)) {
 				return InteractionResult.PASS;
 			}
-			tell(player);
+			tell(player, entity.getUUID());
 			return InteractionResult.FAIL;
 		});
 	}
@@ -80,29 +82,24 @@ public final class DrawnHandsGuard {
 	}
 
 	/**
-	 * Chat with the ping, like every other message that fires because something just
-	 * happened, and on a cooldown because - unlike the one-time pointers - this one can
-	 * fire on every click and would otherwise bury them.
+	 * Chat with the ping, keyed on WHAT was refused rather than on a timer.
 	 *
-	 * "No free hand while your blades are drawn" names the CONSTRAINT, not the pose.
-	 * "Both hands are on your swords" was accurate and still failed - it described what
-	 * the player was doing rather than what they could not do, so it read as flavour and
-	 * left them looking for the real reason. A hand being unavailable is the mechanic,
-	 * so the message says that outright, then names the action that frees one.
-	 *
-	 * Drafts that warned about damaging your belongings were dropped: nothing is at risk
-	 * now that the swords are real items, and a message hinting at a mechanic that does
-	 * not exist costs more than it earns.
+	 * A chest and then a furnace are two attempts and both get an answer. Only the same
+	 * target repeating - a held right-click, which retries several times a second since
+	 * nothing opens to stop it - is suppressed, and only briefly.
 	 */
-	public static void tell(Player player) {
+	public static void tell(Player player, Object target) {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
 			return;
 		}
-		Integer last = lastTold.get(serverPlayer.getUUID());
-		if (last != null && serverPlayer.tickCount - last < MESSAGE_COOLDOWN_TICKS) {
+		UUID id = serverPlayer.getUUID();
+		Integer tick = lastTick.get(id);
+		if (target.equals(lastTarget.get(id)) && tick != null
+				&& serverPlayer.tickCount - tick < REPEAT_TICKS) {
 			return;
 		}
-		lastTold.put(serverPlayer.getUUID(), serverPlayer.tickCount);
+		lastTarget.put(id, target);
+		lastTick.put(id, serverPlayer.tickCount);
 		serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.hands_full")
 				.withStyle(ChatFormatting.GOLD));
 		JoinMessageHandler.ping(serverPlayer);

@@ -73,7 +73,7 @@ public class ServerGamePacketListenerImplMixin {
 			return;
 		}
 		this.player.containerMenu.sendAllDataToRemote();
-		DrawnHandsGuard.tell(this.player);
+		DrawnHandsGuard.tell(this.player, "inventory");
 		info.cancel();
 	}
 

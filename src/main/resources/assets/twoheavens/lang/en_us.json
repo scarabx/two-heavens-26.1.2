@@ -60,7 +60,7 @@
   "tooltip.twoheavens.kera_anvil": "Place on a Smithing Anvil",
   "tooltip.twoheavens.take_apart": "Sneak + right-click to take apart",
   "tooltip.twoheavens.obi_use": "Holds a Daisho Saya on your belt",
-  "message.twoheavens.hands_full": "No free hand while your blades are drawn - sheathe first",
+  "message.twoheavens.hands_full": "Sheathe your swords first",
   "message.twoheavens.obi_refilled": "Your Daisho Obi was missing a blade and has taken your %s",
   "tooltip.twoheavens.obi_equip": "Goes in the Belt slot - hover the leggings slot if you cannot see it",
   "tooltip.twoheavens.obi_draw": "Press R to draw and sheathe your swords",
