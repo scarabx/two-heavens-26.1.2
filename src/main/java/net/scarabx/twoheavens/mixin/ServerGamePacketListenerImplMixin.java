@@ -1,8 +1,10 @@
 package net.scarabx.twoheavens.mixin;
 
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.scarabx.twoheavens.combat.DrawnHandsGuard;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,6 +47,35 @@ public class ServerGamePacketListenerImplMixin {
 
 	@Shadow
 	public ServerPlayer player;
+
+	/**
+	 * Nothing moves in the inventory either, for the same reason nothing opens: no free
+	 * hand.
+	 *
+	 * This is the ONE screen a drawn player can still reach, since E is a client key
+	 * rather than a block, so it is the one place the stance rule has to be enforced
+	 * from inside rather than at the door. It is state-based on purpose - the whole
+	 * point is that a drawn player cannot rearrange anything, not that one item is
+	 * special - which is what makes it the same rule as the locked hotbar rather than a
+	 * second one.
+	 *
+	 * The version reverted earlier today was this same block WITHOUT the door being
+	 * shut: chests opened and then ignored every click, so the player was handed a
+	 * working-looking interface that did nothing. Now the door is shut and says why, and
+	 * this says the same thing in the same words, so both read as one rule.
+	 *
+	 * sendAllDataToRemote because the client has already predicted the move; without the
+	 * resync the two disagree about where the item is.
+	 */
+	@Inject(at = @At("HEAD"), method = "handleContainerClick", cancellable = true)
+	private void twoheavens$blockInventoryMovesWhileDrawn(ServerboundContainerClickPacket packet, CallbackInfo info) {
+		if (!this.player.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			return;
+		}
+		this.player.containerMenu.sendAllDataToRemote();
+		DrawnHandsGuard.tell(this.player);
+		info.cancel();
+	}
 
 	@Inject(at = @At("HEAD"), method = "handleSetCarriedItem", cancellable = true)
 	private void twoheavens$blockSlotSwitchWhileDrawn(ServerboundSetCarriedItemPacket packet, CallbackInfo info) {

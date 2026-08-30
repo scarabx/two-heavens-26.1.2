@@ -49,8 +49,16 @@ public final class DrawnHandsGuard {
 	}
 
 	public static void register() {
+		// SERVER ONLY, and this is not a detail. Both callbacks also fire on the client,
+		// and a FAIL there cancels the interaction locally - the packet is never sent, so
+		// the server never sees the click and never says anything. That is exactly how
+		// the refusal ended up working silently: the block was right and the explanation
+		// never ran. Passing on the client lets the click reach the server, which refuses
+		// it and speaks. Nothing opens in the meantime, because a container screen only
+		// appears when the server tells it to.
 		UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
-			if (!isDrawn(player) || !InteractableBlocks.opensAScreen(level, hit.getBlockPos())) {
+			if (level.isClientSide() || !isDrawn(player)
+					|| !InteractableBlocks.opensAScreen(level, hit.getBlockPos())) {
 				return InteractionResult.PASS;
 			}
 			tell(player);
@@ -58,7 +66,8 @@ public final class DrawnHandsGuard {
 		});
 
 		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-			if (!isDrawn(player) || !(entity instanceof ItemFrame || entity instanceof ArmorStand)) {
+			if (level.isClientSide() || !isDrawn(player)
+					|| !(entity instanceof ItemFrame || entity instanceof ArmorStand)) {
 				return InteractionResult.PASS;
 			}
 			tell(player);
@@ -85,7 +94,7 @@ public final class DrawnHandsGuard {
 	 * now that the swords are real items, and a message hinting at a mechanic that does
 	 * not exist costs more than it earns.
 	 */
-	private static void tell(Player player) {
+	public static void tell(Player player) {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
 			return;
 		}
