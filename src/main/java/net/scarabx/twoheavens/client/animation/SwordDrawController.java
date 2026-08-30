@@ -60,6 +60,40 @@ public class SwordDrawController {
 		player.getInventory().setItem(storedMainHandSlot, stack);
 	}
 
+	/**
+	 * The sheathe half of the same write, and the reason it needs its own method:
+	 * putting the sword back must never destroy something that arrived while drawn.
+	 *
+	 * The server relocates it - free slot first, then anywhere, then the floor. The
+	 * client cannot copy that, because guessing a different slot here and guessing
+	 * wrong leaves a phantom item on screen until the next container sync, which is
+	 * worse than the gap it was trying to hide. So when the slot is genuinely
+	 * occupied, this predicts NOTHING and lets the authoritative update land.
+	 *
+	 * A fake sword counts as free space, which is the ordinary case - the fake this
+	 * very swap is replacing - so a normal sheathe still predicts instantly and none
+	 * of this is reachable in play. Only the collision skips prediction, and losing
+	 * smoothness for one frame there is the correct trade against showing an item
+	 * being deleted.
+	 */
+	private static void restoreIntoDrawSlot(Player player, ItemStack stack) {
+		if (storedMainHandSlot < 0) {
+			return;
+		}
+		ItemStack occupant = player.getInventory().getItem(storedMainHandSlot);
+		if (occupant.isEmpty() || FakeDrawnSword.isFake(occupant)) {
+			player.getInventory().setItem(storedMainHandSlot, stack);
+		}
+	}
+
+	/** Same rule for the offhand, whose restore had the identical unconditional write. */
+	private static void restoreOffHand(Player player, ItemStack stack) {
+		ItemStack occupant = player.getItemInHand(InteractionHand.OFF_HAND);
+		if (occupant.isEmpty() || FakeDrawnSword.isFake(occupant)) {
+			player.setItemInHand(InteractionHand.OFF_HAND, stack);
+		}
+	}
+
 	private static ItemStack storedMainHand = ItemStack.EMPTY;
 	private static ItemStack storedOffHand = ItemStack.EMPTY;
 
@@ -107,9 +141,9 @@ public class SwordDrawController {
 					RawAnimation.begin().thenPlay(TwoHeavensPlayerAnimation.getSheatheSwordsAnimation()));
 
 			pending.add(new PendingSwap(DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.OFF_HAND, storedOffHand)));
+					restoreOffHand(p, storedOffHand)));
 			pending.add(new PendingSwap(DrawTiming.SHEATHE_KATANA_DELAY_TICKS - DrawTiming.SHEATHE_WAKIZASHI_DELAY_TICKS, p ->
-					putInDrawSlot(p, storedMainHand)));
+					restoreIntoDrawSlot(p, storedMainHand)));
 			predictedDrawn = false;
 		}
 		awaitingServerConfirmation = true;
