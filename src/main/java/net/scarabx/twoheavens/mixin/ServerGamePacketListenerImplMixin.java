@@ -1,10 +1,14 @@
 package net.scarabx.twoheavens.mixin;
 
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
+import net.scarabx.twoheavens.combat.FakeDrawnSword;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -50,6 +54,50 @@ public class ServerGamePacketListenerImplMixin {
 	@Inject(at = @At("HEAD"), method = "handleSetCarriedItem", cancellable = true)
 	private void twoheavens$blockSlotSwitchWhileDrawn(ServerboundSetCarriedItemPacket packet, CallbackInfo info) {
 		if (this.player.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			info.cancel();
+		}
+	}
+
+	/**
+	 * A phantom sword cannot be moved through a slot.
+	 *
+	 * Guards the STACK, not the state, and that distinction is the whole lesson from
+	 * the version of this that was reverted. Refusing every click while drawn also
+	 * refused chests, crafting tables and your own inventory - a chest that opened and
+	 * then did nothing read as a broken mod. This refuses one thing: dragging a sword
+	 * that does not really exist. Everything else works normally while drawn, and no
+	 * player ever wanted to move a phantom sword, so nobody can bump into it.
+	 *
+	 * Why it is needed even with the crafting mixin: that one stops a fake being an
+	 * INGREDIENT, but any route that parks a fake in STORAGE dupes just as well. Put
+	 * one in a chest, sheathe, and the real sword returns while the chest keeps a
+	 * working katana - stripFakeSwords only ever sweeps the inventory.
+	 *
+	 * Three checks because a click can reach a slot three ways: the slot named by the
+	 * packet, the stack already on the cursor, and - for a hotbar swap - the slot named
+	 * by buttonNum. Checking buttonNum without knowing the click type is deliberate: it
+	 * costs one array read and cannot be outrun by a click mode being added later.
+	 *
+	 * sendAllDataToRemote because the client has already predicted the move; without
+	 * the resync the two disagree, which looks like a dupe of its own.
+	 */
+	@Inject(at = @At("HEAD"), method = "handleContainerClick", cancellable = true)
+	private void twoheavens$blockFakeSwordMoves(ServerboundContainerClickPacket packet, CallbackInfo info) {
+		AbstractContainerMenu menu = this.player.containerMenu;
+		if (menu.containerId != packet.containerId()) {
+			return;
+		}
+		boolean touchesFake = FakeDrawnSword.isFake(menu.getCarried());
+		int slot = packet.slotNum();
+		if (!touchesFake && slot >= 0 && menu.isValidSlotIndex(slot)) {
+			touchesFake = FakeDrawnSword.isFake(menu.getSlot(slot).getItem());
+		}
+		int button = packet.buttonNum();
+		if (!touchesFake && button >= 0 && button < Inventory.getSelectionSize()) {
+			touchesFake = FakeDrawnSword.isFake(this.player.getInventory().getItem(button));
+		}
+		if (touchesFake) {
+			menu.sendAllDataToRemote();
 			info.cancel();
 		}
 	}

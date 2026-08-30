@@ -2,6 +2,8 @@ package net.scarabx.twoheavens.combat;
 
 import eu.pb4.trinkets.api.TrinketsApi;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.minecraft.world.InteractionResult;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -51,6 +53,19 @@ public class SwordDrawServerHandler {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> toggle(player));
 		});
+
+		// Item frames and armour stands TAKE the held stack on a right-click, and that
+		// never goes through a container menu, so the slot guard cannot see it. A frame
+		// given a fake katana keeps a working one once the real sword is restored -
+		// stripFakeSwords only ever sweeps the inventory, never an entity.
+		//
+		// Scoped to the fake STACK, like the slot guard: the other hand can hold
+		// anything and there is no reason that should not go in a frame. FAIL rather
+		// than PASS, since PASS falls through to the vanilla behaviour being stopped.
+		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) ->
+				FakeDrawnSword.isFake(player.getItemInHand(hand))
+						? InteractionResult.FAIL
+						: InteractionResult.PASS);
 
 		ServerTickEvents.END_SERVER_TICK.register(SwordDrawServerHandler::onServerTick);
 
