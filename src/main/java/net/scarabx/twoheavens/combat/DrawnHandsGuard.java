@@ -76,7 +76,7 @@ public final class DrawnHandsGuard {
 	/** Chat with the ping, every time. One attempt, one answer. */
 	public static void tell(Player player, Object target) {
 		if (player instanceof ServerPlayer serverPlayer) {
-			serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.hands_full")
+			net.scarabx.twoheavens.ModMessages.send(serverPlayer, Component.translatable("message.twoheavens.hands_full")
 					.withStyle(ChatFormatting.GOLD));
 			JoinMessageHandler.ping(serverPlayer);
 		}

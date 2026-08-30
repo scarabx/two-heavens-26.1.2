@@ -5,6 +5,7 @@ import net.scarabx.twoheavens.block.ModDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -123,10 +124,10 @@ public class TataraFurnaceFiredBlockEntity extends BlockEntity {
 		// The passive half just ended - from here neglect costs heat, so tell anyone
 		// nearby to pick up the bellows. Nothing on the block itself signals this.
 		if (this.smeltTicks == PASSIVE_PHASE_TICKS && level instanceof ServerLevel serverLevel) {
-			Component tend = Component.translatable("message.twoheavens.tend_furnace")
+			MutableComponent tend = Component.translatable("message.twoheavens.tend_furnace")
 					.withStyle(ChatFormatting.GOLD);
 			for (ServerPlayer player : serverLevel.getPlayers(p -> p.blockPosition().closerThan(pos, TEND_ALERT_RANGE))) {
-				player.sendSystemMessage(tend);
+				net.scarabx.twoheavens.ModMessages.send(player, tend);
 				// Pinged for the same reason the goal crossings are, and more so: this one
 				// fires unprompted while the player is looking at the furnace or off
 				// gathering, so a silent chat line is the easiest of all of them to miss.

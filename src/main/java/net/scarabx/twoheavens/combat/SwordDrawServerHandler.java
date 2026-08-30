@@ -294,7 +294,7 @@ public class SwordDrawServerHandler {
 			}
 			ObiSwords.setOut(player, sword, false);
 			inventory.setItem(i, ItemStack.EMPTY);
-			player.sendSystemMessage(Component.translatable("message.twoheavens.obi_refilled",
+			net.scarabx.twoheavens.ModMessages.send(player, Component.translatable("message.twoheavens.obi_refilled",
 					sword.getName(stack)).withStyle(ChatFormatting.GOLD));
 			JoinMessageHandler.ping(player);
 			return;

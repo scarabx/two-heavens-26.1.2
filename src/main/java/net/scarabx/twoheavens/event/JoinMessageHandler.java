@@ -62,10 +62,10 @@ public final class JoinMessageHandler {
 			TutorialProgressAttachment.Progress progress = TutorialProgressAttachment.sample(player);
 
 			if (progress.maxSatetsu() < SATETSU_GOAL) {
-				player.sendSystemMessage(satetsuLine(SATETSU_GOAL - progress.maxSatetsu()));
+				net.scarabx.twoheavens.ModMessages.send(player, satetsuLine(SATETSU_GOAL - progress.maxSatetsu()));
 			}
 			if (needsTataraClayHint(progress)) {
-				player.sendSystemMessage(tataraClayLine(progress));
+				net.scarabx.twoheavens.ModMessages.send(player, tataraClayLine(progress));
 			}
 		});
 
@@ -87,7 +87,7 @@ public final class JoinMessageHandler {
 									 TutorialProgressAttachment.Progress before,
 									 TutorialProgressAttachment.Progress after) {
 		if (before.maxSatetsu() < SATETSU_GOAL && after.maxSatetsu() >= SATETSU_GOAL) {
-			player.sendSystemMessage(Component.literal(SATETSU_GOAL + " ")
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal(SATETSU_GOAL + " ")
 					.append(icon(SATETSU))
 					.append(Component.literal(" mined")));
 			// Sent as its own line rather than appended to the one above. The first is a
@@ -104,7 +104,7 @@ public final class JoinMessageHandler {
 			// two teach one name between them whichever goal completes first. Not "kera"
 			// (the output of a process they have not met) and not "Fired Tatara Furnace"
 			// (a distinction that does not exist for them yet).
-			player.sendSystemMessage(Component.literal("Set it aside for the Tatara Furnace"));
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal("Set it aside for the Tatara Furnace"));
 			ping(player);
 		}
 
@@ -118,9 +118,9 @@ public final class JoinMessageHandler {
 		boolean hadBlade = before.maxKatana() > 0 || before.maxWakizashi() > 0;
 		boolean hasBlade = after.maxKatana() > 0 || after.maxWakizashi() > 0;
 		if (!hadBlade && hasBlade) {
-			player.sendSystemMessage(Component.literal(
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal(
 					after.maxKatana() > 0 ? "Katana crafted" : "Wakizashi crafted"));
-			player.sendSystemMessage(Component.literal(
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal(
 					"Craft both swords into a Daisho Saya, and then into an Obi to dual wield"));
 			ping(player);
 		}
@@ -129,7 +129,7 @@ public final class JoinMessageHandler {
 		boolean had = before.maxSugarCane() >= per && before.maxCharcoal() >= per && before.maxClay() >= per;
 		boolean has = after.maxSugarCane() >= per && after.maxCharcoal() >= per && after.maxClay() >= per;
 		if (!had && has) {
-			player.sendSystemMessage(Component.literal(per + " ")
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal(per + " ")
 					.append(icon(SUGAR_CANE))
 					.append(Component.literal(" + " + per + " "))
 					.append(icon(CHARCOAL))
@@ -144,7 +144,7 @@ public final class JoinMessageHandler {
 			// was for. This is the exact instant they ask "now what", so it is answered
 			// here rather than left to a permanent line that would have to be skimmed
 			// past on every future join.
-			player.sendSystemMessage(Component.literal("Craft Tatara Clay, then a Tatara Furnace"));
+			net.scarabx.twoheavens.ModMessages.send(player, Component.literal("Craft Tatara Clay, then a Tatara Furnace"));
 
 			// No recipe pointer here on purpose. ItemTooltipMixin already prints "Hold
 			// [Shift] for recipes" on the vanilla ingredients themselves, so a chat line
