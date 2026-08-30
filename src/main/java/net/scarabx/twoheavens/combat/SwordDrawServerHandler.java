@@ -15,6 +15,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.scarabx.twoheavens.event.JoinMessageHandler;
 import net.minecraft.world.item.ItemStack;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -72,9 +74,7 @@ public class SwordDrawServerHandler {
 			// nothing and says nothing reads as broken. It also answers the question
 			// behind the attempt - someone framing a sword wants to DISPLAY it, and the
 			// Daisho Saya is the better display piece anyway, being the pair as one item.
-			player.sendOverlayMessage(
-					Component.translatable("message.twoheavens.sheathe_to_store")
-							.withStyle(ChatFormatting.GOLD));
+			warnCannotStore(player);
 			return InteractionResult.FAIL;
 		});
 
@@ -118,6 +118,41 @@ public class SwordDrawServerHandler {
 				newPlayer.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi());
 			}
 		});
+	}
+
+	/** Last tick each player was told they cannot store a drawn sword. */
+	private static final Map<UUID, Integer> lastStoreWarning = new HashMap<>();
+
+	private static final int STORE_WARNING_COOLDOWN_TICKS = 60;
+
+	/**
+	 * Tells the player why a phantom sword will not move, in chat, with the ping.
+	 *
+	 * Chat rather than the action bar because this is guidance, not a status readout -
+	 * it names the thing to do instead ("back on your belt") and it is the answer to a
+	 * question the player just asked by clicking. It follows the mod's ping rule
+	 * exactly: a message gets the chime when it appeared BECAUSE something just
+	 * happened. The excluded case was only ever the join hints, which repeat every
+	 * login saying what is still outstanding.
+	 *
+	 * COOLDOWN because, unlike every other pinged message, this one can fire on every
+	 * click. A few frustrated clicks would otherwise flood chat and push the one-time
+	 * pointers off screen - the exact messages the ping exists to make noticeable. Once
+	 * every three seconds is often enough to be read and rare enough not to bury
+	 * anything.
+	 */
+	public static void warnCannotStore(Player player) {
+		if (!(player instanceof ServerPlayer serverPlayer)) {
+			return;
+		}
+		Integer last = lastStoreWarning.get(serverPlayer.getUUID());
+		if (last != null && serverPlayer.tickCount - last < STORE_WARNING_COOLDOWN_TICKS) {
+			return;
+		}
+		lastStoreWarning.put(serverPlayer.getUUID(), serverPlayer.tickCount);
+		serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.sheathe_to_store")
+				.withStyle(ChatFormatting.GOLD));
+		JoinMessageHandler.ping(serverPlayer);
 	}
 
 	private static void onServerTick(MinecraftServer server) {

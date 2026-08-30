@@ -5,12 +5,11 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import net.scarabx.twoheavens.combat.FakeDrawnSword;
+import net.scarabx.twoheavens.combat.SwordDrawServerHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -102,11 +101,10 @@ public class ServerGamePacketListenerImplMixin {
 			menu.sendAllDataToRemote();
 			// Never a silent refusal - the rule this mod holds everywhere else. A click
 			// that does nothing and says nothing reads as broken; one that says why is a
-			// rule. Action bar rather than chat: it fires per click, and chat is reserved
-			// for the one-time pointers that just earned a ping.
-			this.player.sendOverlayMessage(
-					Component.translatable("message.twoheavens.sheathe_to_store")
-							.withStyle(ChatFormatting.GOLD));
+			// rule. Chat with the ping, like every other message that fires because
+			// something just happened; the shared helper carries the cooldown that keeps
+			// a per-click message from burying the one-time pointers.
+			SwordDrawServerHandler.warnCannotStore(this.player);
 			info.cancel();
 		}
 	}
