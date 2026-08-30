@@ -7,7 +7,8 @@
 # project, ready to be moved into OneDrive by hand:
 #
 #   Release <ver>-<mc>_<DD_MM_YY>_<HH_MM>/     mod jar, sources jar, changelog.md
-#   <DD_MM_YY_HH_MM>/                        project zip, changelog.md
+#   <DD_MM_YY>_<HH_MM>/                      <same>.zip, changelog.md,
+#                                            CLAUDE.md, notes.md
 #
 # Everything is derived - version from gradle.properties, timestamp from the jar
 # that was actually built, changelog from notes.md - so nothing has to be typed
@@ -76,7 +77,8 @@ cp "$MOD_JAR" "$SOURCES_JAR" "$RELEASE_DIR/"
 cp "$CHANGELOG" "$RELEASE_DIR/changelog.md"
 
 echo "==> Zipping $PROJECT_NAME"
-ZIP_PATH="$PARENT_DIR/${PROJECT_NAME}.zip"
+ZIP_NAME="${STAMP_DATE}_${STAMP_TIME}"
+ZIP_PATH="$PARENT_DIR/${ZIP_NAME}.zip"
 rm -f "$ZIP_PATH"
 ( cd "$PARENT_DIR" && zip -rq "$ZIP_PATH" "$PROJECT_NAME" -x "${ZIP_EXCLUDES[@]/#/$PROJECT_NAME/}" )
 
@@ -86,6 +88,13 @@ mv "$ZIP_PATH" "$BACKUP_DIR/"
 cp "$CHANGELOG" "$BACKUP_DIR/changelog.md"
 rm -f "$CHANGELOG"
 
+# CLAUDE.md and notes.md are copied out LOOSE as well as being inside the zip.
+# notes.md is untracked (.git/info/exclude), so no commit carries it and this
+# machine holds the only copy - having it readable in the backup folder means it
+# can be checked without unpacking 100M, and it is the file most worth not losing.
+cp "$PROJECT_DIR/CLAUDE.md" "$BACKUP_DIR/CLAUDE.md"
+cp "$PROJECT_DIR/notes.md" "$BACKUP_DIR/notes.md"
+
 echo
 echo "Done."
 echo "  Release : $RELEASE_DIR"
@@ -93,4 +102,4 @@ ls -1sh "$RELEASE_DIR" | sed 's/^/            /'
 echo "  Backup  : $BACKUP_DIR"
 ls -1sh "$BACKUP_DIR" | sed 's/^/            /'
 echo
-echo "Move both into OneDrive, and copy notes.md and CLAUDE.md across too - they are untracked."
+echo "Move both into OneDrive. CLAUDE.md and notes.md are already in the backup folder."
