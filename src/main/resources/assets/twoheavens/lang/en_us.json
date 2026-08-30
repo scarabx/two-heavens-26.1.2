@@ -60,7 +60,7 @@
   "tooltip.twoheavens.kera_anvil": "Place on a Smithing Anvil",
   "tooltip.twoheavens.take_apart": "Sneak + right-click to take apart",
   "tooltip.twoheavens.obi_use": "Holds a Daisho Saya on your belt",
-  "tooltip.twoheavens.obi_equip": "Hover over the leggings slot to reveal the belt slot",
+  "tooltip.twoheavens.obi_equip": "Goes in the Belt slot - hover the leggings slot if you cannot see it",
   "tooltip.twoheavens.obi_draw": "Press R to draw and sheathe your swords",
   "tooltip.twoheavens.wakizashi_combat": "Left-click to slice",
   "tooltip.twoheavens.wakizashi_drawn": "Drawn from a Daisho Obi: left-click stabs to stun, middle-click slices",
