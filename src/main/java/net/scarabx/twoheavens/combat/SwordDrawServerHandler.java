@@ -1,11 +1,10 @@
 package net.scarabx.twoheavens.combat;
 
 import eu.pb4.trinkets.api.TrinketsApi;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.world.InteractionResult;
+import net.scarabx.twoheavens.event.JoinMessageHandler;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -16,7 +15,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.scarabx.twoheavens.event.JoinMessageHandler;
 import net.minecraft.world.item.ItemStack;
 import net.scarabx.twoheavens.item.ModItems;
 
@@ -58,26 +56,6 @@ public class SwordDrawServerHandler {
 			context.server().execute(() -> toggle(player));
 		});
 
-		// Item frames and armour stands TAKE the held stack on a right-click, and that
-		// never goes through a container menu, so the slot guard cannot see it. A frame
-		// given a fake katana keeps a working one once the real sword is restored -
-		// stripFakeSwords only ever sweeps the inventory, never an entity.
-		//
-		// Scoped to the fake STACK, like the slot guard: the other hand can hold
-		// anything and there is no reason that should not go in a frame. FAIL rather
-		// than PASS, since PASS falls through to the vanilla behaviour being stopped.
-		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-			if (!FakeDrawnSword.isFake(player.getItemInHand(hand))) {
-				return InteractionResult.PASS;
-			}
-			// Same line the slot guard uses, for the same reason: a frame that takes
-			// nothing and says nothing reads as broken. It also answers the question
-			// behind the attempt - someone framing a sword wants to DISPLAY it, and the
-			// Daisho Saya is the better display piece anyway, being the pair as one item.
-			warnCannotStore(player);
-			return InteractionResult.FAIL;
-		});
-
 		ServerTickEvents.END_SERVER_TICK.register(SwordDrawServerHandler::onServerTick);
 
 		// Death always forces the player out of drawn/combat mode, regardless
@@ -114,45 +92,10 @@ public class SwordDrawServerHandler {
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
 			if (newPlayer.hasAttached(DrawnSwordsAttachment.TYPE)
 					&& TrinketsApi.getAttachment(newPlayer).isEquipped(ModItems.DAISHO_OBI)) {
-				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, FakeDrawnSword.katana());
-				newPlayer.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi());
+				newPlayer.setItemInHand(InteractionHand.MAIN_HAND, ObiSwords.issuedKatana());
+				newPlayer.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi());
 			}
 		});
-	}
-
-	/** Last tick each player was told they cannot store a drawn sword. */
-	private static final Map<UUID, Integer> lastStoreWarning = new HashMap<>();
-
-	private static final int STORE_WARNING_COOLDOWN_TICKS = 60;
-
-	/**
-	 * Tells the player why a phantom sword will not move, in chat, with the ping.
-	 *
-	 * Chat rather than the action bar because this is guidance, not a status readout -
-	 * it names the thing to do instead ("back on your belt") and it is the answer to a
-	 * question the player just asked by clicking. It follows the mod's ping rule
-	 * exactly: a message gets the chime when it appeared BECAUSE something just
-	 * happened. The excluded case was only ever the join hints, which repeat every
-	 * login saying what is still outstanding.
-	 *
-	 * COOLDOWN because, unlike every other pinged message, this one can fire on every
-	 * click. A few frustrated clicks would otherwise flood chat and push the one-time
-	 * pointers off screen - the exact messages the ping exists to make noticeable. Once
-	 * every three seconds is often enough to be read and rare enough not to bury
-	 * anything.
-	 */
-	public static void warnCannotStore(Player player) {
-		if (!(player instanceof ServerPlayer serverPlayer)) {
-			return;
-		}
-		Integer last = lastStoreWarning.get(serverPlayer.getUUID());
-		if (last != null && serverPlayer.tickCount - last < STORE_WARNING_COOLDOWN_TICKS) {
-			return;
-		}
-		lastStoreWarning.put(serverPlayer.getUUID(), serverPlayer.tickCount);
-		serverPlayer.sendSystemMessage(Component.translatable("message.twoheavens.sheathe_to_store")
-				.withStyle(ChatFormatting.GOLD));
-		JoinMessageHandler.ping(serverPlayer);
 	}
 
 	private static void onServerTick(MinecraftServer server) {
@@ -246,10 +189,21 @@ public class SwordDrawServerHandler {
 			// fake from that slot, leaving it empty, while the real katana went back to
 			// the slot it came from.
 			int drawSlot = player.getInventory().getSelectedSlot();
-			queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_KATANA_DELAY_TICKS,
-					p -> p.getInventory().setItem(drawSlot, FakeDrawnSword.katana())));
-			queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS,
-					p -> p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
+			// Only what the obi actually still holds. A player who left a sword in a chest
+			// draws the other one alone - the obi is short, and saying so by handing over
+			// one blade is more honest than conjuring a replacement. The combat code
+			// already copes: every check reads what is IN YOUR HANDS, so the paired combo
+			// simply does not arm and the solo moves keep working.
+			if (ObiSwords.holds(player, ModItems.KATANA)) {
+				ObiSwords.setOut(player, ModItems.KATANA, true);
+				queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_KATANA_DELAY_TICKS,
+						p -> p.getInventory().setItem(drawSlot, ObiSwords.issuedKatana())));
+			}
+			if (ObiSwords.holds(player, ModItems.WAKIZASHI)) {
+				ObiSwords.setOut(player, ModItems.WAKIZASHI, true);
+				queue.add(new PendingSwap(player.tickCount + DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS,
+						p -> p.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi())));
+			}
 			pendingSwaps.put(player.getUUID(), queue);
 		} else {
 			player.removeAttached(DrawnSwordsAttachment.TYPE);
@@ -271,15 +225,67 @@ public class SwordDrawServerHandler {
 	// switching while drawn is separately blocked (client + server mixins),
 	// so this is mostly a defensive sweep now, but still covers drag/drop
 	// within the inventory screen itself.
-	private static void stripFakeSwords(Inventory inventory) {
+	/**
+	 * Takes the obi's swords back out of the player and records that they are home.
+	 *
+	 * This used to DELETE them, which was safe only because they were copies. They are
+	 * real now, so a sword removed here has to be accounted for - and one that is NOT
+	 * found is not accounted for either: the obi is left marked out, so the next draw
+	 * knows it is short and hands over what is left. That single fact is what makes
+	 * duplication impossible rather than merely difficult.
+	 *
+	 * Sweeps the whole inventory rather than the two hands, because a sword can be
+	 * anywhere by now and the hands are only where it started.
+	 */
+	private static void reclaimSwords(ServerPlayer player) {
+		Inventory inventory = player.getInventory();
 		for (int i = 0; i < inventory.getContainerSize(); i++) {
-			if (FakeDrawnSword.isFake(inventory.getItem(i))) {
-				inventory.setItem(i, ItemStack.EMPTY);
+			ItemStack stack = inventory.getItem(i);
+			if (!ObiSwords.isFromObi(stack)) {
+				continue;
 			}
+			ObiSwords.setOut(player, stack.getItem(), false);
+			inventory.setItem(i, ItemStack.EMPTY);
+		}
+		refill(player, ModItems.KATANA);
+		refill(player, ModItems.WAKIZASHI);
+	}
+
+	/**
+	 * Lets an obi that lost a sword for good take an ordinary one instead.
+	 *
+	 * Without this the obi bricks. A sword left in a chest is recovered by the sweep
+	 * above the moment the player carries it again - the tag rides along, so that case
+	 * heals itself. But a sword destroyed, lost in lava or given away is never coming
+	 * back, and a freshly smithed katana carries no tag, so the obi would stay short
+	 * forever with no way to mend it. An unusable endgame item is a worse outcome than
+	 * anything this whole system was protecting against.
+	 *
+	 * Only on SHEATHE, and only into a gap: the player asked for the pair to go away,
+	 * so completing the pair is the thing they just requested. It is announced, because
+	 * a sword quietly vanishing into a belt is exactly the silent surprise this mod
+	 * spends its guidance budget avoiding.
+	 */
+	private static void refill(ServerPlayer player, net.minecraft.world.item.Item sword) {
+		if (ObiSwords.holds(player, sword)) {
+			return;
+		}
+		Inventory inventory = player.getInventory();
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
+			if (!stack.is(sword)) {
+				continue;
+			}
+			ObiSwords.setOut(player, sword, false);
+			inventory.setItem(i, ItemStack.EMPTY);
+			player.sendSystemMessage(Component.translatable("message.twoheavens.obi_refilled",
+					sword.getName(stack)).withStyle(ChatFormatting.GOLD));
+			JoinMessageHandler.ping(player);
+			return;
 		}
 	}
 
-	// Deliberately does NOT run the stripFakeSwords sweep. This fires first, at the
+	// Deliberately does NOT run the reclaim sweep. This fires first, at the
 	// wakizashi's keyframe, and the sweep clears EVERY fake sword - so running it here
 	// also wiped the katana out of the mainhand, leaving that hand empty for the rest
 	// of the animation until restoreMainHand put the real item back. Setting the
@@ -290,7 +296,7 @@ public class SwordDrawServerHandler {
 			// Nothing was being held, so there is nothing to give back - but the fake
 			// wakizashi still has to go, and an unconditional write of EMPTY here would
 			// also wipe anything real that had arrived in the meantime.
-			if (FakeDrawnSword.isFake(player.getItemInHand(InteractionHand.OFF_HAND))) {
+			if (ObiSwords.isFromObi(player.getItemInHand(InteractionHand.OFF_HAND))) {
 				player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
 			}
 			return;
@@ -309,7 +315,7 @@ public class SwordDrawServerHandler {
 	// katana/wakizashi from a previous draw cycle sat untouched in the old
 	// slot, making the next draw look like it conjured a third sword.
 	private static void restoreMainHand(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
-		stripFakeSwords(player.getInventory());
+		reclaimSwords(player);
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
 		restoreInto(player, stored.mainHandSlot(), stored.mainHand());
@@ -346,7 +352,7 @@ public class SwordDrawServerHandler {
 	// and treating it as occupied would send every ordinary sheathe down the fallback
 	// path. Only a REAL item blocks the slot.
 	private static boolean isReplaceable(ItemStack stack) {
-		return stack.isEmpty() || FakeDrawnSword.isFake(stack);
+		return stack.isEmpty() || ObiSwords.isFromObi(stack);
 	}
 
 	private static void giveBackElsewhere(ServerPlayer player, ItemStack stored) {
@@ -358,7 +364,7 @@ public class SwordDrawServerHandler {
 	// Used only by the instant/forced paths (death) - no animation to wait
 	// for there, so both hands restore together immediately.
 	private static void restoreStoredItems(ServerPlayer player, DrawnSwordsAttachment.StoredItems stored) {
-		stripFakeSwords(player.getInventory());
+		reclaimSwords(player);
 		Inventory inventory = player.getInventory();
 		inventory.setSelectedSlot(stored.mainHandSlot());
 		restoreInto(player, stored.mainHandSlot(), stored.mainHand());

@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.scarabx.twoheavens.combat.DrawSwordsPayload;
 import net.scarabx.twoheavens.combat.DrawTiming;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
-import net.scarabx.twoheavens.combat.FakeDrawnSword;
+import net.scarabx.twoheavens.combat.ObiSwords;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -81,7 +81,7 @@ public class SwordDrawController {
 			return;
 		}
 		ItemStack occupant = player.getInventory().getItem(storedMainHandSlot);
-		if (occupant.isEmpty() || FakeDrawnSword.isFake(occupant)) {
+		if (occupant.isEmpty() || ObiSwords.isFromObi(occupant)) {
 			player.getInventory().setItem(storedMainHandSlot, stack);
 		}
 	}
@@ -89,7 +89,7 @@ public class SwordDrawController {
 	/** Same rule for the offhand, whose restore had the identical unconditional write. */
 	private static void restoreOffHand(Player player, ItemStack stack) {
 		ItemStack occupant = player.getItemInHand(InteractionHand.OFF_HAND);
-		if (occupant.isEmpty() || FakeDrawnSword.isFake(occupant)) {
+		if (occupant.isEmpty() || ObiSwords.isFromObi(occupant)) {
 			player.setItemInHand(InteractionHand.OFF_HAND, stack);
 		}
 	}
@@ -131,9 +131,9 @@ public class SwordDrawController {
 					RawAnimation.begin().thenPlayAndHold(TwoHeavensPlayerAnimation.getDrawSwordsAnimation()));
 
 			pending.add(new PendingSwap(DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
-					putInDrawSlot(p, FakeDrawnSword.katana())));
+					putInDrawSlot(p, ObiSwords.issuedKatana())));
 			pending.add(new PendingSwap(DrawTiming.DRAW_WAKIZASHI_DELAY_TICKS - DrawTiming.DRAW_KATANA_DELAY_TICKS, p ->
-					p.setItemInHand(InteractionHand.OFF_HAND, FakeDrawnSword.wakizashi())));
+					p.setItemInHand(InteractionHand.OFF_HAND, ObiSwords.issuedWakizashi())));
 			AttackSwingController.resetAttackPose();
 			predictedDrawn = true;
 		} else {

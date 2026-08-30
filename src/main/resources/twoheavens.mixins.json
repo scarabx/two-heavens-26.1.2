@@ -7,7 +7,6 @@
 		"LivingEntitySwingMixin",
 		"ServerGamePacketListenerImplMixin",
 		"CraftingResultMixin",
-		"FakeSwordCraftingMixin",
 		"InventoryAddMixin",
 		"StunnedMovementMixin",
 		"StunnedAttackMixin",
