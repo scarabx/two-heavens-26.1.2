@@ -1,6 +1,9 @@
 package net.scarabx.twoheavens.client.mixin;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.scarabx.twoheavens.combat.DrawnSwordsAttachment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,15 +21,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * the server refuses.
  *
  * **Any server-side refusal of a player action needs its client half**, or the
- * refusal looks like item loss. That is the third time today.
+ * refusal looks like item loss - but the client half must suppress the PREDICTION
+ * only. Cancelling the whole method also cancelled the send, so the server never
+ * saw the keypress and the drop was refused in silence.
  */
 @Mixin(LocalPlayer.class)
 public class DrawnDropMixin {
 
 	@Inject(method = "drop(Z)Z", at = @At("HEAD"), cancellable = true)
 	private void twoheavens$blockDropWhileDrawn(boolean all, CallbackInfoReturnable<Boolean> cir) {
-		if (((LocalPlayer) (Object) this).hasAttached(DrawnSwordsAttachment.TYPE)) {
-			cir.setReturnValue(false);
+		LocalPlayer self = (LocalPlayer) (Object) this;
+		if (!self.hasAttached(DrawnSwordsAttachment.TYPE)) {
+			return;
 		}
+		// Suppress the PREDICTION, not the packet. Cancelling outright stopped the send
+		// as well, so the server never saw the keypress and never sent its refusal - the
+		// drop was blocked silently, which is the same failure the chest guard had an
+		// hour earlier. Sending it by hand skips only removeFromSelected, so the server
+		// refuses and speaks while nothing disappears on screen.
+		self.connection.send(new ServerboundPlayerActionPacket(
+				all ? ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
+						: ServerboundPlayerActionPacket.Action.DROP_ITEM,
+				BlockPos.ZERO, Direction.DOWN));
+		cir.setReturnValue(false);
 	}
 }
