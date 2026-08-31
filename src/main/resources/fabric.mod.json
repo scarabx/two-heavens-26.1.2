@@ -34,7 +34,7 @@
 		"minecraft": "~26.1",
 		"java": ">=25",
 		"fabric-api": ">=0.155.2",
-		"trinkets": ">=4.0.0-beta.3",
+		"trinkets": ">=4.0.0-beta.1",
 		"geckolib": ">=5.5.2",
 		"player_animation_library": ">=1.2.5"
 	},
