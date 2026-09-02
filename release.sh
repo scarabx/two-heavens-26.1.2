@@ -6,9 +6,8 @@
 # Builds the jar, then lays out two folders in ~/IdeaProjects, both OUTSIDE the
 # project, ready to be moved into OneDrive by hand:
 #
-#   Release <ver>-<mc>_<DD_MM_YY>_<HH_MM>/     mod jar, sources jar, changelog.md
+#   Release <ver>-<mc>_<DD_MM_YY>_<HH_MM>/   mod jar, sources jar, changelog.md
 #   <DD_MM_YY>_<HH_MM>/                      project zip, changelog.md
-#   <DD_MM_YY>_<HH_MM>_notes/                CLAUDE.md, notes.md
 #
 # Everything is derived - version from gradle.properties, timestamp from the jar
 # that was actually built, changelog from notes.md - so nothing has to be typed
@@ -20,10 +19,12 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$PROJECT_DIR")"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
 
-# Left out of the zip because they are caches the build regenerates - .gradle alone
-# is ~283M. Paths are relative to the project folder. `run` is the test worlds at
-# ~75M; add 'run/*' here if the backup does not need them.
-ZIP_EXCLUDES=( '.gradle/*' 'build/*' )
+# NOTHING is excluded. The zip is a deliberate 1:1 copy of the whole project folder,
+# including .gradle, build, run and .git, because its purpose is wholesale restore:
+# if GitHub is ever lost, the folder is copied straight back into IdeaProjects and
+# work continues, git history included, with no re-clone and no merge conflicts. A
+# source-only zip restores files but not the repository, which is the whole point.
+# Size is the accepted cost - do not "optimise" this by adding excludes here.
 
 cd "$PROJECT_DIR"
 
@@ -49,10 +50,6 @@ STAMP_TIME="$(date -r "$MOD_JAR" +%H_%M)"
 
 RELEASE_DIR="$PARENT_DIR/Release ${VERSION}-${MC_VERSION}_${STAMP_DATE}_${STAMP_TIME}"
 BACKUP_DIR="$PARENT_DIR/${STAMP_DATE}_${STAMP_TIME}"
-# Date first so it sorts beside the other two. The suffix exists only because the
-# zip folder already owns the bare name and two folders cannot share one in a
-# directory - it is meant to be renamed once the folder reaches OneDrive.
-DOCS_DIR="$PARENT_DIR/${STAMP_DATE}_${STAMP_TIME}_notes"
 
 echo "==> Changelog for ${VERSION} from notes.md"
 CHANGELOG="$(mktemp)"
@@ -86,20 +83,16 @@ cp "$CHANGELOG" "$RELEASE_DIR/changelog.md"
 echo "==> Zipping $PROJECT_NAME"
 ZIP_PATH="$PARENT_DIR/${PROJECT_NAME}.zip"
 rm -f "$ZIP_PATH"
-( cd "$PARENT_DIR" && zip -rq "$ZIP_PATH" "$PROJECT_NAME" -x "${ZIP_EXCLUDES[@]/#/$PROJECT_NAME/}" )
+( cd "$PARENT_DIR" && zip -rq "$ZIP_PATH" "$PROJECT_NAME" )
 
 echo "==> $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
 mv "$ZIP_PATH" "$BACKUP_DIR/"
 cp "$CHANGELOG" "$BACKUP_DIR/changelog.md"
 
-# A folder of its own for the two untracked files. notes.md is excluded from git
-# (.git/info/exclude), so no commit carries it and this machine holds the only
-# copy - it goes somewhere it can be read without unpacking 100M of zip, and
-# somewhere it will not be mistaken for part of the release.
-echo "==> $DOCS_DIR"
-mkdir -p "$DOCS_DIR"
-cp -p "$PROJECT_DIR/CLAUDE.md" "$PROJECT_DIR/notes.md" "$DOCS_DIR/"
+# No docs folder. CLAUDE.md and notes.md are inside the 1:1 zip like everything else
+# - including notes.md, which is git-excluded and has no other backup. Dropped to cut
+# the manual drag-into-OneDrive work, not because the files stopped mattering.
 rm -f "$CHANGELOG"
 
 echo
@@ -108,7 +101,5 @@ echo "  Release : $RELEASE_DIR"
 ls -1sh "$RELEASE_DIR" | sed 's/^/            /'
 echo "  Zip     : $BACKUP_DIR"
 ls -1sh "$BACKUP_DIR" | sed 's/^/            /'
-echo "  Notes   : $DOCS_DIR"
-ls -1sh "$DOCS_DIR" | sed 's/^/            /'
 echo
-echo "Move all three into OneDrive."
+echo "Move both into OneDrive."
