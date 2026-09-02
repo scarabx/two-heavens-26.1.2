@@ -38,3 +38,20 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# minecraft runtime
+run/
+logs/
+*.log
+*.log.gz
+crash-reports/
+saves/
+screenshots/
+options.txt
+usercache.json
+usernamecache.json
+
+# jvm crash dumps
+hs_err_pid*
+replay_pid*
+.attach_pid*
