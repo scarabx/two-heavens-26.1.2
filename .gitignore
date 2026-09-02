@@ -40,6 +40,10 @@ replay_*.log
 *.jfr
 
 # minecraft runtime
+/config/fabric/
+/config/roughlyenoughitems/
+/data/
+/mods/
 run/
 logs/
 *.log
